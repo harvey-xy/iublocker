@@ -3,8 +3,15 @@ import { defineScriptlet } from './_define';
 export default defineScriptlet({
   name: 'json-edit-fetch-request',
   args: [
-    { name: 'path', doc: 'uBO json-edit expression: a path, optionally followed by `=<json>` or `+=<json>`.' },
-    { name: 'extra1', optional: true, doc: 'Positional `propsToMatch`, or the first `name, value` extra argument.' },
+    {
+      name: 'path',
+      doc: 'uBO json-edit expression: a path, optionally followed by `=<json>` or `+=<json>`.',
+    },
+    {
+      name: 'extra1',
+      optional: true,
+      doc: 'Positional `propsToMatch`, or the first `name, value` extra argument.',
+    },
     { name: 'extra2', optional: true, doc: 'Value of `extra1` when it names an extra argument.' },
     { name: 'extra3', optional: true, doc: 'Second extra argument name.' },
     { name: 'extra4', optional: true, doc: 'Value of `extra3`.' },
@@ -415,7 +422,12 @@ export default defineScriptlet({
           if (init !== null && typeof init === 'object') {
             for (const k of Object.keys(init)) details[k] = (init as any)[k];
           }
-          if (matches(details) && init !== null && typeof init === 'object' && typeof init.body === 'string') {
+          if (
+            matches(details) &&
+            init !== null &&
+            typeof init === 'object' &&
+            typeof init.body === 'string'
+          ) {
             const obj = JSON.parse(init.body);
             if (edit(obj)) nextInit = Object.assign({}, init, { body: JSON.stringify(obj) });
           }

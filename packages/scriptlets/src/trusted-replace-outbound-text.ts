@@ -3,7 +3,10 @@ import { defineScriptlet } from './_define';
 export default defineScriptlet({
   name: 'trusted-replace-outbound-text',
   args: [
-    { name: 'propChain', doc: 'Function whose *return value* is rewritten, e.g. `atob` or `JSON.stringify`.' },
+    {
+      name: 'propChain',
+      doc: 'Function whose *return value* is rewritten, e.g. `atob` or `JSON.stringify`.',
+    },
     { name: 'pattern', doc: 'Literal or /regex/ to replace inside the returned string.' },
     { name: 'replacement', optional: true, doc: 'Replacement text; defaults to the empty string.' },
     { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`condition`).' },

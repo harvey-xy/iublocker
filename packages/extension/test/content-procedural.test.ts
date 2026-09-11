@@ -197,6 +197,68 @@ describe('ProceduralExecutor — actions', () => {
     expect(a.getAttribute(MARKER_ATTR)).toBe('styled');
   });
 
+  it('remove-attr() strips a named attribute from the matches', () => {
+    html('<a id="a" class="ad" href="/x" onclick="go()">Ad</a><a id="b" href="/y" onclick="go()">News</a>');
+    const x = new ProceduralExecutor(env(), [
+      filter(['css', 'a'], ['has-text', 'Ad'], ['remove-attr', 'onclick']),
+    ]);
+    expect(x.run().stripped).toBe(1);
+    expect(document.getElementById('a')!.hasAttribute('onclick')).toBe(false);
+    expect(document.getElementById('b')!.hasAttribute('onclick')).toBe(true);
+  });
+
+  it('remove-attr() with a regex strips every matching attribute', () => {
+    html('<div id="a" data-ad="1" data-track="2" title="keep"></div>');
+    const x = new ProceduralExecutor(env(), [filter(['css', '#a'], ['remove-attr', '/^data-/'])]);
+    expect(x.run().stripped).toBe(2);
+    const a = document.getElementById('a')!;
+    expect(a.hasAttribute('data-ad')).toBe(false);
+    expect(a.hasAttribute('data-track')).toBe(false);
+    expect(a.getAttribute('title')).toBe('keep');
+  });
+
+  it('remove-class() strips a named class', () => {
+    html('<div id="a" class="box ad sticky"></div>');
+    const x = new ProceduralExecutor(env(), [filter(['css', '#a'], ['remove-class', 'ad'])]);
+    expect(x.run().stripped).toBe(1);
+    expect(document.getElementById('a')!.className).toBe('box sticky');
+  });
+
+  it('remove-class() with a regex strips every matching class', () => {
+    html('<div id="a" class="ad-slot ad-label content"></div>');
+    const x = new ProceduralExecutor(env(), [filter(['css', '#a'], ['remove-class', '/^ad-/'])]);
+    expect(x.run().stripped).toBe(2);
+    expect(document.getElementById('a')!.className).toBe('content');
+  });
+
+  it('re-strips a class the page adds back', () => {
+    html('<div id="a" class="ad"></div>');
+    const x = new ProceduralExecutor(env(), [filter(['css', '#a'], ['remove-class', 'ad'])]);
+    x.run();
+    document.getElementById('a')!.classList.add('ad');
+    expect(x.run().stripped).toBe(1);
+    expect(document.getElementById('a')!.classList.contains('ad')).toBe(false);
+  });
+
+  it('does not hide the element it strips', () => {
+    html('<div id="a" class="ad"></div>');
+    const x = new ProceduralExecutor(env(), [filter(['css', '#a'], ['remove-attr', 'nope'])]);
+    const stats = x.run();
+    expect(stats.hidden).toBe(0);
+    expect((document.getElementById('a') as HTMLElement).style.display).toBe('');
+  });
+
+  it('applies remove-attr and remove-class together', () => {
+    html('<div id="a" class="ad box" data-x="1"></div>');
+    const x = new ProceduralExecutor(env(), [
+      filter(['css', '#a'], ['remove-attr', 'data-x'], ['remove-class', 'ad']),
+    ]);
+    expect(x.run().stripped).toBe(2);
+    const a = document.getElementById('a')!;
+    expect(a.hasAttribute('data-x')).toBe(false);
+    expect(a.className).toBe('box');
+  });
+
   it('never throws on a broken chain', () => {
     html('<div id="a"></div>');
     const x = new ProceduralExecutor(env(), [filter(['css', '::::'], ['has-text', 'x'])]);

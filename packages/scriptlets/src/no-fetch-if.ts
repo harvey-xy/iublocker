@@ -13,10 +13,12 @@ export default defineScriptlet({
     {
       name: 'responseType',
       optional: true,
-      doc: "Response `type` to report (`opaque`, `cors`, …) or a JSON object of response properties.",
+      doc: 'Response `type` to report (`opaque`, `cors`, …) or a JSON object of response properties.',
     },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`throttle`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
   ],
-  fn: function (propsToMatch?: string, responseBody?: string, responseType?: string) {
+  fn: function (propsToMatch?: string, responseBody?: string, responseType?: string, ..._extra: string[]) {
     try {
       const gt: any = globalThis;
       if (typeof gt.fetch !== 'function') return;

@@ -6,7 +6,9 @@ describe('trusted-json-edit-xhr-request', () => {
   it('edits the outgoing JSON body', async () => {
     const win = makeWindow();
     installXhrStub(win);
-    win.eval('window.sentBody = null; XMLHttpRequest.prototype.send = function (b) { window.sentBody = b; };');
+    win.eval(
+      'window.sentBody = null; XMLHttpRequest.prototype.send = function (b) { window.sentBody = b; };',
+    );
     inject(win, def, '..client[?.clientName=="WEB"]+={"clientScreen":"CHANNEL"}', 'propsToMatch', '/player');
     win.eval(`
       var x = new XMLHttpRequest();
@@ -23,7 +25,9 @@ describe('trusted-json-edit-xhr-request', () => {
   it('leaves unmatched requests alone', async () => {
     const win = makeWindow();
     installXhrStub(win);
-    win.eval('window.sentBody = null; XMLHttpRequest.prototype.send = function (b) { window.sentBody = b; };');
+    win.eval(
+      'window.sentBody = null; XMLHttpRequest.prototype.send = function (b) { window.sentBody = b; };',
+    );
     inject(win, def, '.a=2', 'propsToMatch', '/never');
     win.eval(`
       var x = new XMLHttpRequest();
@@ -37,7 +41,9 @@ describe('trusted-json-edit-xhr-request', () => {
   it('leaves a non-JSON body alone', async () => {
     const win = makeWindow();
     installXhrStub(win);
-    win.eval('window.sentBody = null; XMLHttpRequest.prototype.send = function (b) { window.sentBody = b; };');
+    win.eval(
+      'window.sentBody = null; XMLHttpRequest.prototype.send = function (b) { window.sentBody = b; };',
+    );
     inject(win, def, '.a=2');
     win.eval(`
       var x = new XMLHttpRequest();

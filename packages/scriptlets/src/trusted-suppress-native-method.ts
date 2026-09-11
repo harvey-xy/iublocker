@@ -35,7 +35,7 @@ export default defineScriptlet({
         if (t.length > 1 && t.startsWith("'") && t.endsWith("'")) return t.slice(1, -1);
         return t;
       };
-      let raw = unquote(String(signature ?? ''));
+      const raw = unquote(String(signature ?? ''));
       if (raw === '') return;
       let spec: any[] = [];
       try {

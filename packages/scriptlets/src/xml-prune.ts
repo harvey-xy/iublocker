@@ -186,19 +186,15 @@ export default defineScriptlet({
         const bypass = Symbol.for('iub.xhrBypass');
         const origOpen = XHR.prototype.open;
         const origSend = XHR.prototype.send;
-        XHR.prototype.open = keep(
-          origOpen,
-          function (this: any, method: any, url: any, ...rest: any[]): any {
-            try {
-              this[ctxKey] = { method: String(method ?? 'GET'), url: String(url ?? '') };
-            } catch {
-              /* frozen instance */
-            }
-            return origOpen.call(this, method, url, ...rest);
-          },
-        );
-        XHR.prototype.send = keep(origSend, function (this: any, ...args: any[]): any {
-          const xhr = this;
+        XHR.prototype.open = keep(origOpen, function (this: any, method: any, url: any, ...rest: any[]): any {
+          try {
+            this[ctxKey] = { method: String(method ?? 'GET'), url: String(url ?? '') };
+          } catch {
+            /* frozen instance */
+          }
+          return origOpen.call(this, method, url, ...rest);
+        });
+        const handleSend = (xhr: any, args: any[]): any => {
           const ctx = xhr[ctxKey];
           if (ctx === undefined || xhr[bypass] === true) return origSend.apply(xhr, args);
           if (reUrl !== null && reUrl.test(String(ctx.url)) === false) return origSend.apply(xhr, args);
@@ -263,6 +259,9 @@ export default defineScriptlet({
             return origSend.apply(xhr, args);
           }
           return undefined;
+        };
+        XHR.prototype.send = keep(origSend, function (this: any, ...args: any[]): any {
+          return handleSend(this, args);
         });
       }
     } catch {

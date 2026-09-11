@@ -18,12 +18,7 @@ export default defineScriptlet({
     { name: 'extra2', optional: true, doc: 'Further trailing extra argument name.' },
     { name: 'extra3', optional: true, doc: 'Value of `extra2`.' },
   ],
-  fn: function (
-    propsToRemove: string,
-    requiredProps?: string,
-    propsToMatch?: string,
-    ...extra: string[]
-  ) {
+  fn: function (propsToRemove: string, requiredProps?: string, propsToMatch?: string, ...extra: string[]) {
     try {
       const gt: any = globalThis;
       if (typeof gt.fetch !== 'function' || typeof gt.Response !== 'function') return;

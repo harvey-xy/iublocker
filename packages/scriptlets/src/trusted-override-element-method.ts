@@ -47,7 +47,8 @@ export default defineScriptlet({
         let hit = sel === '';
         if (hit === false) {
           try {
-            hit = this !== null && this !== undefined && typeof this.matches === 'function' && this.matches(sel);
+            hit =
+              this !== null && this !== undefined && typeof this.matches === 'function' && this.matches(sel);
           } catch {
             hit = false;
           }

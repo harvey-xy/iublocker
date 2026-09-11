@@ -15,8 +15,10 @@ export default defineScriptlet({
       doc: "'' | emptyObj | emptyArr | emptyStr | throw | a literal body.",
     },
     { name: 'responseType', optional: true, doc: 'Accepted for uBO compatibility; ignored.' },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`throttle`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
   ],
-  fn: function (propsToMatch?: string, directive?: string, _responseType?: string) {
+  fn: function (propsToMatch?: string, directive?: string, _responseType?: string, ..._extra: string[]) {
     try {
       const gt: any = globalThis;
       const XHR: any = gt.XMLHttpRequest;

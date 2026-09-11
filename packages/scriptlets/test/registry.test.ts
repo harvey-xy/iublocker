@@ -69,6 +69,73 @@ describe('resolveScriptlet', () => {
     expect(resolveScriptlet('prevent-fetch')?.name).toBe('no-fetch-if');
     expect(resolveScriptlet('prevent-xhr')?.name).toBe('no-xhr-if');
     expect(resolveScriptlet('noeval')?.name).toBe('noeval-if');
+    expect(resolveScriptlet('trusted-set')?.name).toBe('trusted-set-constant');
+    expect(resolveScriptlet('trusted-rpnt')?.name).toBe('trusted-replace-node-text');
+    expect(resolveScriptlet('refresh-defuser')?.name).toBe('prevent-refresh');
+    expect(resolveScriptlet('acis')?.name).toBe('abort-current-script');
+    expect(resolveScriptlet('fingerprintjs2')?.name).toBe('fingerprint2.js');
+    expect(resolveScriptlet('fingerprintjs3')?.name).toBe('fingerprint3.js');
+    expect(resolveScriptlet('google-ima3')?.name).toBe('google-ima.js');
+    expect(resolveScriptlet('popads.net')?.name).toBe('popads.js');
+  });
+
+  it('resolves the library gaps closed against the uBO lists', () => {
+    for (const name of [
+      'href-sanitizer',
+      'nowebrtc',
+      'trusted-replace-argument',
+      'trusted-click-element',
+      'trusted-prevent-dom-bypass',
+      'trusted-suppress-native-method',
+      'trusted-replace-outbound-text',
+      'trusted-override-element-method',
+      'trusted-create-html',
+      'trusted-set-attr',
+      'trusted-set-session-storage-item',
+      'trusted-set-cookie-reload',
+      'json-edit',
+      'trusted-json-edit',
+      'json-edit-fetch-response',
+      'json-edit-fetch-request',
+      'json-edit-xhr-response',
+      'jsonl-edit-xhr-response',
+      'trusted-json-edit-fetch-response',
+      'trusted-json-edit-xhr-response',
+      'trusted-json-edit-xhr-request',
+      'trusted-edit-inbound-object',
+      'trusted-prevent-fetch',
+      'trusted-prevent-xhr',
+      'xml-prune',
+      'm3u-prune',
+      'prevent-innerHTML',
+      'prevent-refresh',
+      'prevent-canvas',
+      'prevent-clipboard-write',
+      'spoof-css',
+      'alert-buster',
+      'window-close-if',
+    ]) {
+      expect(resolveScriptlet(name)?.name).toBe(name);
+    }
+  });
+
+  it("accepts uBO's current argument counts", () => {
+    const count = (name: string): number => resolveScriptlet(name)?.args.length ?? 0;
+    // Each of these dropped filters from the uBO lists before the schemas were widened.
+    expect(count('replace-node-text')).toBeGreaterThanOrEqual(7);
+    expect(count('remove-node-text')).toBeGreaterThanOrEqual(4);
+    expect(count('remove-cookie')).toBeGreaterThanOrEqual(3);
+    expect(count('prevent-addEventListener')).toBeGreaterThanOrEqual(4);
+    expect(count('json-prune-fetch-response')).toBeGreaterThanOrEqual(4);
+    expect(count('json-prune-xhr-response')).toBeGreaterThanOrEqual(4);
+    expect(count('no-fetch-if')).toBeGreaterThanOrEqual(3);
+    expect(count('no-xhr-if')).toBeGreaterThanOrEqual(3);
+    expect(count('set-constant')).toBeGreaterThanOrEqual(5);
+    expect(count('set-cookie')).toBeGreaterThanOrEqual(5);
+    expect(count('trusted-set-cookie')).toBeGreaterThanOrEqual(6);
+    // `set-constant` and `abort-on-stack-trace` are callable with one argument now.
+    expect(resolveScriptlet('set-constant')?.args.filter((a) => a.optional !== true).length).toBe(1);
+    expect(resolveScriptlet('abort-on-stack-trace')?.args.filter((a) => a.optional !== true).length).toBe(1);
   });
 
   it('accepts an optional .js suffix', () => {
@@ -121,6 +188,32 @@ describe('registryJSON', () => {
     expect(redirectResources['google-analytics.com/analytics.js']).toBe(
       'resources/google-analytics_analytics.js',
     );
+  });
+
+  it('exposes the newly added redirect resources under every uBO spelling', () => {
+    const json = registryJSON();
+    const r = json.redirectResources;
+    expect(r['noopjson']).toBe('resources/noop.json');
+    expect(r['noop.json']).toBe('resources/noop.json');
+    expect(r['noopvmap-1.0']).toBe('resources/noop-vmap1.0.xml');
+    expect(r['noop-vmap1.0.xml']).toBe('resources/noop-vmap1.0.xml');
+    expect(r['noopvast-2.0']).toBe('resources/noop-vast2.xml');
+    expect(r['noopvast-3.0']).toBe('resources/noop-vast3.xml');
+    expect(r['noop-vast3.xml']).toBe('resources/noop-vast3.xml');
+    expect(r['google-ima.js']).toBe('resources/google-ima.js');
+    expect(r['google-ima3']).toBe('resources/google-ima.js');
+    expect(r['google-ima']).toBe('resources/google-ima.js');
+    expect(r['fingerprint2.js']).toBe('resources/fingerprint2.js');
+    expect(r['fingerprintjs2']).toBe('resources/fingerprint2.js');
+    expect(r['fingerprint3.js']).toBe('resources/fingerprint3.js');
+    expect(r['fingerprintjs3']).toBe('resources/fingerprint3.js');
+    expect(r['amazon_apstag.js']).toBe('resources/amazon_apstag.js');
+    expect(r['nobab2.js']).toBe('resources/nobab2.js');
+    expect(r['ati-smarttag.js']).toBe('resources/ati-smarttag.js');
+    expect(r['ati-smarttag']).toBe('resources/ati-smarttag.js');
+    // Hyphenated spellings used by some lists for the existing surrogates.
+    expect(r['googletagservices-gpt']).toBe('resources/googletagservices_gpt.js');
+    expect(r['googlesyndication-adsbygoogle']).toBe('resources/googlesyndication_adsbygoogle.js');
   });
 
   it('points every surrogate scriptlet at a resource file', () => {

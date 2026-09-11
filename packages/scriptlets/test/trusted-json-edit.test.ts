@@ -15,7 +15,10 @@ describe('trusted-json-edit', () => {
   it('writes through a filter', () => {
     const win = makeWindow();
     inject(win, def, '.features.*[?.slug=="adblock-detection"].enabled=false');
-    const out = parse(win, '{"features":[{"slug":"adblock-detection","enabled":true},{"slug":"x","enabled":true}]}');
+    const out = parse(
+      win,
+      '{"features":[{"slug":"adblock-detection","enabled":true},{"slug":"x","enabled":true}]}',
+    );
     expect(out.features[0].enabled).toBe(false);
     expect(out.features[1].enabled).toBe(true);
   });

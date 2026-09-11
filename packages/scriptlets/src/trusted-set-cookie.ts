@@ -13,13 +13,7 @@ export default defineScriptlet({
     { name: 'extra4', optional: true, doc: 'Value of `extra3`.' },
   ],
   trusted: true,
-  fn: function (
-    name: string,
-    value: string,
-    offsetExpiresSec?: string,
-    path?: string,
-    ...extra: string[]
-  ) {
+  fn: function (name: string, value: string, offsetExpiresSec?: string, path?: string, ...extra: string[]) {
     try {
       const doc: any = typeof document !== 'undefined' ? document : undefined;
       if (doc === undefined) return;

@@ -14,7 +14,11 @@ export default defineScriptlet({
       optional: true,
       doc: 'Legacy positional form; also settable as a trailing `excludes, <value>` pair.',
     },
-    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`excludes`, `condition`, `stay`).' },
+    {
+      name: 'extra1',
+      optional: true,
+      doc: 'Trailing `name, value` extra argument (`excludes`, `condition`, `stay`).',
+    },
     { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
     { name: 'extra3', optional: true, doc: 'Further extra argument name.' },
     { name: 'extra4', optional: true, doc: 'Value of `extra3`.' },

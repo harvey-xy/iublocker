@@ -14,7 +14,8 @@ describe('fingerprint2.js', () => {
   it('answers getPromise()', async () => {
     const win = makeWindow();
     inject(win, def);
-    await expect(win.eval('Fingerprint2.getPromise()')).resolves.toBeInstanceOf(Array);
+    const out = await win.eval('Fingerprint2.getPromise()');
+    expect(Array.isArray(out)).toBe(true);
   });
 
   it('answers getV18() with a fixed hash', () => {

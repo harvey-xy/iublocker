@@ -141,8 +141,7 @@ export default defineScriptlet({
           }
           return origOpen.call(this, method, url, ...rest);
         });
-        XHR.prototype.send = keep(origSend, function (this: any, ...args: any[]): any {
-          const xhr = this;
+        const handleSend = (xhr: any, args: any[]): any => {
           const ctx = xhr[ctxKey];
           if (ctx === undefined || xhr[bypass] === true) return origSend.apply(xhr, args);
           const url = String(ctx.url);
@@ -197,6 +196,9 @@ export default defineScriptlet({
             return origSend.apply(xhr, args);
           }
           return undefined;
+        };
+        XHR.prototype.send = keep(origSend, function (this: any, ...args: any[]): any {
+          return handleSend(this, args);
         });
       }
     } catch {

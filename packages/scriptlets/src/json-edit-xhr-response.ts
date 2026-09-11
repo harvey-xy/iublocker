@@ -3,8 +3,15 @@ import { defineScriptlet } from './_define';
 export default defineScriptlet({
   name: 'json-edit-xhr-response',
   args: [
-    { name: 'path', doc: 'uBO json-edit expression: a path, optionally followed by `=<json>` or `+=<json>`.' },
-    { name: 'extra1', optional: true, doc: 'Positional `propsToMatch`, or the first `name, value` extra argument.' },
+    {
+      name: 'path',
+      doc: 'uBO json-edit expression: a path, optionally followed by `=<json>` or `+=<json>`.',
+    },
+    {
+      name: 'extra1',
+      optional: true,
+      doc: 'Positional `propsToMatch`, or the first `name, value` extra argument.',
+    },
     { name: 'extra2', optional: true, doc: 'Value of `extra1` when it names an extra argument.' },
     { name: 'extra3', optional: true, doc: 'Second extra argument name.' },
     { name: 'extra4', optional: true, doc: 'Value of `extra3`.' },
@@ -424,8 +431,7 @@ export default defineScriptlet({
         }
         return origOpen.call(this, method, url, ...rest);
       });
-      XHR.prototype.send = keep(origSend, function (this: any, ...args: any[]): any {
-        const xhr = this;
+      const handleSend = (xhr: any, args: any[]): any => {
         const ctx = xhr[ctxKey];
         if (ctx === undefined || xhr[bypass] === true) return origSend.apply(xhr, args);
         if (matches(ctx) === false) return origSend.apply(xhr, args);
@@ -489,6 +495,9 @@ export default defineScriptlet({
           return origSend.apply(xhr, args);
         }
         return undefined;
+      };
+      XHR.prototype.send = keep(origSend, function (this: any, ...args: any[]): any {
+        return handleSend(this, args);
       });
     } catch {
       /* never throw into the page */

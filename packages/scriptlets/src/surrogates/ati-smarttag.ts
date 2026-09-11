@@ -12,8 +12,8 @@ export default defineScriptlet({
       const noop = function (): void {
         /* the tracker call is inert */
       };
-      const makeTag = function (this: any): void {
-        const self: any = this;
+      const makeTag = function (): any {
+        const self: any = {};
         const section: any = {
           set: noop,
           send: noop,
@@ -71,6 +71,7 @@ export default defineScriptlet({
         self.dispatch = noop;
         self.setProps = noop;
         self.types = {};
+        return self;
       };
       const ATInternet: any = {
         Tracker: { Tag: makeTag, addPlugin: noop, Plugins: {} },

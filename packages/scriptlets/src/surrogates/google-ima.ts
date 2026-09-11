@@ -106,8 +106,8 @@ export default defineScriptlet({
         };
       };
 
-      const Ad = function (this: any): void {
-        const self = this;
+      const Ad = function (): any {
+        const self: any = {};
         self.pi = new (AdPodInfo as any)();
         self.getAdId = function (): string {
           return '';
@@ -205,6 +205,7 @@ export default defineScriptlet({
         self.isSkippable = function (): boolean {
           return true;
         };
+        return self;
       };
 
       const AdError = function (this: any, type: any, code: any, vast: any, message: any): void {
@@ -245,8 +246,8 @@ export default defineScriptlet({
       };
       (AdErrorEvent as any).Type = { AD_ERROR: 'adError' };
 
-      const AdsManager = function (this: any): void {
-        const self: any = makeEmitter(this);
+      const AdsManager = function (): any {
+        const self: any = makeEmitter({});
         let volume = 1;
         self.collapse = noop;
         self.configureAdsManager = noop;
@@ -305,6 +306,7 @@ export default defineScriptlet({
             }
           }
         };
+        return self;
       };
 
       const AdsManagerLoadedEvent = function (this: any, type: any, manager: any): void {
@@ -320,8 +322,8 @@ export default defineScriptlet({
         ADS_MANAGER_LOADED: 'adsManagerLoaded',
       };
 
-      const AdsLoader = function (this: any): void {
-        const self: any = makeEmitter(this);
+      const AdsLoader = function (): any {
+        const self: any = makeEmitter({});
         self.contentComplete = noop;
         self.destroy = noop;
         self.getSettings = function (): any {
@@ -344,6 +346,7 @@ export default defineScriptlet({
           else gt.setTimeout(fire, 0);
         };
         self.requestStream = noop;
+        return self;
       };
       (AdsLoader as any).prototype = {};
 
@@ -369,8 +372,8 @@ export default defineScriptlet({
         this.initialize = noop;
         this.destroy = noop;
       };
-      const ImaSdkSettings = function (this: any): void {
-        const self: any = this;
+      const ImaSdkSettings = function (): any {
+        const self: any = {};
         self.c = true;
         self.f = {};
         self.i = false;
@@ -436,6 +439,7 @@ export default defineScriptlet({
         self.setSessionId = noop;
         self.setVpaidAllowed = noop;
         self.setVpaidMode = noop;
+        return self;
       };
       (ImaSdkSettings as any).CompanionBackfillMode = { ALWAYS: 'always', ON_MASTER_AD: 'on_master_ad' };
       (ImaSdkSettings as any).VpaidMode = { DISABLED: 0, ENABLED: 1, INSECURE: 2 };
@@ -505,8 +509,8 @@ export default defineScriptlet({
       ima.dai = {
         AdBreakEvent: { Type: {} },
         StreamEvent: { Type: {} },
-        StreamManager: function (this: any): void {
-          const self: any = makeEmitter(this);
+        StreamManager: function (): any {
+          const self: any = makeEmitter({});
           self.contentTimeForStreamTime = noop;
           self.loadStreamMetadata = noop;
           self.onTimedMetadata = noop;
@@ -517,6 +521,7 @@ export default defineScriptlet({
           self.reset = noop;
           self.setClickElement = noop;
           self.streamTimeForContentTime = noop;
+          return self;
         },
         StreamRequest: function (this: any): void {
           this.adTagParameters = {};

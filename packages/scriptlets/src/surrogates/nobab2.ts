@@ -16,9 +16,9 @@ export default defineScriptlet({
         'blockadblock',
         'babasbm',
         'fuckadblock',
-        'getItem(',
-        'detectAdBlock',
-        'adsBlocked',
+        'detectadblock',
+        'adsblocked',
+        'adblockdetect',
       ];
       const nk = Symbol.for('iub.nativeMap');
       let nmap: WeakMap<any, any> = gt[nk];

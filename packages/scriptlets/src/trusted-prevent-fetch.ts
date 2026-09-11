@@ -14,9 +14,11 @@ export default defineScriptlet({
       optional: true,
       doc: 'JSON object of extra response properties, e.g. `{"type": "cors"}`.',
     },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`throttle`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
   ],
   trusted: true,
-  fn: function (propsToMatch?: string, responseBody?: string, responseProps?: string) {
+  fn: function (propsToMatch?: string, responseBody?: string, responseProps?: string, ..._extra: string[]) {
     try {
       const gt: any = globalThis;
       if (typeof gt.fetch !== 'function') return;

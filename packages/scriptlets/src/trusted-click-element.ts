@@ -100,9 +100,12 @@ export default defineScriptlet({
         if (index >= steps.length) return;
         const step = steps[index] ?? '';
         if (/^\d+$/.test(step)) {
-          gt.setTimeout(function () {
-            run(index + 1);
-          }, parseInt(step, 10));
+          gt.setTimeout(
+            function () {
+              run(index + 1);
+            },
+            parseInt(step, 10),
+          );
           return;
         }
         const deadline = Date.now() + 10000;

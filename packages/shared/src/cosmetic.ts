@@ -15,6 +15,9 @@ export type ProceduralTask =
   | ['others']
   | ['remove']
   | ['style', string]
+  /** Action operators: strip matching attributes / classes from the matched elements. */
+  | ['remove-attr', string]
+  | ['remove-class', string]
   | ['has', ProceduralFilter]
   | ['not', ProceduralFilter]
   /** A plain CSS selector step applied with querySelectorAll on the current set (or document at the start). */

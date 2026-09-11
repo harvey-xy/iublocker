@@ -125,6 +125,8 @@ export const PROCEDURAL_OPS: ReadonlySet<string> = new Set([
   'others',
   'remove',
   'style',
+  'remove-attr',
+  'remove-class',
 ]);
 
 /** Operators that are procedural only when their argument is procedural. */
@@ -269,6 +271,12 @@ function buildTask(op: string, p: PseudoRef): Result<ProceduralTask> {
     case 'remove':
       if (arg !== '') return { ok: false, reason: `":${op}()" takes no argument` };
       return { ok: true, value: op === 'others' ? ['others'] : ['remove'] };
+
+    case 'remove-attr':
+    case 'remove-class': {
+      if (arg === '') return { ok: false, reason: `":${op}()" requires an argument` };
+      return { ok: true, value: [op, arg] as ProceduralTask };
+    }
 
     case 'has-text':
     case 'matches-css':

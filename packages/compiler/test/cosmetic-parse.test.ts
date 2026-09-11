@@ -323,6 +323,36 @@ describe('parseCosmeticFilter — procedural operators', () => {
     ['##.a:remove()', [['css', '.a'], ['remove']]],
     ['##.a:has-text(x):remove()', [['css', '.a'], ['has-text', 'x'], ['remove']]],
     [
+      '##.a:remove-attr(onclick)',
+      [
+        ['css', '.a'],
+        ['remove-attr', 'onclick'],
+      ],
+    ],
+    [
+      '##.a:remove-class(ad)',
+      [
+        ['css', '.a'],
+        ['remove-class', 'ad'],
+      ],
+    ],
+    [
+      '##a[href]:has-text(Ad):remove-attr(/^data-/)',
+      [
+        ['css', 'a[href]'],
+        ['has-text', 'Ad'],
+        ['remove-attr', '/^data-/'],
+      ],
+    ],
+    [
+      '##.a:remove-attr(x):remove-class(y)',
+      [
+        ['css', '.a'],
+        ['remove-attr', 'x'],
+        ['remove-class', 'y'],
+      ],
+    ],
+    [
       '##.a:has(.b:has-text(x))',
       [
         ['css', '.a'],

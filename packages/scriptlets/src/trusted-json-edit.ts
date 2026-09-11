@@ -3,7 +3,10 @@ import { defineScriptlet } from './_define';
 export default defineScriptlet({
   name: 'trusted-json-edit',
   args: [
-    { name: 'path', doc: 'uBO json-edit expression: a path, optionally followed by `=<json>` or `+=<json>`.' },
+    {
+      name: 'path',
+      doc: 'uBO json-edit expression: a path, optionally followed by `=<json>` or `+=<json>`.',
+    },
   ],
   trusted: true,
   fn: function (path: string) {

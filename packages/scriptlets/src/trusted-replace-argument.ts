@@ -132,10 +132,11 @@ export default defineScriptlet({
         Function.prototype.toString = pts;
       }
 
+      const NO_OVERRIDE = Symbol('keep-this');
       const patched = function (this: any, ...args: any[]): any {
-        let self0: any = this;
+        let override: any = NO_OVERRIDE;
         try {
-          const subject = targetThis ? self0 : args[index];
+          const subject = targetThis ? this : args[index];
           let matches = true;
           if (condition !== null) {
             let text = '';
@@ -160,13 +161,13 @@ export default defineScriptlet({
             } else {
               next = replacement;
             }
-            if (targetThis) self0 = next;
+            if (targetThis) override = next;
             else args[index] = next;
           }
         } catch {
           /* leave the call untouched */
         }
-        return orig.apply(self0, args);
+        return orig.apply(override === NO_OVERRIDE ? this : override, args);
       };
       nmap.set(patched, orig);
       try {

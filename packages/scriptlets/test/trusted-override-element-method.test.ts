@@ -20,7 +20,9 @@ describe('trusted-override-element-method', () => {
 
   it('neutralises everything when no selector is given', () => {
     const win = makeWindow(html);
-    win.eval('window.clicks = 0; document.getElementById("ok").addEventListener("click", () => window.clicks++);');
+    win.eval(
+      'window.clicks = 0; document.getElementById("ok").addEventListener("click", () => window.clicks++);',
+    );
     inject(win, def, 'HTMLAnchorElement.prototype.click');
     win.eval('document.getElementById("ok").click();');
     expect(win.clicks).toBe(0);

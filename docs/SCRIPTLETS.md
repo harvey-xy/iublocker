@@ -70,6 +70,44 @@ Rules for `fn`:
 | `trusted-*` (`trusted-set-cookie`, `trusted-replace-fetch-response`, `trusted-set-constant`…) |                                      | only from lists flagged `trusted: true` in `filterlists.json` or user filters        |
 | `googletagservices_gpt.js`, `google-analytics_ga.js`, …                                       |                                      | **surrogates**: implemented as redirect resources (§5), also invocable as scriptlets |
 
+### 1.2 Second set (added to close uBO-list coverage gaps)
+
+Measured against `uBlock filters` + `uBlock annoyances`, most frequent first.
+
+| Name                                                                                                                                                                      | Aliases           | Purpose                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------- |
+| `trusted-replace-argument`                                                                                                                                                |                   | swap one argument of a wrapped function (`json:`, `repl:/a/b/`, `condition`) |
+| `href-sanitizer`                                                                                                                                                          |                   | rewrite tracking links to the URL they wrap (`?param`, `[attr]`, `-base64`)  |
+| `nowebrtc`                                                                                                                                                                |                   | replace `RTCPeerConnection` with an inert stub                               |
+| `trusted-prevent-dom-bypass`                                                                                                                                              |                   | seed a freshly inserted frame with this window's patched natives             |
+| `trusted-click-element`                                                                                                                                                   |                   | click a sequence of selectors (numeric entries are pauses)                   |
+| `trusted-replace-node-text`                                                                                                                                               | `trusted-rpnt`    | `replace-node-text` with an arbitrary replacement                            |
+| `trusted-create-html`                                                                                                                                                     |                   | insert an HTML fragment into a matched parent                                |
+| `trusted-suppress-native-method`                                                                                                                                          |                   | `prevent`/`abort` a native call whose arguments match a signature            |
+| `json-edit`, `trusted-json-edit`                                                                                                                                          |                   | uBO json-edit path expressions over `JSON.parse` / `Response.json`           |
+| `json-edit-fetch-response`, `json-edit-xhr-response`, `jsonl-edit-xhr-response`, `json-edit-fetch-request`, `trusted-json-edit-{fetch-response,xhr-response,xhr-request}` |                   | the same path language over network payloads                                 |
+| `xml-prune`                                                                                                                                                               |                   | drop nodes/attributes from XML (DASH/VAST) responses, CSS or `xpath(…)`      |
+| `prevent-refresh`                                                                                                                                                         | `refresh-defuser` | defuse `<meta http-equiv="refresh">`                                         |
+| `trusted-replace-outbound-text`                                                                                                                                           |                   | rewrite the string a wrapped function returns                                |
+| `trusted-prevent-xhr`, `trusted-prevent-fetch`                                                                                                                            |                   | trusted `no-xhr-if` / `no-fetch-if` (arbitrary bodies, response props)       |
+| `trusted-set-attr`, `trusted-set-session-storage-item`, `trusted-set-cookie-reload`                                                                                       |                   | trusted variants of the corresponding setters                                |
+| `m3u-prune`                                                                                                                                                               |                   | drop ad segments from HLS playlists                                          |
+| `prevent-innerHTML`                                                                                                                                                       |                   | refuse `innerHTML` assignments matching a pattern                            |
+| `trusted-override-element-method`                                                                                                                                         |                   | neutralise a prototype method for elements matching a selector               |
+| `trusted-edit-inbound-object`                                                                                                                                             |                   | apply a json-edit path to an argument before the call                        |
+| `spoof-css`                                                                                                                                                               |                   | make `getComputedStyle()` report chosen values                               |
+| `prevent-canvas`                                                                                                                                                          |                   | refuse `canvas.getContext()` for a context type                              |
+| `prevent-clipboard-write`                                                                                                                                                 |                   | refuse clipboard writes matching a pattern ("ClickFix" payloads)             |
+| `alert-buster`, `window-close-if`                                                                                                                                         |                   | silence `alert()`; close the frame when the URL matches                      |
+| `trusted-set-constant`                                                                                                                                                    | `trusted-set`     | (existing) now also accepts `json:…` and `{"value": …}`                      |
+
+**Argument counts.** uBO scriptlets have grown trailing `name, value` _extra arguments_
+(`condition`, `sedCount`, `stay`, `log`, `elements`, `when`, `runAt`, `domain`, `reload`,
+`propsToMatch`, …). The schemas here declare those trailing slots as optional arguments and
+the implementations parse them as name/value pairs, falling back to the legacy positional
+reading when the first extra is not a known key. Extra arguments we do not implement are
+accepted and ignored rather than dropping the filter.
+
 All parameters follow uBO argument semantics (e.g. `/regex/` arguments, `!` negation
 for `no-setTimeout-if`). Reference behaviour: uBO's `assets/resources/scriptlets.js`;
 reimplemented in TypeScript, not copied.
@@ -253,6 +291,16 @@ doubleclick_instream_ad_status.js, amazon_ads.js, outbrain-widget.js,
 scorecardresearch_beacon.js, chartbeat.js, hd-main.js, fuckadblock.js-3.2.0,
 prebid-ads.js, nobab.js, nofab.js, popads.js, popads-dummy.js, addthis_widget.js,
 ampproject_v0.js, monkeybroker.js, ligatus_angular-tag.js, click2load.html (with query param passthrough)
+noop.json / noopjson       → noop.json        ({})
+noop-vast2.xml / noopvast-2.0, noop-vast3.xml / noopvast-3.0, noop-vast4.xml / noopvast-4.0
+noop-vmap1.0.xml / noopvmap-1.0                (empty VMAP document)
+google-ima.js / google-ima3 → functional IMA3 SDK stub (google.ima: AdDisplayContainer,
+                              AdsLoader → AdsManagerLoadedEvent → stub AdsManager that
+                              fires CONTENT_RESUME_REQUESTED + ALL_ADS_COMPLETED)
+fingerprint2.js / fingerprintjs2, fingerprint3.js / fingerprintjs3  (fixed fingerprint)
+amazon_apstag.js            (Amazon Publisher Services: no bids)
+ati-smarttag.js             (AT Internet SmartTag)
+nobab2.js                   (second-generation BlockAdBlock)
 ```
 
 The compiler maps `$redirect=<name>` to `extensionPath: "/resources/<file>"` and

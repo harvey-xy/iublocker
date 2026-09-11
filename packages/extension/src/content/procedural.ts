@@ -2,9 +2,10 @@
  * Procedural filter executor (docs/COSMETIC-FILTERING.md §3).
  *
  * A `ProceduralFilter` is a chain of `ProceduralTask`s; each task maps a set of
- * elements to a new set. The last task may instead be an *action* (`remove`, `style`);
- * when there is none the matched elements are hidden with an important inline
- * `display:none`, and un-hidden when a later pass no longer matches them.
+ * elements to a new set. The last task may instead be an *action* (`remove`, `style`,
+ * `remove-attr`, `remove-class`); when there is none the matched elements are hidden with
+ * an important inline `display:none`, and un-hidden when a later pass no longer matches
+ * them.
  *
  * Pure DOM code: it takes its environment as a parameter so it is unit-testable in jsdom.
  */
@@ -40,7 +41,7 @@ export function envFromWindow(win: Window): ProceduralEnv {
   };
 }
 
-type ActionKind = 'hide' | 'remove' | 'style';
+type ActionKind = 'hide' | 'remove' | 'style' | 'strip';
 
 interface FilterState {
   filter: ProceduralFilter;
@@ -48,6 +49,10 @@ interface FilterState {
   tasks: ProceduralTask[];
   action: ActionKind;
   styleText: string;
+  /** `:remove-attr()` arguments: attribute-name matchers. */
+  stripAttrs: Matcher[];
+  /** `:remove-class()` arguments: class-name matchers. */
+  stripClasses: Matcher[];
   watchAttrs: string[];
   watchAll: boolean;
   hidden: Set<Element>;
@@ -60,18 +65,24 @@ export interface ProceduralPassStats {
   unhidden: number;
   removed: number;
   styled: number;
+  /** Attributes and classes dropped by `:remove-attr()` / `:remove-class()`. */
+  stripped: number;
 }
 
-type ActionTask = ['remove'] | ['style', string];
+type ActionTask = ['remove'] | ['style', string] | ['remove-attr', string] | ['remove-class', string];
 
 function isActionTask(task: ProceduralTask): task is ActionTask {
-  return task[0] === 'remove' || task[0] === 'style';
+  return (
+    task[0] === 'remove' || task[0] === 'style' || task[0] === 'remove-attr' || task[0] === 'remove-class'
+  );
 }
 
 function compile(filter: ProceduralFilter): FilterState {
   const tasks: ProceduralTask[] = [];
   let action: ActionKind = 'hide';
   let styleText = '';
+  const stripAttrs: Matcher[] = [];
+  const stripClasses: Matcher[] = [];
   const watchAttrs: string[] = [];
   let watchAll = false;
   for (const task of filter.tasks) {
@@ -79,6 +90,12 @@ function compile(filter: ProceduralFilter): FilterState {
       if (task[0] === 'style') {
         action = 'style';
         styleText = task[1];
+      } else if (task[0] === 'remove-attr') {
+        action = 'strip';
+        stripAttrs.push(compileMatcher(task[1], 'exact'));
+      } else if (task[0] === 'remove-class') {
+        action = 'strip';
+        stripClasses.push(compileMatcher(task[1], 'exact'));
       } else {
         action = 'remove';
       }
@@ -99,6 +116,8 @@ function compile(filter: ProceduralFilter): FilterState {
     tasks,
     action,
     styleText,
+    stripAttrs,
+    stripClasses,
     watchAttrs,
     watchAll,
     hidden: new Set(),
@@ -145,7 +164,7 @@ export class ProceduralExecutor {
 
   /** One evaluation pass over every filter. */
   run(): ProceduralPassStats {
-    const stats: ProceduralPassStats = { hidden: 0, unhidden: 0, removed: 0, styled: 0 };
+    const stats: ProceduralPassStats = { hidden: 0, unhidden: 0, removed: 0, styled: 0, stripped: 0 };
     for (const state of this.states) {
       let matched: Element[];
       try {
@@ -163,6 +182,10 @@ export class ProceduralExecutor {
       }
       if (state.action === 'style') {
         stats.styled += this.applyStyle(state, matched);
+        continue;
+      }
+      if (state.action === 'strip') {
+        stats.stripped += this.strip(state, matched);
         continue;
       }
       stats.hidden += this.hide(state, matched);
@@ -388,6 +411,32 @@ export class ProceduralExecutor {
       state.hidden.delete(el);
       this.restore(state, el);
       count += 1;
+    }
+    return count;
+  }
+
+  /**
+   * `:remove-attr()` / `:remove-class()` — uBO action operators. Each argument is a
+   * literal name or a `/regex/`; the regex form drops every matching name.
+   */
+  private strip(state: FilterState, matched: Element[]): number {
+    let count = 0;
+    for (const el of matched) {
+      for (const match of state.stripAttrs) {
+        for (const attr of Array.from(el.attributes)) {
+          if (!match(attr.name)) continue;
+          el.removeAttribute(attr.name);
+          count += 1;
+        }
+      }
+      if (state.stripClasses.length > 0) {
+        for (const name of Array.from(el.classList)) {
+          if (!state.stripClasses.some((match) => match(name))) continue;
+          el.classList.remove(name);
+          count += 1;
+        }
+        if (el.classList.length === 0 && el.getAttribute('class') === '') el.removeAttribute('class');
+      }
     }
     return count;
   }

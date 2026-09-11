@@ -5,7 +5,10 @@ export default defineScriptlet({
   args: [
     { name: 'propChain', doc: 'Function whose argument is edited, e.g. `Object.keys`.' },
     { name: 'argpos', doc: 'Zero-based index of the argument to edit.' },
-    { name: 'path', doc: 'uBO json-edit expression: a path, optionally followed by `=<json>` or `+=<json>`.' },
+    {
+      name: 'path',
+      doc: 'uBO json-edit expression: a path, optionally followed by `=<json>` or `+=<json>`.',
+    },
   ],
   trusted: true,
   fn: function (propChain: string, argpos: string, path: string) {

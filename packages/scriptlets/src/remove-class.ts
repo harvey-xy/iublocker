@@ -7,7 +7,7 @@ export default defineScriptlet({
     { name: 'classes', doc: '`|`-separated class names.' },
     { name: 'selector', optional: true, doc: 'CSS selector; defaults to `.class` for each class.' },
     { name: 'behaviour', optional: true, doc: '`stay` keeps watching the DOM, `complete` waits for load.' },
-   {
+    {
       name: 'extra',
       optional: true,
       doc: 'Further behaviour token; accepted for uBO compatibility.',

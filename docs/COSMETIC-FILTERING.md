@@ -17,6 +17,8 @@ compiled database format, the runtime engine, and mode behaviour.
 | `example.com#?#.x:has-text(Sponsored)`          | procedural                         | content script, `complete` mode (or `optimal` when the list marks it `!#trusted`? — no: always `complete`) |
 | `example.com##.ad:style(opacity:0.1!important)` | style injection (uBO `:style`)     | worker `insertCSS`, `optimal`+                                                                             |
 | `example.com##.ad:remove()`                     | remove element                     | content script, `complete` (procedural path)                                                               |
+| `example.com##a:remove-attr(onclick)`           | strip attributes from the match    | content script, `complete` (procedural path)                                                               |
+| `example.com##div:remove-class(/^ad-/)`         | strip classes from the match       | content script, `complete` (procedural path)                                                               |
 | `@@                                             |                                    | example.com^$elemhide` / `$generichide`/`$specifichide`                                                    | disable all / generic / specific cosmetic on the site | recorded in DB `exceptions` |
 
 Selectors are validated with a permissive CSS selector parser at compile time. Native
@@ -26,9 +28,20 @@ pseudo‑classes force the content‑script path.
 Supported procedural operators (uBO names): `:has-text()`, `:matches-css()`,
 `:matches-css-before()`, `:matches-css-after()`, `:matches-attr()`, `:matches-path()`,
 `:min-text-length()`, `:upward()`, `:xpath()`, `:watch-attr()`, `:others()`, `:remove()`,
-`:style()`, `:matches-media()`, `:if()`/`:if-not()` (legacy → `:has`/`:not`),
+`:remove-attr()`, `:remove-class()`, `:style()`, `:matches-media()`,
+`:if()`/`:if-not()` (legacy → `:has`/`:not`),
 `:has()` and `:not()` with procedural arguments. Unknown operators drop the filter with a
 warning.
+
+**Action operators.** `:remove()`, `:style()`, `:remove-attr()` and `:remove-class()` are
+_actions_: they are terminal, consume the element set produced by the operators before
+them, and replace the default "hide with `display:none!important`" behaviour.
+`:remove-attr(name)` deletes matching attributes from every matched element and
+`:remove-class(name)` deletes matching classes; the argument is a literal name or a
+`/regex/`, and the regex form removes **every** name it matches (so
+`##div:remove-class(/^ad-/)` strips `ad-slot` and `ad-label` alike). Both are re-applied on
+every pass of the procedural engine, so a class the page re-adds is stripped again; unlike
+hiding, they are not reverted by `reset()` because the original value is not recorded.
 
 The compiler also accepts the AdGuard CSS‑injection separators `#$#`, `#@$#`, `#$?#` and
 `#@$?#`; a `#$#selector { declarations }` body compiles to the same `styles` entry as uBO's

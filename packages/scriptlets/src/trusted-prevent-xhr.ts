@@ -14,9 +14,11 @@ export default defineScriptlet({
       doc: 'Any literal body, or one of the uBO keywords (`emptyObj`, `emptyArr`, `emptyStr`, `throw`).',
     },
     { name: 'responseType', optional: true, doc: 'Accepted for uBO compatibility; ignored.' },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`throttle`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
   ],
   trusted: true,
-  fn: function (propsToMatch?: string, directive?: string, _responseType?: string) {
+  fn: function (propsToMatch?: string, directive?: string, _responseType?: string, ..._extra: string[]) {
     try {
       const gt: any = globalThis;
       const XHR: any = gt.XMLHttpRequest;

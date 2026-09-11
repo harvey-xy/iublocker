@@ -2,6 +2,8 @@ import { defineScriptlet } from '../_define';
 
 export default defineScriptlet({
   name: 'popads.js',
+  // uBO lists also invoke the surrogate by its long `$redirect` spelling.
+  aliases: ['popads.net.js'],
   args: [],
   redirectResource: 'popads.js',
   fn: function () {
