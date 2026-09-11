@@ -1,165 +1,443 @@
 {
-  "extName": { "message": "iuBlocker" },
-  "extDescription": { "message": "專為新版 Chrome 打造的開源內容封鎖器：廣告、追蹤器與煩人元素。" },
-
-  "common_loading": { "message": "載入中…" },
-  "common_error": { "message": "發生錯誤" },
-  "common_retry": { "message": "重試" },
-  "common_apply": { "message": "套用" },
-  "common_add": { "message": "新增" },
-  "common_remove": { "message": "移除" },
-  "common_never": { "message": "從未" },
-  "common_unknown": { "message": "未知" },
-  "common_enabled": { "message": "已啟用" },
-  "common_disabled": { "message": "已停用" },
-  "common_rules": { "message": "條規則" },
-
-  "mode_off": { "message": "關閉" },
-  "mode_basic": { "message": "基本" },
-  "mode_optimal": { "message": "最佳" },
-  "mode_complete": { "message": "完整" },
-  "mode_off_desc": { "message": "此網站不進行任何封鎖，全部放行。" },
-  "mode_basic_desc": { "message": "僅封鎖網路請求，不套用外觀過濾與腳本。" },
-  "mode_optimal_desc": { "message": "封鎖網路請求，並套用網站專屬外觀過濾與腳本。" },
-  "mode_complete_desc": { "message": "包含「最佳」的一切，再加上通用與程序式外觀過濾。" },
-  "mode_default_marker": { "message": "（預設）" },
-
-  "popup_title": { "message": "iuBlocker" },
-  "popup_internal_page": { "message": "瀏覽器內部頁面" },
-  "popup_internal_hint": { "message": "iuBlocker 無法在瀏覽器內部頁面上運作。" },
-  "popup_blocked_tab": { "message": "本頁已封鎖" },
-  "popup_blocked_total": { "message": "累計封鎖" },
-  "popup_mode_legend": { "message": "$1 的封鎖模式" },
-  "popup_mode_legend_generic": { "message": "封鎖模式" },
-  "popup_site_override": { "message": "此網站使用自訂模式。" },
-  "popup_reset_default": { "message": "還原為預設" },
-  "popup_pick_element": { "message": "挑選元素" },
-  "popup_open_dashboard": { "message": "開啟控制台" },
-  "popup_reload_to_apply": { "message": "重新載入以套用" },
-  "popup_reload_hint": { "message": "新模式會在頁面重新載入後生效。" },
-  "popup_update_lists": { "message": "更新清單" },
-  "popup_updating": { "message": "更新中…" },
-  "popup_update_done": { "message": "清單已更新" },
-  "popup_update_failed": { "message": "更新失敗" },
-  "popup_lists_enabled": { "message": "已啟用 $1 份清單" },
-  "popup_version": { "message": "v$1" },
-  "popup_lists_version": { "message": "清單 $1" },
-  "popup_delta_version": { "message": "差異更新 $1" },
-  "popup_delta_none": { "message": "無差異更新" },
-  "popup_open_logger": { "message": "開啟記錄器" },
-
-  "dash_title": { "message": "iuBlocker 控制台" },
-  "tab_lists": { "message": "過濾清單" },
-  "tab_filters": { "message": "我的過濾規則" },
-  "tab_sites": { "message": "網站" },
-  "tab_settings": { "message": "設定" },
-  "tab_about": { "message": "關於" },
-  "tab_logger": { "message": "記錄器" },
-
-  "group_ads": { "message": "廣告" },
-  "group_privacy": { "message": "隱私" },
-  "group_malware": { "message": "惡意軟體與詐騙" },
-  "group_annoyances": { "message": "煩人元素" },
-  "group_regional": { "message": "區域清單" },
-  "group_custom": { "message": "自訂" },
-  "group_test": { "message": "測試" },
-
-  "lists_title": { "message": "過濾清單" },
-  "lists_update_now": { "message": "立即更新" },
-  "lists_updating": { "message": "更新中…" },
-  "lists_last_check": { "message": "上次檢查：$1" },
-  "lists_last_success": { "message": "上次成功：$1" },
-  "lists_last_error": { "message": "上次錯誤：$1" },
-  "lists_budget_title": { "message": "靜態規則額度" },
-  "lists_budget_summary": { "message": "已使用 $1 / $2 條規則，尚餘 $3 條" },
-  "lists_budget_full": { "message": "靜態規則額度即將用盡。請先停用一份清單，再啟用其他清單。" },
-  "lists_counts": { "message": "$1 網路 · $2 外觀 · $3 腳本" },
-  "lists_homepage": { "message": "官方網頁" },
-  "lists_license": { "message": "授權：$1" },
-  "lists_empty": { "message": "此版本未內建任何過濾清單。" },
-  "lists_ruleset_version": { "message": "快照 $1" },
-  "lists_delta_version": { "message": "差異更新 $1" },
-
-  "filters_title": { "message": "我的過濾規則" },
-  "filters_desc": { "message": "每行一條規則，以 ! 開頭的行為註解。" },
-  "filters_apply": { "message": "套用" },
-  "filters_applied": { "message": "規則已套用。" },
-  "filters_lines": { "message": "$1 行" },
-  "filters_warnings": { "message": "警告" },
-  "filters_no_warnings": { "message": "沒有警告。" },
-  "filters_counts": { "message": "$1 條網路規則 · $2 外觀 · $3 腳本" },
-  "filters_syntax_help": { "message": "過濾語法說明" },
-  "filters_placeholder": { "message": "! 我的過濾規則\nexample.com##.ad-banner" },
-
-  "sites_title": { "message": "各網站模式" },
-  "sites_desc": { "message": "此處列出的網站會覆寫預設封鎖模式。" },
-  "sites_col_hostname": { "message": "網站" },
-  "sites_col_mode": { "message": "模式" },
-  "sites_col_actions": { "message": "操作" },
-  "sites_add_placeholder": { "message": "example.com" },
-  "sites_add": { "message": "新增網站" },
-  "sites_invalid_hostname": { "message": "請輸入有效的主機名稱，例如 example.com" },
-  "sites_duplicate": { "message": "該網站已有覆寫設定。" },
-  "sites_empty": { "message": "尚未設定任何網站覆寫。" },
-  "sites_remove": { "message": "移除 $1 的覆寫設定" },
-  "sites_unavailable": { "message": "無法從背景服務讀取各網站覆寫設定。" },
-
-  "settings_title": { "message": "設定" },
-  "settings_general": { "message": "一般" },
-  "settings_updates": { "message": "更新" },
-  "settings_appearance": { "message": "外觀" },
-  "settings_advanced": { "message": "進階" },
-  "settings_default_mode": { "message": "預設封鎖模式" },
-  "settings_default_mode_desc": { "message": "套用於所有未設定覆寫的網站。" },
-  "settings_show_badge": { "message": "在工具列圖示顯示封鎖數量" },
-  "settings_collapse": { "message": "收合被封鎖元素留下的空白" },
-  "settings_auto_update": { "message": "自動更新過濾清單" },
-  "settings_update_interval": { "message": "更新間隔（小時）" },
-  "settings_update_channel": { "message": "更新頻道" },
-  "settings_cloud_base_url": { "message": "更新伺服器網址" },
-  "settings_cloud_base_url_desc": { "message": "只有在自行架設清單更新服務時才需要變更。" },
-  "settings_theme": { "message": "主題" },
-  "settings_log_matched": { "message": "為記錄器記錄命中的規則" },
-  "settings_allow_trusted_scriptlets": { "message": "允許在我的規則中使用受信任腳本" },
+  "extName": {
+    "message": "iuBlocker"
+  },
+  "extDescription": {
+    "message": "專為新版 Chrome 打造的開源內容封鎖器：廣告、追蹤器與煩人元素。"
+  },
+  "common_loading": {
+    "message": "載入中…"
+  },
+  "common_error": {
+    "message": "發生錯誤"
+  },
+  "common_retry": {
+    "message": "重試"
+  },
+  "common_apply": {
+    "message": "套用"
+  },
+  "common_add": {
+    "message": "新增"
+  },
+  "common_remove": {
+    "message": "移除"
+  },
+  "common_never": {
+    "message": "從未"
+  },
+  "common_unknown": {
+    "message": "未知"
+  },
+  "common_enabled": {
+    "message": "已啟用"
+  },
+  "common_disabled": {
+    "message": "已停用"
+  },
+  "common_rules": {
+    "message": "條規則"
+  },
+  "mode_off": {
+    "message": "關閉"
+  },
+  "mode_basic": {
+    "message": "基本"
+  },
+  "mode_optimal": {
+    "message": "最佳"
+  },
+  "mode_complete": {
+    "message": "完整"
+  },
+  "mode_off_desc": {
+    "message": "此網站不進行任何封鎖，全部放行。"
+  },
+  "mode_basic_desc": {
+    "message": "僅封鎖網路請求，不套用外觀過濾與腳本。"
+  },
+  "mode_optimal_desc": {
+    "message": "封鎖網路請求，並套用網站專屬外觀過濾與腳本。"
+  },
+  "mode_complete_desc": {
+    "message": "包含「最佳」的一切，再加上通用與程序式外觀過濾。"
+  },
+  "mode_default_marker": {
+    "message": "（預設）"
+  },
+  "popup_title": {
+    "message": "iuBlocker"
+  },
+  "popup_internal_page": {
+    "message": "瀏覽器內部頁面"
+  },
+  "popup_internal_hint": {
+    "message": "iuBlocker 無法在瀏覽器內部頁面上運作。"
+  },
+  "popup_blocked_tab": {
+    "message": "本頁已封鎖"
+  },
+  "popup_blocked_total": {
+    "message": "累計封鎖"
+  },
+  "popup_mode_legend": {
+    "message": "$1 的封鎖模式"
+  },
+  "popup_mode_legend_generic": {
+    "message": "封鎖模式"
+  },
+  "popup_site_override": {
+    "message": "此網站使用自訂模式。"
+  },
+  "popup_reset_default": {
+    "message": "還原為預設"
+  },
+  "popup_pick_element": {
+    "message": "挑選元素"
+  },
+  "popup_open_dashboard": {
+    "message": "開啟控制台"
+  },
+  "popup_reload_to_apply": {
+    "message": "重新載入以套用"
+  },
+  "popup_reload_hint": {
+    "message": "新模式會在頁面重新載入後生效。"
+  },
+  "popup_update_lists": {
+    "message": "更新清單"
+  },
+  "popup_updating": {
+    "message": "更新中…"
+  },
+  "popup_update_done": {
+    "message": "清單已更新"
+  },
+  "popup_update_failed": {
+    "message": "更新失敗"
+  },
+  "popup_lists_enabled": {
+    "message": "已啟用 $1 份清單"
+  },
+  "popup_version": {
+    "message": "v$1"
+  },
+  "popup_lists_version": {
+    "message": "清單 $1"
+  },
+  "popup_delta_version": {
+    "message": "差異更新 $1"
+  },
+  "popup_delta_none": {
+    "message": "無差異更新"
+  },
+  "popup_open_logger": {
+    "message": "開啟記錄器"
+  },
+  "dash_title": {
+    "message": "iuBlocker 控制台"
+  },
+  "tab_lists": {
+    "message": "過濾清單"
+  },
+  "tab_filters": {
+    "message": "我的過濾規則"
+  },
+  "tab_sites": {
+    "message": "網站"
+  },
+  "tab_settings": {
+    "message": "設定"
+  },
+  "tab_about": {
+    "message": "關於"
+  },
+  "tab_logger": {
+    "message": "記錄器"
+  },
+  "group_ads": {
+    "message": "廣告"
+  },
+  "group_privacy": {
+    "message": "隱私"
+  },
+  "group_malware": {
+    "message": "惡意軟體與詐騙"
+  },
+  "group_annoyances": {
+    "message": "煩人元素"
+  },
+  "group_regional": {
+    "message": "區域清單"
+  },
+  "group_custom": {
+    "message": "自訂"
+  },
+  "group_test": {
+    "message": "測試"
+  },
+  "lists_title": {
+    "message": "過濾清單"
+  },
+  "lists_update_now": {
+    "message": "立即更新"
+  },
+  "lists_updating": {
+    "message": "更新中…"
+  },
+  "lists_last_check": {
+    "message": "上次檢查：$1"
+  },
+  "lists_last_success": {
+    "message": "上次成功：$1"
+  },
+  "lists_last_error": {
+    "message": "上次錯誤：$1"
+  },
+  "lists_budget_title": {
+    "message": "靜態規則額度"
+  },
+  "lists_budget_summary": {
+    "message": "已使用 $1 / $2 條規則，尚餘 $3 條"
+  },
+  "lists_budget_full": {
+    "message": "靜態規則額度即將用盡。請先停用一份清單，再啟用其他清單。"
+  },
+  "lists_counts": {
+    "message": "$1 網路 · $2 外觀 · $3 腳本"
+  },
+  "lists_homepage": {
+    "message": "官方網頁"
+  },
+  "lists_license": {
+    "message": "授權：$1"
+  },
+  "lists_empty": {
+    "message": "此版本未內建任何過濾清單。"
+  },
+  "lists_ruleset_version": {
+    "message": "清單快照"
+  },
+  "lists_delta_version": {
+    "message": "差異更新"
+  },
+  "filters_title": {
+    "message": "我的過濾規則"
+  },
+  "filters_desc": {
+    "message": "每行一條規則，以 ! 開頭的行為註解。"
+  },
+  "filters_apply": {
+    "message": "套用"
+  },
+  "filters_applied": {
+    "message": "規則已套用。"
+  },
+  "filters_lines": {
+    "message": "$1 行"
+  },
+  "filters_warnings": {
+    "message": "警告"
+  },
+  "filters_no_warnings": {
+    "message": "沒有警告。"
+  },
+  "filters_counts": {
+    "message": "$1 條網路規則 · $2 外觀 · $3 腳本"
+  },
+  "filters_syntax_help": {
+    "message": "過濾語法說明"
+  },
+  "filters_placeholder": {
+    "message": "! 我的過濾規則\nexample.com##.ad-banner"
+  },
+  "sites_title": {
+    "message": "各網站模式"
+  },
+  "sites_desc": {
+    "message": "此處列出的網站會覆寫預設封鎖模式。"
+  },
+  "sites_col_hostname": {
+    "message": "網站"
+  },
+  "sites_col_mode": {
+    "message": "模式"
+  },
+  "sites_col_actions": {
+    "message": "操作"
+  },
+  "sites_add_placeholder": {
+    "message": "example.com"
+  },
+  "sites_add": {
+    "message": "新增網站"
+  },
+  "sites_invalid_hostname": {
+    "message": "請輸入有效的主機名稱，例如 example.com"
+  },
+  "sites_duplicate": {
+    "message": "該網站已有覆寫設定。"
+  },
+  "sites_empty": {
+    "message": "尚未設定任何網站覆寫。"
+  },
+  "sites_remove": {
+    "message": "移除 $1 的覆寫設定"
+  },
+  "sites_unavailable": {
+    "message": "無法從背景服務讀取各網站覆寫設定。"
+  },
+  "settings_title": {
+    "message": "設定"
+  },
+  "settings_general": {
+    "message": "一般"
+  },
+  "settings_updates": {
+    "message": "更新"
+  },
+  "settings_appearance": {
+    "message": "外觀"
+  },
+  "settings_advanced": {
+    "message": "進階"
+  },
+  "settings_default_mode": {
+    "message": "預設封鎖模式"
+  },
+  "settings_default_mode_desc": {
+    "message": "套用於所有未設定覆寫的網站。"
+  },
+  "settings_show_badge": {
+    "message": "在工具列圖示顯示封鎖數量"
+  },
+  "settings_collapse": {
+    "message": "收合被封鎖元素留下的空白"
+  },
+  "settings_auto_update": {
+    "message": "自動更新過濾清單"
+  },
+  "settings_update_interval": {
+    "message": "更新間隔（小時）"
+  },
+  "settings_update_channel": {
+    "message": "更新頻道"
+  },
+  "settings_cloud_base_url": {
+    "message": "更新伺服器網址"
+  },
+  "settings_cloud_base_url_desc": {
+    "message": "只有在自行架設清單更新服務時才需要變更。"
+  },
+  "settings_theme": {
+    "message": "主題"
+  },
+  "settings_log_matched": {
+    "message": "為記錄器記錄命中的規則"
+  },
+  "settings_allow_trusted_scriptlets": {
+    "message": "允許在我的規則中使用受信任腳本"
+  },
   "settings_allow_trusted_scriptlets_desc": {
     "message": "受信任腳本能深入改變頁面行為，請確認您了解其風險後再啟用。"
   },
-  "settings_saved": { "message": "已儲存" },
-  "settings_save_failed": { "message": "無法儲存：$1" },
-
-  "channel_stable": { "message": "穩定版" },
-  "channel_nightly": { "message": "每夜建置" },
-  "theme_auto": { "message": "跟隨系統" },
-  "theme_light": { "message": "淺色" },
-  "theme_dark": { "message": "深色" },
-
-  "about_title": { "message": "關於 iuBlocker" },
-  "about_version": { "message": "擴充功能版本" },
-  "about_ruleset_version": { "message": "清單快照" },
-  "about_delta_version": { "message": "差異更新" },
-  "about_license": { "message": "授權" },
+  "settings_saved": {
+    "message": "已儲存"
+  },
+  "settings_save_failed": {
+    "message": "無法儲存：$1"
+  },
+  "channel_stable": {
+    "message": "穩定版"
+  },
+  "channel_nightly": {
+    "message": "每夜建置"
+  },
+  "theme_auto": {
+    "message": "跟隨系統"
+  },
+  "theme_light": {
+    "message": "淺色"
+  },
+  "theme_dark": {
+    "message": "深色"
+  },
+  "about_title": {
+    "message": "關於 iuBlocker"
+  },
+  "about_version": {
+    "message": "擴充功能版本"
+  },
+  "about_ruleset_version": {
+    "message": "清單快照"
+  },
+  "about_delta_version": {
+    "message": "差異更新"
+  },
+  "about_license": {
+    "message": "授權"
+  },
   "about_license_notice": {
     "message": "iuBlocker 是依 GNU 通用公共授權條款第 3 版（或後續版本）發布的自由軟體，不提供任何擔保。"
   },
-  "about_list_licenses": { "message": "過濾清單授權" },
-  "about_copy_diagnostics": { "message": "複製診斷資訊" },
-  "about_copied": { "message": "診斷資訊已複製到剪貼簿。" },
-  "about_copy_failed": { "message": "無法複製診斷資訊：$1" },
-  "about_source": { "message": "原始碼" },
-
-  "logger_title": { "message": "請求記錄器" },
-  "logger_tab": { "message": "分頁 $1" },
-  "logger_no_tab": { "message": "請從控制台或彈出視窗開啟記錄器，這樣才知道要監看哪個分頁。" },
-  "logger_col_time": { "message": "時間" },
-  "logger_col_type": { "message": "類型" },
-  "logger_col_url": { "message": "網址" },
-  "logger_col_ruleset": { "message": "清單" },
-  "logger_col_rule": { "message": "規則" },
-  "logger_filter_placeholder": { "message": "篩選項目…" },
-  "logger_pause": { "message": "暫停" },
-  "logger_resume": { "message": "繼續" },
-  "logger_paused": { "message": "已暫停自動重新整理。" },
-  "logger_empty": { "message": "此分頁尚未記錄到任何命中的規則。" },
-  "logger_hint": { "message": "只有在設定中啟用「為記錄器記錄命中的規則」時才會記錄。" },
-  "logger_rows": { "message": "$1 / $2 列" }
+  "about_list_licenses": {
+    "message": "過濾清單授權"
+  },
+  "about_copy_diagnostics": {
+    "message": "複製診斷資訊"
+  },
+  "about_copied": {
+    "message": "診斷資訊已複製到剪貼簿。"
+  },
+  "about_copy_failed": {
+    "message": "無法複製診斷資訊：$1"
+  },
+  "about_source": {
+    "message": "原始碼"
+  },
+  "logger_title": {
+    "message": "請求記錄器"
+  },
+  "logger_tab": {
+    "message": "分頁 $1"
+  },
+  "logger_no_tab": {
+    "message": "請從控制台或彈出視窗開啟記錄器，這樣才知道要監看哪個分頁。"
+  },
+  "logger_col_time": {
+    "message": "時間"
+  },
+  "logger_col_type": {
+    "message": "類型"
+  },
+  "logger_col_url": {
+    "message": "網址"
+  },
+  "logger_col_ruleset": {
+    "message": "清單"
+  },
+  "logger_col_rule": {
+    "message": "規則"
+  },
+  "logger_filter_placeholder": {
+    "message": "篩選項目…"
+  },
+  "logger_pause": {
+    "message": "暫停"
+  },
+  "logger_resume": {
+    "message": "繼續"
+  },
+  "logger_paused": {
+    "message": "已暫停自動重新整理。"
+  },
+  "logger_empty": {
+    "message": "此分頁尚未記錄到任何命中的規則。"
+  },
+  "logger_hint": {
+    "message": "只有在設定中啟用「為記錄器記錄命中的規則」時才會記錄。"
+  },
+  "logger_rows": {
+    "message": "$1 / $2 列"
+  }
 }

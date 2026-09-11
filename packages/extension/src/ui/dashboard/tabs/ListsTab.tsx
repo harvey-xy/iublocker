@@ -40,7 +40,9 @@ export function ListsTab() {
       (event) => {
         if (event.type !== 'event:listsUpdated') return;
         setUpdating(false);
-        setNote(event.ok ? t('lists_delta_version', [event.version]) : (event.error ?? t('common_error')));
+        setNote(
+          event.ok ? `${t('popup_update_done')} · ${event.version}` : (event.error ?? t('common_error')),
+        );
         lists.reload();
       },
       [lists.reload],

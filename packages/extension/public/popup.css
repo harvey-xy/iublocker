@@ -293,7 +293,7 @@ a:hover {
 .segmented {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 1fr;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 2px;
   padding: 2px;
   background: var(--surface-2);
@@ -302,6 +302,8 @@ a:hover {
 }
 .segment {
   font: inherit;
+  font-weight: 600;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -320,7 +322,6 @@ a:hover {
 .segment[aria-checked='true'] {
   background: var(--accent);
   color: var(--accent-fg);
-  font-weight: 650;
 }
 .segment:disabled {
   opacity: 0.6;
@@ -328,6 +329,10 @@ a:hover {
 }
 .segment-label {
   font-size: 12px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .segment-marker {
   font-size: 10px;
@@ -521,6 +526,9 @@ body.popup-body {
   gap: 8px;
   color: var(--fg-muted);
 }
+.pop-override .btn {
+  white-space: nowrap;
+}
 
 .pop-notice {
   display: flex;
@@ -556,7 +564,21 @@ body.popup-body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.pop-foot .btn {
+  white-space: nowrap;
+}
 .pop-updatenote {
   color: var(--fg-muted);
   font-size: 11px;
+}
+
+/* The popup is only 320 px wide: the four mode labels must fit without truncation. */
+.popup .segment {
+  padding: 6px 2px;
+}
+.popup .segment-label {
+  font-size: 11.5px;
+}
+.popup .segment-marker {
+  font-size: 9.5px;
 }
