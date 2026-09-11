@@ -7,6 +7,7 @@ export default defineConfig({
       'packages/compiler',
       'packages/scriptlets',
       'packages/extension',
+      'tools',
     ],
     coverage: { provider: 'v8', reporter: ['text', 'lcov'] },
   },

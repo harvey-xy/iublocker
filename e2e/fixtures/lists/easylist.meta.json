@@ -1,0 +1,12 @@
+{
+  "id": "easylist",
+  "sources": [
+    {
+      "url": "snapshot:e2e/fixtures/lists/easylist.txt",
+      "sha256": "a811c4d7f3ce2575c4717022b7bd7f6d3c4457a66380f8c57fdc231f830a7c9c",
+      "fetchedAt": "2026-01-01T00:00:00.000Z",
+      "bytes": 11097
+    }
+  ],
+  "fetchedAt": "2026-01-01T00:00:00.000Z"
+}

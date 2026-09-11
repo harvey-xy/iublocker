@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>iuBlocker e2e — modes</title>
+  </head>
+  <body>
+    <h1>modes</h1>
+    <!-- Network: blocked in every mode except `off`. -->
+    <script src="/ads/banner.js"></script>
+    <!-- Cosmetic: hidden from `optimal` up, visible in `basic` and `off`. -->
+    <div class="ad-banner" id="ad-banner-1">ad banner</div>
+    <div id="sponsored">sponsored block</div>
+    <!-- Procedural: `complete` mode only. -->
+    <div class="card" id="card-sponsored"><span>Sponsored</span> — promoted</div>
+    <div class="card" id="card-regular">ordinary</div>
+    <div class="content" id="content">real content</div>
+    <p id="ad-flag">pending</p>
+    <script>
+      document.getElementById('ad-flag').textContent = String(window.__ad === true);
+      window.__adLoaded = window.__ad === true;
+    </script>
+  </body>
+</html>

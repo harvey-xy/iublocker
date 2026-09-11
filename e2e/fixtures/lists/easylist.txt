@@ -1,0 +1,309 @@
+[Adblock Plus 2.0]
+! Title: EasyList (iuBlocker CI snapshot)
+! Version: 202601010001
+! Expires: 4 days
+! Homepage: https://easylist.to/
+! Licence: https://easylist.to/pages/licence.html
+! Last modified: 01 Jan 2026 00:00 UTC
+! SYNTHETIC SNAPSHOT — see README.md in this directory. Not the real EasyList.
+!
+! ------------------------------------------------------------------- third-party ad servers
+||ads-example.com^$third-party
+||adserver-example.com^$third-party
+||adservice-example.com^$third-party
+||adtech-example.com^$third-party
+||banners-example.com^$third-party
+||bidder-example.com^$third-party
+||doubleclick-example.net^$third-party
+||exchange-example.com^$third-party
+||googleads-example.com^$third-party
+||adnxs-example.com^$third-party
+||openx-example.com^$third-party
+||pubmatic-example.com^$third-party
+||rubicon-example.com^$third-party
+||taboola-example.com^$third-party
+||outbrain-example.com^$third-party
+||criteo-example.com^$third-party
+||media-net-example.com^$third-party
+||smartadserver-example.com^$third-party
+||teads-example.com^$third-party
+||sharethrough-example.com^$third-party
+||adform-example.net^$third-party
+||yieldmo-example.com^$third-party
+||indexexchange-example.com^$third-party
+||sovrn-example.com^$third-party
+||triplelift-example.com^$third-party
+||gumgum-example.com^$third-party
+||adroll-example.com^$third-party
+||zemanta-example.com^$third-party
+||revcontent-example.com^$third-party
+||mgid-example.com^$third-party
+||propellerads-example.com^$third-party
+||popads-example.net^$third-party
+||adcash-example.com^$third-party
+||exoclick-example.com^$third-party
+||juicyads-example.com^$third-party
+||trafficjunky-example.com^$third-party
+||adsterra-example.com^$third-party
+||hilltopads-example.com^$third-party
+||clickadu-example.com^$third-party
+||admaven-example.com^$third-party
+!
+! ------------------------------------------------------------------- path patterns
+/ads/banner*.gif
+/ads/leaderboard.
+/adserve/
+/adframe.
+/adimages/
+/adpartner.
+/adservice/
+/adsystem/
+/advert/*
+/advertisement-
+/advertising/*
+/banner_ad.
+/banners/ad_
+/bannerad.
+/click.php?*&adid=
+/deliver.php?*zoneid=
+/getad.php?
+/imp?adunit=
+/openx/www/delivery/
+/pagead/js/
+/pagead2.
+/popunder.
+/promoted_content/
+/pubads_
+/showad.
+/sponsored-post/
+/textad.
+/vast.xml?*&ad=
+/videoads/
+/zone/*/ad.
+!
+! ------------------------------------------------------------------- resource types
+||cdn-example.com/ad.js$script
+||cdn-example.com/pixel.png$image
+||cdn-example.com/ads.css$stylesheet
+||cdn-example.com/adframe.html$subdocument
+||cdn-example.com/adapi$xmlhttprequest
+||cdn-example.com/preroll.mp4$media
+||cdn-example.com/adfont.woff2$font
+||cdn-example.com/beacon$ping
+||cdn-example.com/socket$websocket
+||cdn-example.com/flash.swf$object
+||cdn-example.com/misc$other
+||interstitial-example.com^$document
+||widgets-example.com/embed$subdocument,third-party
+||metrics-example.com/collect$xmlhttprequest,ping
+||player-example.com/ads/*$media,script
+||fonts-example.com/adfonts/*$font,third-party
+||assets-example.com/promo/*$image,stylesheet
+||cdn-example.com/tag.js$script,third-party
+||cdn-example.com/sync$image,xmlhttprequest,third-party
+||cdn-example.com/vast$xmlhttprequest,media
+||ads-example.org^$all
+||stream-example.com/ads.m3u8$media,~first-party
+||api-example.com/ads$xmlhttprequest,~third-party
+||static-example.com/ad-*.js$script,match-case
+||upload-example.com/ad$other,websocket
+||wb-example.com/bundle$webbundle
+||wt-example.com/session$webtransport
+||csp-example.com/report$csp_report
+!
+! ------------------------------------------------------------------- option combinations
+||partner-example.com^$third-party,domain=news-example.com|blog-example.com
+||partner-example.com^$third-party,domain=~intranet-example.com
+||tracker-example.com^$from=shop-example.com
+||cdn-example.com/promo^$to=static-example.com
+||host-example.com^$denyallow=cdn-example.com|img-example.com,domain=site-example.com
+||api-example.com/track$method=post
+||api-example.com/log$method=~get
+||analytics-example.com^$important,third-party
+||malvertising-example.com^$important
+||tag-example.com^$script,third-party,domain=publisher-example.com
+||sync-example.com^$image,third-party,domain=publisher-example.com|~sub.publisher-example.com
+||adserver-example.com/vast^$media,domain=video-example.com
+||count-example.com^$ping,first-party
+||count-example.com^$image,third-party
+||cdn-example.com/AdBanner.js$script,match-case
+||news-example.com/sponsored/*$subdocument,first-party
+||promo-example.com^$third-party,domain=news-example.com|sports-example.com|weather-example.com
+||ads-example.com/native$xmlhttprequest,domain=app-example.com
+||beacon-example.com^$ping,third-party,domain=~internal-example.com
+!
+! ------------------------------------------------------------------- exceptions
+@@||cdn-example.com/ads/player.js$script,domain=video-example.com
+@@||assets-example.com/ad-styles.css$stylesheet
+@@||shop-example.com^$document
+@@||bank-example.com^$document
+@@||login-example.com^$elemhide
+@@||dashboard-example.com^$generichide
+@@||editor-example.com^$specifichide
+@@||search-example.com/ads?*$xmlhttprequest,domain=search-example.com
+@@||partner-example.com^$script,domain=whitelisted-example.com
+@@/ads/allowed.js$script,domain=allow-example.com
+@@||cdn-example.com/adblock-detect.js$script,important
+@@||media-example.com/preroll.mp4$media,domain=media-example.com
+@@||csp-example.com^$csp
+@@||news-example.com^$ghide
+!
+! ------------------------------------------------------------------- badfilter
+||banners-example.com^$third-party,badfilter
+/textad.$badfilter
+||criteo-example.com^$third-party,badfilter
+!
+! ------------------------------------------------------------------- regex
+/^https?:\/\/[a-z]{6,10}\.ads-example\.com\//$third-party
+/^https?:\/\/ad[0-9]{1,3}\.example-cdn\.net\//$script
+/\/(ad|ads|adv)[0-9]*\.js$/$script,third-party
+/banner_[0-9]+x[0-9]+\.(gif|png|jpg)/$image
+/^https?:\/\/.*\/sponsored\?id=[0-9]+/$xmlhttprequest
+!
+! ------------------------------------------------------------------- redirect
+||googletagservices-example.com/tag/js/gpt.js$script,redirect=googletagservices_gpt.js
+||google-analytics-example.com/analytics.js$script,redirect=google-analytics_analytics.js
+||googletagmanager-example.com/gtm.js$script,redirect=googletagmanager_gtm.js
+||pagead-example.com/adsbygoogle.js$script,redirect=googlesyndication_adsbygoogle.js
+||ads-example.com/frame.html$subdocument,redirect=noopframe
+||ads-example.com/tracker.gif$image,redirect=1x1.gif
+||ads-example.com/player.mp4$media,redirect-rule=noopmp4-1s
+||ads-example.com/empty.js$script,redirect=noopjs
+!
+! ------------------------------------------------------------------- removeparam
+$removeparam=fbclid
+$removeparam=gclid
+$removeparam=dclid
+$removeparam=msclkid
+$removeparam=mc_eid
+$removeparam=igshid
+$removeparam=ref_src
+||shop-example.com^$removeparam=affiliate_id
+||news-example.com^$removeparam=utm_campaign
+||news-example.com^$removeparam=utm_medium
+!
+! ------------------------------------------------------------------- csp / headers
+||anti-adblock-example.com^$csp=script-src 'self' 'unsafe-inline'
+||popup-example.com^$csp=frame-src 'none'
+||inline-example.com^$csp=script-src 'none',subdocument
+||news-example.com^$removeheader=refresh
+||tracker-example.com^$removeheader=request:cookie
+||api-example.com^$header=content-type:application/json
+||feed-example.com^$header=~content-type:text/html
+||perm-example.com^$permissions=interest-cohort=()
+!
+! ------------------------------------------------------------------- generic cosmetic
+##.ad-banner
+##.ad-container
+##.ad-leaderboard
+##.ad-placeholder
+##.ad-slot
+##.ad-wrapper
+##.adsbygoogle
+##.advert
+##.advertisement
+##.advertising-container
+##.banner-ad
+##.google-ad
+##.header-ad
+##.footer-ad
+##.sidebar-ad
+##.sponsored-link
+##.sponsored-post
+##.textad
+##.top-ads
+##.video-ad-overlay
+###ad
+###ad-banner
+###ad-container
+###ad-footer
+###ad-header
+###ad-sidebar
+###ads
+###adsense
+###advertisement
+###banner-ad
+###google_ads_frame
+###leaderboard-ad
+###sponsored
+###sponsored-content
+###taboola-below-article
+##a[href^="https://ads-example.com/"]
+##div[id^="google_ads_iframe_"]
+##div[data-ad-slot]
+##iframe[src*="/adframe."]
+##ins.adsbygoogle
+!
+! ------------------------------------------------------------------- specific cosmetic
+news-example.com##.promoted-story
+news-example.com##.article-ad
+news-example.com###top-banner
+news-example.com##div[data-testid="ad-unit"]
+blog-example.com##.widget-ads
+blog-example.com##.inline-promo
+shop-example.com##.deal-of-the-day-ad
+shop-example.com##.recommendation-sponsored
+video-example.com##.preroll-overlay
+video-example.com##.companion-ad
+sports-example.com##.betting-promo
+sports-example.com###sidebar-sponsor
+weather-example.com##.weather-ad
+weather-example.com##.forecast-sponsor
+forum-example.com##.post-ad
+forum-example.com##.signature-ad
+mail-example.com##.inbox-ad
+mail-example.com###promo-tab
+social-example.com##[data-pagelet="RightRail"] .sponsored
+social-example.com##div[aria-label="Sponsored"]
+recipe-example.com##.recipe-ad-wrapper
+recipe-example.com##.newsletter-nag
+travel-example.com##.hotel-sponsor
+travel-example.com##.deal-banner
+game-example.com##.interstitial
+game-example.com##.rewarded-ad-prompt
+music-example.com##.audio-ad
+music-example.com##.upgrade-banner
+docs-example.com##.upsell-banner
+maps-example.com##.promoted-pin
+news-example.com,blog-example.com##.shared-ad-rail
+news-example.com,~sub.news-example.com##.regional-ad
+example.*##.entity-wide-ad
+shop-example.*##.entity-shop-ad
+partner-example.*###entity-promo
+media-example.*##.entity-preroll
+!
+! ------------------------------------------------------------------- cosmetic exceptions
+news-example.com#@#.article-ad
+shop-example.com#@#.recommendation-sponsored
+#@#.sponsored-link
+video-example.com#@#.companion-ad
+forum-example.com#@#.post-ad
+docs-example.com#@#.upsell-banner
+social-example.com#@#div[aria-label="Sponsored"]
+!
+! ------------------------------------------------------------------- :style() and :remove()
+news-example.com##.sticky-ad-rail:style(position: static !important)
+blog-example.com##body:style(overflow: auto !important)
+shop-example.com##.paywall-overlay:style(display: none !important)
+forum-example.com##.post-ad:remove()
+recipe-example.com##.newsletter-nag:remove()
+!
+! ------------------------------------------------------------------- procedural
+news-example.com#?#.card:has-text(Sponsored)
+news-example.com#?#.story:has(> .sponsored-label)
+blog-example.com#?#article:has-text(/^Advertisement/)
+shop-example.com#?#.tile:has(img[alt="Ad"])
+video-example.com#?#.playlist-item:has-text(Promoted)
+forum-example.com#?#.post:min-text-length(400):has-text(Buy now)
+social-example.com#?#div[role="article"]:has-text(Suggested for you)
+sports-example.com#?#.row:matches-css(background-image: /sponsor/)
+travel-example.com#?#.result:has-text(Ad):upward(2)
+recipe-example.com#?#.step:matches-attr(data-ad="/true/")
+!
+!#if env_chromium
+||chromium-only-example.com^$third-party
+!#endif
+!#if env_firefox
+||firefox-only-example.com^$third-party
+!#endif
+! End of EasyList CI snapshot

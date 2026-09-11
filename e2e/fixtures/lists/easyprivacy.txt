@@ -1,0 +1,112 @@
+[Adblock Plus 2.0]
+! Title: EasyPrivacy (iuBlocker CI snapshot)
+! Version: 202601010001
+! Expires: 4 days
+! Homepage: https://easylist.to/
+! SYNTHETIC SNAPSHOT — see README.md in this directory. Not the real EasyPrivacy.
+!
+! ------------------------------------------------------------------- analytics endpoints
+||analytics-example.com^$third-party
+||analytics-example.net^$third-party
+||stats-example.com^$third-party
+||metrics-example.com^$third-party
+||telemetry-example.com^$third-party
+||insights-example.com^$third-party
+||collector-example.com^$third-party
+||events-example.com^$third-party
+||logs-example.com^$third-party
+||sentry-example.com^$third-party
+||mixpanel-example.com^$third-party
+||amplitude-example.com^$third-party
+||segment-example.com^$third-party
+||heap-example.com^$third-party
+||hotjar-example.com^$third-party
+||fullstory-example.com^$third-party
+||clarity-example.com^$third-party
+||quantserve-example.com^$third-party
+||scorecardresearch-example.com^$third-party
+||chartbeat-example.com^$third-party
+||parsely-example.com^$third-party
+||newrelic-example.com^$third-party
+||datadog-example.com^$third-party
+||bugsnag-example.com^$third-party
+||optimizely-example.com^$third-party
+!
+! ------------------------------------------------------------------- tracking pixels and beacons
+||pixel-example.com^$image,third-party
+||track-example.com/pixel.gif$image
+||track-example.com/p.gif$image,third-party
+||track-example.com/open?*$image
+||beacon-example.com^$ping,third-party
+||beacon-example.net/collect$ping
+||cdn-example.com/track.gif$image,third-party
+||cdn-example.com/1x1.png$image,third-party
+||mail-track-example.com/o/*$image
+||newsletter-example.com/open/*$image,third-party
+/__utm.gif$image
+/collect?v=1&*$xmlhttprequest
+/piwik.php?$xmlhttprequest,third-party
+/matomo.php?$xmlhttprequest,third-party
+/tr?id=*&ev=$image,third-party
+!
+! ------------------------------------------------------------------- fingerprinting and sync
+||fingerprint-example.com^$script,third-party
+||fp-example.net/fp.js$script
+||idsync-example.com^$third-party
+||cookiesync-example.com^$image,third-party
+||usersync-example.com/sync$xmlhttprequest,third-party
+||match-example.com/cm?$image,third-party
+||dmp-example.com^$third-party
+||cdp-example.com^$xmlhttprequest,third-party
+||audience-example.com^$third-party
+||profile-example.com/segments$xmlhttprequest,third-party
+!
+! ------------------------------------------------------------------- script tags by path
+/analytics.js$script,third-party
+/gtag/js?id=$script,third-party
+/tracking.js$script,third-party
+/telemetry.min.js$script
+/beacon.min.js$script,third-party
+/heatmap.js$script,third-party
+/recorder.js$script,third-party
+/session-replay.js$script,third-party
+/tagmanager.js$script,third-party
+/pixel.js$script,third-party
+!
+! ------------------------------------------------------------------- link decoration
+$removeparam=utm_source
+$removeparam=utm_content
+$removeparam=utm_term
+$removeparam=_ga
+$removeparam=_gl
+$removeparam=yclid
+$removeparam=wickedid
+$removeparam=oly_enc_id
+||shop-example.com^$removeparam=cjevent
+||news-example.com^$removeparam=at_medium
+!
+! ------------------------------------------------------------------- headers and csp
+||tracker-example.com^$removeheader=set-cookie
+||analytics-example.com^$removeheader=request:referer
+||beacon-example.com^$header=content-type:image/gif
+!
+! ------------------------------------------------------------------- exceptions
+@@||analytics-example.com^$script,domain=analytics-example.com
+@@||metrics-example.com/health$xmlhttprequest
+@@||sentry-example.com^$xmlhttprequest,domain=app-example.com
+@@||shop-example.com/checkout/track$xmlhttprequest,domain=shop-example.com
+@@||stats-example.com^$image,domain=stats-example.com
+!
+! ------------------------------------------------------------------- badfilter and regex
+||chartbeat-example.com^$third-party,badfilter
+/^https?:\/\/t[0-9]\.tracking-example\.com\//$third-party
+/^https?:\/\/[a-z]+\.pixel-example\.net\/[a-f0-9]{16}/$image
+/\/(px|pxl|trk)\.gif\?/$image,third-party
+!
+! ------------------------------------------------------------------- cosmetic
+##.tracking-pixel
+##img[width="1"][height="1"]
+news-example.com##.analytics-debug-bar
+shop-example.com##.tracking-consent-nag
+social-example.com#?#.notice:has-text(We use cookies)
+! End of EasyPrivacy CI snapshot

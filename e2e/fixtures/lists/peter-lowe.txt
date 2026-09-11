@@ -1,0 +1,61 @@
+# Title: Peter Lowe's Ad and tracking server list (iuBlocker CI snapshot)
+# Version: 202601010001
+# Expires: 1 day
+# Homepage: https://pgl.yoyo.org/adservers/
+# SYNTHETIC SNAPSHOT — see README.md in this directory. Not the real list.
+# Format: hosts
+#
+127.0.0.1 localhost
+0.0.0.0 ads-hosts-example.com
+0.0.0.0 ad1-hosts-example.com
+0.0.0.0 ad2-hosts-example.com
+0.0.0.0 adserver-hosts-example.com
+0.0.0.0 adservice-hosts-example.com
+0.0.0.0 adtrack-hosts-example.com
+0.0.0.0 banner-hosts-example.com
+0.0.0.0 banners-hosts-example.com
+0.0.0.0 beacon-hosts-example.com
+0.0.0.0 bidder-hosts-example.com
+0.0.0.0 click-hosts-example.com
+0.0.0.0 clicks-hosts-example.com
+0.0.0.0 counter-hosts-example.com
+0.0.0.0 delivery-hosts-example.com
+0.0.0.0 dmp-hosts-example.com
+0.0.0.0 exchange-hosts-example.com
+0.0.0.0 impression-hosts-example.com
+0.0.0.0 intent-hosts-example.com
+0.0.0.0 lead-hosts-example.com
+0.0.0.0 metric-hosts-example.com
+0.0.0.0 metrics-hosts-example.com
+0.0.0.0 native-hosts-example.com
+0.0.0.0 offers-hosts-example.com
+0.0.0.0 pixel-hosts-example.com
+0.0.0.0 pop-hosts-example.com
+0.0.0.0 popunder-hosts-example.com
+0.0.0.0 promo-hosts-example.com
+0.0.0.0 push-hosts-example.com
+0.0.0.0 retarget-hosts-example.com
+0.0.0.0 rtb-hosts-example.com
+0.0.0.0 sponsor-hosts-example.com
+0.0.0.0 stat-hosts-example.com
+0.0.0.0 stats-hosts-example.com
+0.0.0.0 survey-hosts-example.com
+0.0.0.0 sync-hosts-example.com
+0.0.0.0 tag-hosts-example.com
+0.0.0.0 telemetry-hosts-example.com
+0.0.0.0 track-hosts-example.com
+0.0.0.0 tracker-hosts-example.com
+0.0.0.0 tracking-hosts-example.com
+0.0.0.0 traffic-hosts-example.com
+0.0.0.0 usersync-hosts-example.com
+0.0.0.0 vast-hosts-example.com
+0.0.0.0 video-ads-hosts-example.com
+0.0.0.0 widget-ads-hosts-example.com
+0.0.0.0 yield-hosts-example.com
+0.0.0.0 zone-hosts-example.com
+0.0.0.0 adnet-hosts-example.net
+0.0.0.0 adpush-hosts-example.net
+0.0.0.0 analytics-hosts-example.net
+0.0.0.0 audience-hosts-example.net
+0.0.0.0 profile-hosts-example.net
+# End of hosts CI snapshot

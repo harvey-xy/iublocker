@@ -1,2 +1,5 @@
-// Implemented by the owning workstream (see src/index.ts).
-export {};
+/** T2 — scriptlet filter compilation (docs/SCRIPTLETS.md). */
+export * from './hash';
+export * from './parse';
+export * from './compile';
+export * from './groups';

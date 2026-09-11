@@ -1,0 +1,12 @@
+{
+  "id": "easyprivacy",
+  "sources": [
+    {
+      "url": "snapshot:e2e/fixtures/lists/easyprivacy.txt",
+      "sha256": "e0e243c4fa6ea21f28747582f8c6d1e73c6d9f922ee8a18af6e28a2f3c93a988",
+      "fetchedAt": "2026-01-01T00:00:00.000Z",
+      "bytes": 4357
+    }
+  ],
+  "fetchedAt": "2026-01-01T00:00:00.000Z"
+}

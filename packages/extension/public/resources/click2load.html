@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blocked content</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --fg: #111;
+        --bg: #f4f4f5;
+        --muted: #52525b;
+        --accent: #2563eb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #f4f4f5;
+          --bg: #18181b;
+          --muted: #a1a1aa;
+          --accent: #60a5fa;
+        }
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--fg);
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main {
+        max-width: 32rem;
+        padding: 1.25rem;
+        text-align: center;
+      }
+      h1 {
+        font-size: 1rem;
+        margin: 0 0 0.5rem;
+      }
+      p {
+        margin: 0 0 0.75rem;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+      }
+      button {
+        font: inherit;
+        padding: 0.4rem 0.9rem;
+        border: 1px solid var(--accent);
+        border-radius: 0.375rem;
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid var(--fg);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>This frame was blocked by iuBlocker</h1>
+      <p id="url"></p>
+      <button id="load" type="button">Load original content</button>
+    </main>
+    <script src="click2load.js"></script>
+  </body>
+</html>

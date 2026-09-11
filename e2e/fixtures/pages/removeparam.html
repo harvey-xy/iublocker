@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>iuBlocker e2e — removeparam</title>
+  </head>
+  <body>
+    <h1>removeparam</h1>
+    <!-- `$removeparam=utm_source` must strip utm_source and keep everything else. -->
+    <a id="link" href="/removeparam.html?utm_source=x&amp;keep=1">tagged link</a>
+    <p id="search">pending</p>
+    <p id="utm">pending</p>
+    <p id="keep">pending</p>
+    <script>
+      (function () {
+        var params = new URLSearchParams(location.search);
+        document.getElementById('search').textContent = location.search || '(none)';
+        document.getElementById('utm').textContent = String(params.get('utm_source'));
+        document.getElementById('keep').textContent = String(params.get('keep'));
+        // Auto-navigate once so the test can assert on a real navigation, not just a link.
+        if (location.search === '') {
+          location.replace('/removeparam.html?utm_source=x&keep=1&auto=1');
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>iuBlocker e2e — network</title>
+  </head>
+  <body>
+    <h1>network</h1>
+    <!-- Blocked by `||127.0.0.1/ads/^`: must never set window.__ad. -->
+    <script src="/ads/banner.js"></script>
+    <!-- Blocked by `||127.0.0.1/track/^$image,ping,xmlhttprequest`: naturalWidth stays 0. -->
+    <img id="pixel" src="/track/pixel.gif" alt="tracking pixel" width="1" height="1" />
+    <!-- Blocked by `||127.0.0.1/ads/^`. -->
+    <iframe id="adframe" src="/ads/frame.html" title="ad frame" width="120" height="60"></iframe>
+    <p id="ad-flag">pending</p>
+    <p id="xhr-blocked">pending</p>
+    <p id="xhr-allowed">pending</p>
+    <script>
+      window.__results = {};
+      function show(id, value) {
+        document.getElementById(id).textContent = String(value);
+      }
+      window.addEventListener('load', async () => {
+        show('ad-flag', window.__ad === true);
+
+        // Blocked XHR: /track/ping is in the e2e list.
+        try {
+          const res = await fetch('/track/ping', { method: 'GET' });
+          window.__results.trackBlocked = !res.ok;
+          show('xhr-blocked', res.status);
+        } catch (err) {
+          window.__results.trackBlocked = true;
+          show('xhr-blocked', 'error');
+        }
+
+        // Never blocked.
+        try {
+          const res = await fetch('/api/data.json');
+          const json = await res.json();
+          window.__results.apiOk = json.ok === true;
+          show('xhr-allowed', json.ok === true ? 'ok' : 'bad');
+        } catch (err) {
+          window.__results.apiOk = false;
+          show('xhr-allowed', 'error');
+        }
+        window.__results.ad = window.__ad === true;
+        window.__loaded = true;
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "id": "peter-lowe",
+  "sources": [
+    {
+      "url": "snapshot:e2e/fixtures/lists/peter-lowe.txt",
+      "sha256": "1cab7f11cfe4a4887c650924922a499c6deb8e5adb7ca9384ee10a4355a3ddd7",
+      "fetchedAt": "2026-01-01T00:00:00.000Z",
+      "bytes": 2021
+    }
+  ],
+  "fetchedAt": "2026-01-01T00:00:00.000Z"
+}

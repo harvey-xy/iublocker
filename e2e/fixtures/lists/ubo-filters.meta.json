@@ -1,0 +1,12 @@
+{
+  "id": "ubo-filters",
+  "sources": [
+    {
+      "url": "snapshot:e2e/fixtures/lists/ubo-filters.txt",
+      "sha256": "70d63393c42f73c86eeabc9e12f237cf7c90ec26dbbb3bd1b66e4eed87d8d54f",
+      "fetchedAt": "2026-01-01T00:00:00.000Z",
+      "bytes": 5487
+    }
+  ],
+  "fetchedAt": "2026-01-01T00:00:00.000Z"
+}

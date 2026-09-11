@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>iuBlocker e2e — cosmetic</title>
+    <style>
+      .card { border: 1px solid #ccc; padding: 4px; }
+    </style>
+  </head>
+  <body>
+    <h1>cosmetic</h1>
+
+    <!-- `127.0.0.1##.ad-banner` -->
+    <div class="ad-banner" id="ad-banner-1">ad banner</div>
+    <!-- `127.0.0.1###sponsored` -->
+    <div id="sponsored">sponsored block</div>
+
+    <!-- `127.0.0.1#?#.card:has-text(Sponsored)` — only the first card must be hidden. -->
+    <div class="card" id="card-sponsored"><span>Sponsored</span> — a promoted story</div>
+    <div class="card" id="card-regular">An ordinary story</div>
+    <div class="card" id="card-sponsored-nested">
+      <div class="inner"><b>Sponsored</b> by someone</div>
+    </div>
+
+    <!-- Controls: must stay visible in every mode. -->
+    <div class="content" id="content">real content</div>
+    <p id="ready">ready</p>
+  </body>
+</html>

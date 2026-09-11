@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>iuBlocker e2e — scriptlet</title>
+  </head>
+  <body>
+    <h1>scriptlet</h1>
+    <!--
+      `127.0.0.1##+js(set-constant, adConfig, false)` runs in the MAIN world at
+      document_start, so this synchronous inline script must already see `false`.
+    -->
+    <p id="result">pending</p>
+    <p id="type">pending</p>
+    <script>
+      window.__adConfigAtLoad = window.adConfig;
+      document.getElementById('result').textContent = String(window.adConfig);
+      document.getElementById('type').textContent = typeof window.adConfig;
+    </script>
+  </body>
+</html>

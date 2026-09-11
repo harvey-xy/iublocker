@@ -1,0 +1,158 @@
+[Adblock Plus 2.0]
+! Title: iuBlocker compiler sample list
+! Version: 202609110001
+! Expires: 1 days (update frequency)
+! Homepage: https://example.invalid/sample
+! Licence: GPL-3.0-or-later
+! Last modified: 11 Sep 2026 09:00 UTC
+!
+! ---------------------------------------------------------------------------
+! Section 1 — EasyList-style network filters
+! ---------------------------------------------------------------------------
+||ads.example.com^
+||adserver.example.net^
+||tracking.example.org^
+||metrics.example.io^
+||pixel.example.co.uk^
+||example.com/banner/*$image,third-party
+||example.com/ads/*.js$script
+||cdn.example.com/sponsored-$script,stylesheet
+/ads/leaderboard.gif
+-advertisement-icon.
+&ad_box_
+||example.net^*/adframe.
+||doubleclick.invalid^$third-party
+||partner.example.com^$~third-party
+||example.org/track.gif|
+|http://ads.example.info/
+||example.com/ad?id=$xmlhttprequest
+||tracker.example.com^$important
+||beacon.example.com^$ping,beacon
+||ws.example.com^$websocket
+||fonts.example.com/ad.woff$font
+||media.example.com/preroll.mp4$media
+||other.example.com/thing$other
+||frame.example.com^$subdocument
+||api.example.com/collect$xhr,method=post
+||api.example.com/beacon$method=get|~post
+||sub.example.com^$domain=publisher.com|~safe.publisher.com
+||entity.example.com^$domain=newspaper.*
+||cdn.example.com/lib.js$to=cdn.example.com
+||host.example.com^$denyallow=allowed.example.com,domain=site.example
+||case.example.com/AdBox$match-case
+||regexy.example.com^$document
+
+! ---------------------------------------------------------------------------
+! Section 2 — regex filters
+! ---------------------------------------------------------------------------
+/^https?:\/\/[a-z]{2,10}\.ad\.example\.com\//
+/banner[0-9]{2,4}\.(gif|png)$/$image
+/^https?:\/\/(?=evil)\.example\.com\//
+/\1backref\.example\.com/
+
+! ---------------------------------------------------------------------------
+! Section 3 — exceptions
+! ---------------------------------------------------------------------------
+@@||cdn.example.com^$script,domain=site.example
+@@||safe.example.com^
+@@||whitelisted.example.com^$document
+@@||example.com/acceptable-ads.js$script
+@@||shop.example.com^$elemhide
+@@||news.example.com^$generichide
+@@||forum.example.com^$specifichide
+@@||nocsp.example.com^$csp
+
+! ---------------------------------------------------------------------------
+! Section 4 — uBO-specific options
+! ---------------------------------------------------------------------------
+||example.com/ads/gpt.js$script,redirect=noop.js
+||example.com/video.mp4$mp4
+||example.com/empty.js$empty
+||example.com/pixel.gif$image,redirect=1x1.gif
+||example.com/analytics.js$script,redirect-rule=noop.js
+||example.com/analytics.js$script
+$removeparam=utm_source
+$removeparam=utm_medium
+||shop.example.com^$removeparam=affiliate_id
+||csp.example.com^$csp=script-src 'none'
+||perm.example.com^$permissions=autoplay=()
+||hdr.example.com^$removeheader=refresh
+||hdr.example.com^$removeheader=request:cookie
+||forbidden.example.com^$removeheader=origin
+||type.example.com^$header=content-type:application/json
+||notype.example.com^$header=~content-length
+||badfiltered.example.com^
+||badfiltered.example.com^$badfilter
+
+! ---------------------------------------------------------------------------
+! Section 5 — unsupported options (must be dropped with a warning)
+! ---------------------------------------------------------------------------
+||popup.example.com^$popup
+||popunder.example.com^$popunder
+||inline.example.com^$inline-script
+||strict.example.com^$strict3p
+||replace.example.com^$replace=/a/b/
+||webrtc.example.com^$webrtc
+||unknown.example.com^$notanoption
+||cname.example.com^$cname
+
+! ---------------------------------------------------------------------------
+! Section 6 — hosts-file lines mixed in
+! ---------------------------------------------------------------------------
+0.0.0.0 hosts-one.example.com
+0.0.0.0 hosts-two.example.com
+127.0.0.1 hosts-three.example.com
+0.0.0.0 localhost
+127.0.0.1 broadcasthost
+0.0.0.0 hosts-four.example.com # trailing comment
+
+! ---------------------------------------------------------------------------
+! Section 7 — cosmetic filters
+! ---------------------------------------------------------------------------
+##.ad-banner
+##.sponsored-post
+###top-ad
+example.com##.site-ad
+example.com,example.net##.shared-ad
+~safe.example.com,example.com##.negated-ad
+entity.*##.entity-ad
+example.com#@#.site-ad
+#@#.ad-banner
+example.com#?#.card:has-text(Sponsored)
+example.com#?#div.item:-abp-has(> .promo)
+example.com##.dim:style(opacity: 0.1 !important)
+example.com##.gone:remove()
+example.com##^div[ad]
+
+! ---------------------------------------------------------------------------
+! Section 8 — scriptlets
+! ---------------------------------------------------------------------------
+example.com##+js(set-constant, adConfig, false)
+example.com##+js(abort-on-property-read, adBlockDetected)
+news.example.com##+js(no-setTimeout-if, /adsbygoogle/, 1000)
+example.com#@#+js(set-constant, adConfig, false)
+
+! ---------------------------------------------------------------------------
+! Section 9 — pre-processor directives
+! ---------------------------------------------------------------------------
+!#if env_chromium
+||chromium-only.example.com^
+!#else
+||firefox-only.example.com^
+!#endif
+!#if env_firefox
+||never.example.com^
+!#endif
+!#if (env_chromium && !env_firefox)
+||nested-ok.example.com^
+!#endif
+!#include fragments/extra.txt
+
+! ---------------------------------------------------------------------------
+! Section 10 — duplicates and shadowed rules
+! ---------------------------------------------------------------------------
+||ads.example.com^
+||ads.example.com/specific/path.js$script
+||dup.example.com^$script
+||dup.example.com^$script
+! End of list

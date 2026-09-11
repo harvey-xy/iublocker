@@ -1,0 +1,108 @@
+! Title: uBlock filters (iuBlocker CI snapshot)
+! Version: 202601010001
+! Expires: 1 day
+! Homepage: https://github.com/uBlockOrigin/uAssets
+! SYNTHETIC SNAPSHOT — see README.md in this directory. Not the real uBlock filters.
+! This list is marked `trusted` in tools/filterlists.json, so trusted scriptlets are allowed.
+!
+! ------------------------------------------------------------------- scriptlets: set-constant
+news-example.com##+js(set-constant, adConfig, false)
+news-example.com##+js(set-constant, canRunAds, true)
+blog-example.com##+js(set-constant, adBlockDetected, false)
+shop-example.com##+js(set-constant, window.adsEnabled, false)
+video-example.com##+js(set-constant, playerConfig.ads, undefined)
+sports-example.com##+js(set-constant, __adBlocker, noopFunc)
+forum-example.com##+js(set-constant, blockAdBlock, trueFunc)
+music-example.com##+js(set-constant, adFree, true)
+game-example.com##+js(set-constant, AdManager.enabled, false)
+travel-example.com##+js(set-constant, dataLayer, emptyArr)
+!
+! ------------------------------------------------------------------- scriptlets: abort-on-property-read
+news-example.com##+js(aopr, adsbygoogle)
+blog-example.com##+js(aopr, google_ad_client)
+shop-example.com##+js(aopr, __adblockdetector)
+video-example.com##+js(abort-on-property-read, googletag.cmd)
+forum-example.com##+js(abort-on-property-read, adBlockDetect)
+recipe-example.com##+js(aopr, admiral)
+weather-example.com##+js(aopr, adsWatcher)
+!
+! ------------------------------------------------------------------- scriptlets: no-setTimeout-if / no-setInterval-if
+news-example.com##+js(nostif, adblock)
+news-example.com##+js(nostif, /detectAdBlock|adBlockEnabled/, 1000)
+blog-example.com##+js(nostif, showModal, 500)
+shop-example.com##+js(no-setTimeout-if, checkAds)
+video-example.com##+js(nosiif, refreshAd, 2000)
+forum-example.com##+js(no-setInterval-if, /ads?Refresh/)
+game-example.com##+js(nostif, !adsReady)
+!
+! ------------------------------------------------------------------- scriptlets: json-prune and friends
+api-example.com##+js(json-prune, ads)
+news-example.com##+js(json-prune, data.items.[].promotedContent)
+video-example.com##+js(json-prune, playerAds adPlacements adSlots)
+social-example.com##+js(json-prune, data.feed.[].sponsored, data.feed.[].id)
+shop-example.com##+js(json-prune, results.[].isSponsored)
+music-example.com##+js(json-prune, ads.slots)
+!
+! ------------------------------------------------------------------- scriptlets: misc
+news-example.com##+js(remove-attr, onclick, a.promo)
+blog-example.com##+js(remove-class, ad-visible, body)
+shop-example.com##+js(nowebrtc)
+video-example.com##+js(prevent-fetch, /ads?\?/)
+social-example.com##+js(prevent-xhr, adserver)
+forum-example.com##+js(window.open-defuser)
+game-example.com##+js(abort-current-script, document.createElement, adsbygoogle)
+maps-example.com##+js(set-cookie, consent, accepted)
+mail-example.com##+js(remove-cookie, /^ad_/)
+docs-example.com##+js(adjust-setInterval, checkAds, 1000, 0.02)
+!
+! ------------------------------------------------------------------- scriptlet exceptions
+allow-example.com#@#+js(set-constant, adConfig, false)
+news-example.com,~sub.news-example.com#@#+js(nostif, adblock)
+partner-example.com#@#+js(aopr, adsbygoogle)
+!
+! ------------------------------------------------------------------- unbreak / allow rules
+@@||cdn-example.com/player/core.js$script,domain=video-example.com
+@@||api-example.com/graphql$xmlhttprequest,domain=social-example.com
+@@||assets-example.com/fonts/*$font
+@@||shop-example.com/cart/api$xmlhttprequest,important
+!
+! ------------------------------------------------------------------- badware / privacy
+||miner-example.com^$third-party,important
+||coinhive-example.com^$script,important
+||phishing-example.com^$document,important
+||malvertising-example.net^$important
+||scam-example.com^$third-party,important
+!
+! ------------------------------------------------------------------- quick fixes (cosmetic)
+news-example.com##.qf-sticky-header
+video-example.com##.qf-overlay-blocker
+social-example.com##.qf-login-wall
+shop-example.com#?#.modal:has-text(Disable your ad blocker)
+blog-example.com#?#div:has-text(/ad ?block/i):upward(1)
+news-example.com##.paywall:style(display: none !important)
+video-example.com##.ad-interrupt:remove()
+!
+! ------------------------------------------------------------------- more scriptlets
+docs-example.com##+js(set-constant, Object.prototype.adBlockDetected, false)
+maps-example.com##+js(set-constant, navigator.brave, undefined)
+mail-example.com##+js(nostif, /bait|adsbox/, 250)
+recipe-example.com##+js(no-fetch-if, /\/ads\//)
+weather-example.com##+js(prevent-setTimeout, adRefresh)
+sports-example.com##+js(json-prune, betting.promos)
+music-example.com##+js(aopr, Audio.prototype.adPlaying)
+travel-example.com##+js(remove-attr, data-ad-slot)
+game-example.com##+js(abort-on-property-write, adBlockDetected)
+social-example.com##+js(no-xhr-if, /adserver|doubleclick/)
+forum-example.com##+js(trusted-set-cookie, adfree, 1)
+video-example.com##+js(set-local-storage-item, ads-disabled, true)
+!
+! ------------------------------------------------------------------- more cosmetic
+docs-example.com##.doc-promo-rail
+maps-example.com##.map-sponsored-pin
+mail-example.com##.ad-row
+music-example.com##.audio-ad-banner
+travel-example.com##.sponsored-hotel
+sports-example.com###betting-sidebar
+weather-example.com#?#.tile:has-text(Sponsored)
+recipe-example.com#@#.newsletter-nag
+! End of uBlock filters CI snapshot
