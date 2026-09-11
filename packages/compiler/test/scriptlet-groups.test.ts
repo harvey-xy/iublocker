@@ -391,9 +391,9 @@ describe('scriptlet libs', () => {
   });
 
   it('collects the union of every group lib, deduped and sorted', () => {
-    expect(collectScriptletLibs(groupsFor('a.com##+js(noop)\nb.com##+js(set, x, 1)\nc.com##+js(noop)'))).toEqual(
-      ['scriptlet-lib/noop.js', 'scriptlet-lib/set-constant.js'],
-    );
+    expect(
+      collectScriptletLibs(groupsFor('a.com##+js(noop)\nb.com##+js(set, x, 1)\nc.com##+js(noop)')),
+    ).toEqual(['scriptlet-lib/noop.js', 'scriptlet-lib/set-constant.js']);
   });
 
   it('defines the function on self.__iub_lib under its canonical name', () => {
@@ -591,10 +591,7 @@ describe('emitScriptletGroupBundle', () => {
 
   it('round-trips a compiled list end to end', () => {
     const groups = groupsFor('example.com##+js(set, adConfig, false)\nexample.com##+js(noop)');
-    expect(collectScriptletLibs(groups)).toEqual([
-      'scriptlet-lib/noop.js',
-      'scriptlet-lib/set-constant.js',
-    ]);
+    expect(collectScriptletLibs(groups)).toEqual(['scriptlet-lib/noop.js', 'scriptlet-lib/set-constant.js']);
     expect(runAll(groups, 'www.example.com')).toEqual([['noop'], ['set-constant', 'adConfig', 'false']]);
   });
 });

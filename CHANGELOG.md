@@ -11,5 +11,9 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 - Extension: MV3 service worker (rulesets, site modes, injector, updater with
   differential updates, stats), content scripts (cosmetic engine, procedural executor,
   element picker), popup / dashboard / logger UI with en, zh_TW, zh_CN locales.
-- Tooling: list fetcher, delta generator, packager, CI / nightly rulesets / release
-  workflows, Playwright e2e suite (25 tests) running the unpacked extension in Chromium.
+- Tooling: list fetcher (with GitHub mirror sets), delta generator, packager, CI / nightly
+  rulesets / release workflows, Playwright e2e suite (25 tests) running the unpacked
+  extension in Chromium, and `pnpm verify:real` loading the full real-list build in Chrome.
+- Scale fixes from real lists: per-ruleset rule IDs, chunked domain merging, entity keys
+  (`example.*`) resolved at lookup time, one scriptlet group file per scriptlet name, RE2
+  program-size estimator calibrated against Chrome, 98 scriptlets and 136 `$redirect` names.

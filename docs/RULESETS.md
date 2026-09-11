@@ -214,13 +214,14 @@ dnr/<listId>.json             DNR rules (declared in manifest.json → declarati
 cosmetic/<listId>.json        CosmeticDB
 scriptlets/<listId>.json      ScriptletDB
 scriptlet-lib/<name>.js       one scriptlet function body, assigned to self.__iub_lib
-scriptlet-groups/<hash>.js    MAIN‑world call list for one group (no function bodies)
+scriptlet-groups/<name>.js    hostname → arguments table for that one scriptlet
 report.json                   per‑list RulesetReport (counts, dropped filters with reasons, budget)
 ```
 
-A group is registered as `js: [...group.libs, group.file]`, so the lib files run first and
-define the functions the group file calls (docs/SCRIPTLETS.md §3). Each lib is written
-once no matter how many groups use it.
+There is **one group per scriptlet name** (docs/SCRIPTLETS.md §3), so the two scriptlet
+directories hold the same handful of files: the 19 shipped lists produce 74 libs and 74
+group files. A group is registered as `js: [...group.libs, group.file]`, so the lib runs
+first and defines the function the group file calls.
 
 ```ts
 interface RulesetManifest {
@@ -249,14 +250,14 @@ interface RulesetManifest {
   }>;
   budget: { staticRulesTotal: number; staticRulesDefaultEnabled: number; regexTotal: number };
   scriptletGroups: Array<{
-    hash: string;
-    file: string; // scriptlet-groups/<hash>.js
-    libs: string[]; // scriptlet-lib/<name>.js files, in the order they must load
-    hosts: string[]; // concrete hostnames only (or "*")
+    name: string; // canonical scriptlet name — the group's identity
+    hash: string; // digest of the emitted table
+    file: string; // scriptlet-groups/<name>.js
+    libs: string[]; // [scriptlet-lib/<name>.js]
+    hosts: string[]; // concrete hostnames to build match patterns from, or ["*"]
     listIds: string[];
+    hostLists?: number[]; // parallel to hosts: bit i = "listIds[i] wants this host"
   }>;
-  /** Hosts whose group the per-list group cap demoted to the dynamic path. */
-  scriptletDynamicHosts?: string[];
 }
 ```
 
@@ -267,9 +268,12 @@ interface RulesetManifest {
 - Any single list ≤ 150,000 rules.
 - Regex ≤ 1,000 per list (compiler drops beyond with warnings; report lists them).
 - Scriptlet bundles total ≤ 8 MB — `scriptlet-lib/*.js` plus `scriptlet-groups/*.js`, each
-  file counted **once**, not once per group that registers it.
-- ≤ 3,000 pre-registered scriptlet groups per list; above that the compiler demotes the
-  smallest groups to the dynamic path (docs/SCRIPTLETS.md §3).
+  file counted **once**, not once per registration that names it.
+- No cap on scriptlet groups: there is one group per scriptlet _name_, so the count is
+  bounded by the bundled library (~74 for the shipped lists) rather than by list content.
+  The build prints the group count, the number of host patterns and how many
+  `registerContentScripts` entries they amount to (hosts are chunked 1,000 per entry,
+  mirroring `MAX_HOSTS_PER_SCRIPT` in the registrar).
 - `manifest.json` (extension) declares ≤ 100 rulesets; the build fails otherwise.
 
 ## 4. Extension manifest wiring

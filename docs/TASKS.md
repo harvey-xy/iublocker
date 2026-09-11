@@ -7,9 +7,12 @@ others (in this repo: via the PR description).
 
 Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
 
-**Status (2026‑09‑11):** T1–T7 delivered and integrated; unit suite 1,127 tests, e2e 25/25
-on Chromium 141. T8 follow‑ups in progress: per‑ruleset rule IDs, entity keys without
-compile‑time expansion, shared scriptlet library files, list mirrors.
+**Status (2026‑09‑11):** T1–T7 delivered and integrated. Follow‑ups T8–T12 done: per‑ruleset
+rule IDs, chunked domain merge, entity keys resolved at lookup, per‑scriptlet‑name group files
+(95 registrations for 19 lists, ~6 s), RE2 program‑size model calibrated against Chrome on a
+412‑regex corpus, 98 scriptlets / 136 redirect names, GitHub mirror sets for lists, and a
+real‑list load verification (`pnpm verify:real`) that Chrome 141 passes with all 19 lists.
+Unit suite 1,896 tests; e2e 25/25 + 6 real‑list checks.
 
 ## T1 — Compiler: network filters → DNR (`packages/compiler/src/{parser,network,dnr,cli}`) 🔴
 

@@ -56,7 +56,7 @@ MV3 dictates the architecture. The relevant facts, with the Chrome version they 
 │                       dist/rulesets/cosmetic/<list>.json (cosmetic DB)    │
 │                       dist/rulesets/scriptlets/<list>.json                │
 │                       dist/rulesets/scriptlet-lib/<name>.js  (fn bodies)  │
-│                       dist/rulesets/scriptlet-groups/<hash>.js (calls)    │
+│                       dist/rulesets/scriptlet-groups/<name>.js (host→args)│
 │                       dist/rulesets/manifest.json         (RulesetManifest)│
 │ packages/scriptlets → dist/scriptlets/registry.js  (bundled MAIN‑world code)│
 └───────────────────────────────────────────────────────────────────────────┘
@@ -66,7 +66,7 @@ MV3 dictates the architecture. The relevant facts, with the Chrome version they 
 │   ├─ RulesetManager   enable/disable static rulesets, budget accounting    │
 │   ├─ DynamicRules     user filters, per‑site allow, delta updates          │
 │   ├─ CosmeticIndex    loads cosmetic DBs lazily, answers per‑hostname       │
-│   ├─ ScriptletRegistrar  registerContentScripts(MAIN) per hostname group   │
+│   ├─ ScriptletRegistrar  registerContentScripts(MAIN) per scriptlet name   │
 │   ├─ SiteModes        off / basic / optimal / complete per hostname        │
 │   ├─ Injector         webNavigation.onCommitted → insertCSS + executeScript│
 │   ├─ Updater          fetches delta.json, applies dynamic/static changes    │
@@ -79,7 +79,7 @@ MV3 dictates the architecture. The relevant facts, with the Chrome version they 
 │   └─ picker/        element picker UI (on demand, via executeScript)      │
 │                                                                           │
 │ Content scripts (MAIN world, document_start)                              │
-│   └─ scriptlets/    pre‑registered per hostname group; user scriptlets     │
+│   └─ scriptlets/    pre‑registered per scriptlet name; user scriptlets     │
 │                     via executeScript({world:'MAIN', injectImmediately})   │
 │                                                                           │
 │ UI (extension pages)                                                      │
@@ -146,7 +146,7 @@ Compile‑time pipeline, one list = one static ruleset (`docs/RULESETS.md`):
 list.txt ─parse─▶ Filter[] ─classify─▶ network / cosmetic / scriptlet / unsupported
 network   ─convert─▶ DNRRule[] ─dedupe/merge/rank─▶ dnr/<id>.json (+ budget report)
 cosmetic  ─index──▶ cosmetic/<id>.json  (generic tables + per‑domain specific/procedural/exceptions)
-scriptlet ─index──▶ scriptlets/<id>.json (per‑domain [name, args]) + scriptlet-lib/ + host groups
+scriptlet ─index──▶ scriptlets/<id>.json (per‑domain [name, args]) + scriptlet-lib/ + per‑name groups
 ```
 
 Runtime pipeline for user filters (same parser, in the worker): network → dynamic

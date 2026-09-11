@@ -160,31 +160,61 @@ both ways counts as concrete. §3 explains why the split exists.
 
 ## 3. Injection strategy
 
-Two paths, both producing `(function(){ try{ (fn)(...args) }catch{} })()` code:
+Two paths, both running `(fn)(...args)` inside a `try/catch` in the page's MAIN world:
 
 1. **Pre‑registered (list scriptlets).** At install/update/ruleset‑toggle time the
-   `ScriptletRegistrar` groups hostnames by their _set of calls_ and calls
-   `scripting.registerContentScripts([{ id: 'sl-<hash>', js: [...libs, file], matches:
-['*://*.host/*', …], world: 'MAIN', runAt: 'document_start', allFrames: true,
+   `ScriptletRegistrar` registers **one content script per scriptlet _name_** (plus a chunk
+   index):
+   `scripting.registerContentScripts([{ id: 'sl-<name>-<chunk>', js: [lib, groupFile],
+matches: ['*://*.host/*', …], world: 'MAIN', runAt: 'document_start', allFrames: true,
 persistAcrossSessions: true }])` for every group whose list is enabled. Hosts in
    `off`/`basic` mode are excluded via `excludeMatches`. Chrome caps the total size of
    registered scripts; the build fails if the sum exceeds 8 MB.
 
-   **Two files, not one.** Scriptlet function bodies are several kB each and are shared by
-   thousands of groups, so they are emitted **once per scriptlet name**:
+   **One registration per name, not per call list.** `registerContentScripts` gets slower
+   the more scripts are already registered: the previous "one group per distinct set of
+   calls" layout produced 3,007 registrations for the 19 shipped lists and Chrome was still
+   installing them after two minutes (800 done after 5 s, 1,620 after 45 s). Grouping by
+   name instead produces **74 groups / 95 registrations** — a few seconds, once. This is the
+   uBO‑Lite layout: the hostname → arguments table moves into the file, and the suffix walk
+   that used to be expressed as thousands of match patterns happens in three lines of JS.
+
+   **Two files, not one.** Scriptlet function bodies are several kB each, so they stay in
+   their own file and the group file carries only data:
 
    ```
    scriptlet-lib/<name>.js       self.__iub_lib = self.__iub_lib || {};
                                  self.__iub_lib["<name>"] = <fn>;
-   scriptlet-groups/<hash>.js    run(key, "<name>", [args]) …  (nothing else)
+   scriptlet-groups/<name>.js    A = [[args…], …]           distinct argument vectors
+                                 H = {"host": 0|[0,1], …}   what each hostname adds
+                                 X = {"host": 1, …}         #@#+js(…) exceptions
+                                 idx = [...]                generic (##+js) arguments
    ```
 
-   Chrome runs a script's `js` files in order, so listing the libs first guarantees the
-   functions are defined before the group file looks them up. A group file is a few hundred
-   bytes. Emitting each body into every group instead produced 28 MB of bundles for the
-   default lists; the same lists now cost ~67 kB of libs plus ~3.5 MB of group files.
-   `BUILD_BUDGET.SCRIPTLET_GROUP_BYTES` counts each file **once**, not once per group that
-   registers it.
+   Chrome runs a script's `js` files in order, so listing the lib first guarantees the
+   function is defined before the group file looks it up. The 19 shipped lists cost ~214 kB
+   of libs plus ~1.0 MB of group files (was ~3.1 MB).
+   `BUILD_BUDGET.SCRIPTLET_GROUP_BYTES` counts each file **once**, not once per
+   registration that names it.
+
+   **The runtime walk.** The group file resolves `self.__iub_lib["<name>"]`, then walks
+   `location.hostname`'s suffixes (`a.b.c` → `a.b.c`, `b.c`, `c`). If any level appears in
+   `X` the scriptlet does not run at all; otherwise every matching level's argument indices
+   are collected (plus the generic ones) and run once each, deduped through the
+   `window.__iub_sl` guard below. Subdomains therefore inherit their parent domain's calls
+   without a row of their own, and a host that adds nothing to its parent costs neither a
+   table row nor a match pattern.
+
+   **Match patterns.** One per host: `*://*.example.com/*` matches `example.com` itself as
+   well as its subdomains, so the extra `*://example.com/*` would only double the number of
+   patterns Chrome has to index (measured: ~17 s of registration with both, ~5 s with one).
+   IP literals and single‑label hosts keep the plain `*://host/*` form — `*://*.127.0.0.1/*`
+   is not a valid match pattern and would make Chrome reject the whole registration.
+
+   **Which hosts are registered.** `hosts` is the union across lists, and `hostLists[i]` is
+   a bit set over `listIds` saying which lists put host `i` there, so a host that only a
+   **disabled** list asks for is left out of the match patterns. Two enabled lists that name
+   the same host still share the file, so a host both lists name runs both lists' arguments.
 
    Function sources are always produced with `serializeScriptletFn` from
    `@iublocker/scriptlets`, never a raw `Function.prototype.toString()`: it splices in the
@@ -197,15 +227,7 @@ persistAcrossSessions: true }])` for every group whose list is enabled. Hosts in
    `ScriptletIndex.lookupDynamic` returns them alongside the user/delta scriptlets, using
    the `entity` half of `lookupScriptletsDetailed`.
 
-   **Group cap.** A single list may pre‑register at most
-   `SCRIPTLET_GROUPS_PER_LIST` = 3,000 groups. Above that the compiler demotes the smallest
-   groups (fewest hosts, then fewest calls, then hash — deterministic) until the list fits,
-   and records their hostnames in `manifest.scriptletDynamicHosts`. The worker injects
-   those hosts' calls with `executeScript` instead. The generic `"*"` group is never
-   demoted. uBlock filters currently produce ~4,400 distinct call lists, so ~1,400 of the
-   rarest ones take the dynamic path.
-
-2. **Dynamic (user scriptlets, delta‑added scriptlets, entity matches, demoted hosts).**
+2. **Dynamic (user scriptlets, delta‑added scriptlets, entity matches).**
    At `webNavigation.onCommitted`
    the worker calls `scripting.executeScript({ target:{tabId, frameIds:[frameId]},
 world: 'MAIN', injectImmediately: true, func: runner, args: [calls] })` where
@@ -221,37 +243,47 @@ until the next release folds them into path 1.
 
 ### 3.1 Compiler notes (group computation and bundle emission)
 
-- `computeScriptletGroups(dbs, resolve?)` groups by the **canonical JSON of the effective
-  call list** — the `concrete` calls from `lookupScriptletsDetailed` for that hostname,
-  sorted by name then argument JSON, so the grouping is order‑independent. Only **concrete**
-  hostnames that appear as a `byHost` key are listed (entity keys are skipped); subdomains
-  inherit through the `*://*.host/*` match pattern. A hostname that has its own calls
-  therefore also carries its parent domains' calls, and both groups match the page — the
-  runtime guard below makes the overlap harmless.
+- `computeScriptletGroups(dbs, resolve?)` returns one `ScriptletGroupBuild` per scriptlet
+  **name**, sorted by name so the build is reproducible. For every concrete `byHost` key
+  (entity keys are skipped) it takes the `concrete` half of `lookupScriptletsDetailed` —
+  i.e. the effective call list after exceptions, with parent‑domain and generic calls
+  already folded in — and files each call under its canonical name. Names with no bundled
+  body are dropped: there would be no lib to call.
+- Hosts are visited **parents first**, so each row records only what its host _adds_ to what
+  its parents and the generic row already contribute. A host whose delta is empty is dropped
+  entirely unless it is the only reason an otherwise‑unrepresented list reaches that page
+  (`hostLists`, see below), because its parent's `*://*.parent/*` pattern already covers it.
+- The build fields are `argsList` (distinct argument vectors), `hostArgs` (host → indices),
+  `genericArgs` (indices that run everywhere) and `exclude` (hostnames an `#@#+js(…)`
+  cancels, restricted to the ones this group's patterns can actually reach). The shipped
+  half — `name`, `hash`, `file`, `libs`, `hosts`, `listIds`, `hostLists` — is what
+  `manifest.json` carries.
+- `hosts` is `["*"]` when the scriptlet has a generic call: one all‑URLs registration then
+  answers for every host, and the concrete rows stay in the table.
 - `libsFor(calls, resolve?)` lists the `scriptlet-lib/<name>.js` files a call list needs, in
   first‑use order, canonicalising aliases (so `set` and `set-constant` share one lib) and
   skipping names that do not resolve. `collectScriptletLibs(groups)` is the deduped union
   the CLI writes. `emitScriptletLib(name, resolve?)` returns the lib source or `null`.
-- `capScriptletGroups(groups, maxPerList?)` enforces the group cap and returns
-  `{ groups, dynamicHosts }`.
-- `hash` is the first 12 hex digits of a 64‑bit FNV‑1a digest of that canonical JSON
-  (pure TS, no `node:crypto`, so the compiler stays isomorphic); `file` is
-  `scriptlet-groups/<hash>.js`. Groups are returned sorted by hash for reproducible builds.
-- `emitScriptletGroupBundle(group, resolve?)` emits an IIFE that invokes
-  `self.__iub_lib[name]` with `JSON.stringify`‑d arguments, each call in its own
-  `try/catch`, and does nothing if the lib is missing. `U+2028`, `U+2029` and `</` are
-  escaped. It contains no function bodies at all.
+- `hash` is the first 12 hex digits of a 64‑bit FNV‑1a digest of the emitted tables (pure
+  TS, no `node:crypto`, so the compiler stays isomorphic); `file` is
+  `scriptlet-groups/<name>.js`.
+- `emitScriptletGroupBundle(group)` emits the IIFE described above: the tables through
+  `JSON.stringify` (so list data can never break out of a literal, with `U+2028`, `U+2029`
+  and `</` escaped), the suffix walk, and one `try/catch` per call. It contains no function
+  bodies at all, and does nothing when the lib is missing.
 - **Double‑execution guard.** `window.__iub_sl` maps `"<name>#<argsJSON>"` → `1`; a call
-  whose key is already present is skipped. This is what makes overlapping group
-  registrations (and a re‑injection after a soft navigation) safe.
+  whose key is already present is skipped. This is what makes a parent row and a child row
+  that name the same arguments (and a re‑injection after a soft navigation) safe.
 - `serializeScriptletFn` splices a local inert `__name` shim into the body when a
   transpiler rewrote nested function expressions to `__name(fn, "fn")` (esbuild
   `--keep-names`), since that helper is not part of `fn.toString()`. The scriptlets build
   should still avoid `keepNames`.
 - **Generic scriptlets.** `##+js(…)` with no domain list is stored under the `"*"` host key
-  and becomes its own group (the registrar maps it to `<all_urls>`). `#@#+js(name)` with no
-  domain list is a global exception, also stored under `"*"`; `#@#+js()` stores the name
-  `"*"`, meaning "disable every scriptlet on this hostname".
+  and becomes the group's `genericArgs` (the registrar maps `hosts: ["*"]` to
+  `http://*/*` + `https://*/*`). `#@#+js(name)` with no domain list is a global exception,
+  also stored under `"*"`, and is applied when the DBs are compiled; `#@#+js()` stores the
+  name `"*"`, meaning "disable every scriptlet on this hostname", which lands in every
+  group's `exclude`.
 
 ## 4. Argument validation
 

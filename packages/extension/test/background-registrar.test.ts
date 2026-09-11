@@ -62,7 +62,8 @@ describe('registrar: desired scripts', () => {
       id: 'sl-set-constant-0',
       // the lib first (it defines self.__iub_lib), then the group's host table.
       js: ['rulesets/scriptlet-lib/set-constant.js', 'rulesets/scriptlet-groups/set-constant.js'],
-      matches: ['*://b.example.org/*', '*://*.b.example.org/*', '*://example.com/*', '*://*.example.com/*'],
+      // One pattern per host: `*://*.h/*` already covers `h` itself.
+      matches: ['*://*.b.example.org/*', '*://*.example.com/*'],
       world: 'MAIN',
       runAt: 'document_start',
       allFrames: true,
@@ -83,9 +84,8 @@ describe('registrar: desired scripts', () => {
       'sl-noop-2',
       undefined,
     ]);
-    // 1,000 hosts × two patterns each, then the 500-host remainder.
-    expect(first?.matches).toHaveLength(2_000);
-    expect(third?.matches).toHaveLength(1_000);
+    expect(first?.matches).toHaveLength(1_000);
+    expect(third?.matches).toHaveLength(500);
   });
 
   it('registers a generic group against every http(s) URL', () => {
@@ -100,7 +100,7 @@ describe('registrar: desired scripts', () => {
 
   it('excludes hosts in off/basic mode', () => {
     const [script] = registrar.buildDesired(groups, new Set(['easylist']), ['off.test']);
-    expect(script?.excludeMatches).toEqual(['*://off.test/*', '*://*.off.test/*']);
+    expect(script?.excludeMatches).toEqual(['*://*.off.test/*']);
   });
 
   it('derives the bundle path when the manifest has none', () => {
@@ -176,7 +176,7 @@ describe('registrar: reconcile', () => {
     expect(result.updated).toBe(1);
     expect(result.registered).toBe(0);
     const [registered] = await chrome.scripting.getRegisteredContentScripts();
-    expect(registered?.excludeMatches).toEqual(['*://off.test/*', '*://*.off.test/*']);
+    expect(registered?.excludeMatches).toEqual(['*://*.off.test/*']);
   });
 
   it('is a no-op when nothing changed', async () => {
