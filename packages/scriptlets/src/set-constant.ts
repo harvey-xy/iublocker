@@ -5,10 +5,16 @@ export default defineScriptlet({
   aliases: ['set'],
   args: [
     { name: 'property', doc: 'Property chain to define, e.g. "adsEnabled" or "a.b.c".' },
-    { name: 'value', doc: 'One of the uBO value keywords, a number, or a quoted empty string.' },
+    {
+      name: 'value',
+      optional: true,
+      doc: 'One of the uBO value keywords, a number, or a quoted empty string; absent means `undefined`.',
+    },
     { name: 'stack', optional: true, doc: 'Only answer with the constant when the call stack matches.' },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`runAt`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
   ],
-  fn: function (property: string, value: string, stack?: string) {
+  fn: function (property: string, value?: string, stack?: string, ..._extra: string[]) {
     try {
       if (typeof property !== 'string' || property === '') return;
       const toRe = (s: string | undefined): RegExp | null => {
@@ -88,7 +94,7 @@ export default defineScriptlet({
         }
         return NOT_SET;
       };
-      const constant = toValue(typeof value === 'string' ? value : '');
+      const constant = value === undefined ? undefined : toValue(value);
       if (constant === NOT_SET) return;
       const reStack = toRe(stack);
       const applies = (): boolean => {

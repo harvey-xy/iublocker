@@ -9,9 +9,18 @@ export default defineScriptlet({
       doc: 'Literal or /regex/ matched against the element name (`#text` for text nodes).',
     },
     { name: 'includes', doc: 'Only empty nodes whose text matches this literal or /regex/.' },
-    { name: 'excludes', optional: true, doc: 'Skip nodes whose text matches this literal or /regex/.' },
+    {
+      name: 'excludes',
+      optional: true,
+      doc: 'Legacy positional form; also settable as a trailing `excludes, <value>` pair.',
+    },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`excludes`, `condition`, `stay`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
+    { name: 'extra3', optional: true, doc: 'Further extra argument name.' },
+    { name: 'extra4', optional: true, doc: 'Value of `extra3`.' },
+    { name: 'extra5', optional: true, doc: 'Further extra argument name.' },
   ],
-  fn: function (nodeName: string, includes: string, excludes?: string) {
+  fn: function (nodeName: string, includes: string, ...extra: string[]) {
     try {
       const gt: any = globalThis;
       const doc: any = typeof document !== 'undefined' ? document : undefined;
@@ -31,8 +40,18 @@ export default defineScriptlet({
       };
       const reName = toRe(nodeName, '');
       if (reName === null) return;
-      const reIncludes = toRe(includes, '');
-      const reExcludes = toRe(excludes, '');
+      const KNOWN = ['excludes', 'condition', 'stay', 'log'];
+      const opts: Record<string, string> = {};
+      if (extra.length === 1 && KNOWN.indexOf(String(extra[0] ?? '').trim()) === -1) {
+        opts['excludes'] = String(extra[0] ?? '');
+      } else {
+        for (let i = 0; i + 1 < extra.length; i += 2) {
+          const k = String(extra[i] ?? '').trim();
+          if (k !== '') opts[k] = String(extra[i + 1] ?? '');
+        }
+      }
+      const reIncludes = toRe(opts['condition'] ?? includes, '');
+      const reExcludes = toRe(opts['excludes'], '');
       const handle = (node: any): void => {
         try {
           const text: string = String(node.textContent ?? '');

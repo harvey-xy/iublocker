@@ -14,8 +14,9 @@ export default defineScriptlet({
       optional: true,
       doc: "'' | emptyObj | emptyArr | emptyStr | throw | a literal body.",
     },
+    { name: 'responseType', optional: true, doc: 'Accepted for uBO compatibility; ignored.' },
   ],
-  fn: function (propsToMatch?: string, directive?: string) {
+  fn: function (propsToMatch?: string, directive?: string, _responseType?: string) {
     try {
       const gt: any = globalThis;
       const XHR: any = gt.XMLHttpRequest;

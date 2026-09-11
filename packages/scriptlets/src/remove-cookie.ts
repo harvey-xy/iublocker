@@ -3,8 +3,14 @@ import { defineScriptlet } from './_define';
 export default defineScriptlet({
   name: 'remove-cookie',
   aliases: ['cookie-remover'],
-  args: [{ name: 'name', doc: 'Literal or /regex/ matched against cookie names.' }],
-  fn: function (name: string) {
+  args: [
+    { name: 'name', optional: true, doc: 'Literal or /regex/ matched against cookie names.' },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`when`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
+    { name: 'extra3', optional: true, doc: 'Further extra argument name.' },
+    { name: 'extra4', optional: true, doc: 'Value of `extra3`.' },
+  ],
+  fn: function (name: string, ...extra: string[]) {
     try {
       const gt: any = globalThis;
       const doc: any = typeof document !== 'undefined' ? document : undefined;
@@ -24,6 +30,11 @@ export default defineScriptlet({
       };
       const re = toRe(name);
       if (re === null) return;
+      const opts: Record<string, string> = {};
+      for (let i = 0; i + 1 < extra.length; i += 2) {
+        const k = String(extra[i] ?? '').trim();
+        if (k !== '') opts[k] = String(extra[i + 1] ?? '');
+      }
       const expire = (key: string): void => {
         const host = String(gt.location !== undefined ? (gt.location.hostname ?? '') : '');
         const domains: string[] = [''];
@@ -70,6 +81,16 @@ export default defineScriptlet({
         gt.addEventListener('beforeunload', sweep);
       } catch {
         /* no event target */
+      }
+      // `when` re-sweeps on the named DOM events, e.g. `when, scroll keydown`.
+      for (const type of String(opts['when'] ?? '')
+        .split(/\s+/)
+        .filter((t) => t !== '')) {
+        try {
+          gt.addEventListener(type, sweep, { passive: true });
+        } catch {
+          /* no event target */
+        }
       }
     } catch {
       /* never throw into the page */

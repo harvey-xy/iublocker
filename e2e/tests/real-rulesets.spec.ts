@@ -391,6 +391,23 @@ test('the registered scriptlet content scripts match the manifest and their file
   });
 
   const expected = expectedScripts(ruleset, new Set(enabled));
+  // Registration runs in batches after install; with thousands of groups it can take a
+  // while. Wait until the count settles on the expected value before asserting.
+  const started = Date.now();
+  while (registered.length !== expected.count && Date.now() - started < 120_000) {
+    await new Promise((r) => setTimeout(r, 500));
+    registered.length = 0;
+    registered.push(
+      ...(await sw.evaluate(
+        async () =>
+          (await (globalThis as any).chrome.scripting.getRegisteredContentScripts()) as {
+            id: string;
+            js?: string[];
+          }[],
+      )),
+    );
+  }
+  summary.registrationMs = Date.now() - started;
   expect(registered.length).toBe(expected.count);
 
   const missing: string[] = [];

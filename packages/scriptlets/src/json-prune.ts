@@ -10,8 +10,10 @@ export default defineScriptlet({
       doc: 'Space-separated paths that must (or, with `!`, must not) exist.',
     },
     { name: 'stack', optional: true, doc: 'Only prune when the call stack matches this literal or /regex/.' },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument; accepted and ignored.' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
   ],
-  fn: function (propsToRemove: string, requiredProps?: string, stack?: string) {
+  fn: function (propsToRemove: string, requiredProps?: string, stack?: string, ..._extra: string[]) {
     try {
       const gt: any = globalThis;
       const paths = (s: string | undefined): string[][] =>

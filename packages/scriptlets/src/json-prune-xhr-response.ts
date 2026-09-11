@@ -10,8 +10,16 @@ export default defineScriptlet({
       doc: 'Space-separated paths that must (or, with `!`, must not) exist.',
     },
     { name: 'propsToMatch', optional: true, doc: 'Space-separated `key:pattern` pairs (url, method).' },
+    { name: 'extra1', optional: true, doc: 'Second half of a `propsToMatch, <value>` pair, or `stack`.' },
+    { name: 'extra2', optional: true, doc: 'Further trailing extra argument name.' },
+    { name: 'extra3', optional: true, doc: 'Value of `extra2`.' },
   ],
-  fn: function (propsToRemove: string, requiredProps?: string, propsToMatch?: string) {
+  fn: function (
+    propsToRemove: string,
+    requiredProps?: string,
+    propsToMatch?: string,
+    ...extra: string[]
+  ) {
     try {
       const gt: any = globalThis;
       const XHR: any = gt.XMLHttpRequest;
@@ -77,8 +85,19 @@ export default defineScriptlet({
         }
         return new RegExp(s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
       };
+      const KNOWN = ['propsToMatch', 'stack', 'logLevel', 'dontOverwrite'];
+      let match = String(propsToMatch ?? '');
+      if (KNOWN.indexOf(match.trim()) !== -1) {
+        const opts: Record<string, string> = {};
+        const all = [match, ...extra];
+        for (let i = 0; i + 1 < all.length; i += 2) {
+          const k = String(all[i] ?? '').trim();
+          if (k !== '') opts[k] = String(all[i + 1] ?? '');
+        }
+        match = opts['propsToMatch'] ?? '';
+      }
       const needles: { key: string; re: RegExp; negate: boolean }[] = [];
-      for (const tok of String(propsToMatch ?? '')
+      for (const tok of String(match)
         .split(/\s+/)
         .filter((t) => t !== '')) {
         if (tok === '*') continue;

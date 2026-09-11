@@ -10,8 +10,13 @@ export default defineScriptlet({
       doc: 'Space-separated `key:pattern` pairs; a bare token matches the URL.',
     },
     { name: 'responseBody', optional: true, doc: "'' | emptyObj | emptyArr | emptyStr | a literal body." },
+    {
+      name: 'responseType',
+      optional: true,
+      doc: "Response `type` to report (`opaque`, `cors`, …) or a JSON object of response properties.",
+    },
   ],
-  fn: function (propsToMatch?: string, responseBody?: string) {
+  fn: function (propsToMatch?: string, responseBody?: string, responseType?: string) {
     try {
       const gt: any = globalThis;
       if (typeof gt.fetch !== 'function') return;
@@ -64,9 +69,24 @@ export default defineScriptlet({
         case 'emptyArr':
           body = '[]';
           break;
-        default:
-          body = String(responseBody);
+        default: {
+          const raw = String(responseBody);
+          const m = /^length:(\d+)$/.exec(raw);
+          body = m === null ? raw : ' '.repeat(Math.min(parseInt(m[1] ?? '0', 10), 65536));
           break;
+        }
+      }
+      let props: Record<string, any> = {};
+      try {
+        const raw = String(responseType ?? '').trim();
+        if (raw.startsWith('{')) {
+          const parsed = JSON.parse(raw);
+          if (parsed !== null && typeof parsed === 'object') props = parsed;
+        } else if (raw !== '') {
+          props = { type: raw };
+        }
+      } catch {
+        /* not JSON: ignore the extra properties */
       }
       const makeResponse = (url: string): any => {
         if (typeof gt.Response === 'function') {
@@ -79,6 +99,13 @@ export default defineScriptlet({
             Object.defineProperty(r, 'url', { value: url });
           } catch {
             /* read-only in some engines */
+          }
+          for (const k of Object.keys(props)) {
+            try {
+              Object.defineProperty(r, k, { value: props[k], configurable: true });
+            } catch {
+              /* read-only in some engines */
+            }
           }
           return r;
         }

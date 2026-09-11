@@ -6,8 +6,12 @@ export default defineScriptlet({
     { name: 'name', doc: 'Cookie name.' },
     { name: 'value', doc: 'One of the uBO-approved consent values, or a number.' },
     { name: 'path', optional: true, doc: 'Cookie path, default "/".' },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`reload`, `domain`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
+    { name: 'extra3', optional: true, doc: 'Second trailing extra argument name.' },
+    { name: 'extra4', optional: true, doc: 'Value of `extra3`.' },
   ],
-  fn: function (name: string, value: string, path?: string) {
+  fn: function (name: string, value: string, path?: string, ...extra: string[]) {
     try {
       const gt: any = globalThis;
       const doc: any = typeof document !== 'undefined' ? document : undefined;
@@ -52,6 +56,11 @@ export default defineScriptlet({
         'granted',
         'emptystr',
       ];
+      const opts: Record<string, string> = {};
+      for (let i = 0; i + 1 < extra.length; i += 2) {
+        const k = String(extra[i] ?? '').trim();
+        if (k !== '') opts[k] = String(extra[i + 1] ?? '').trim();
+      }
       const raw = typeof value === 'string' ? value : '';
       const lower = raw.toLowerCase();
       let out: string | null = null;
@@ -70,6 +79,7 @@ export default defineScriptlet({
       if (p === 'none') p = '';
       let cookie = encName + '=' + encValue;
       if (p !== '') cookie += '; path=' + p;
+      if (opts['domain'] !== undefined && opts['domain'] !== '') cookie += '; domain=' + opts['domain'];
       doc.cookie = cookie;
       if (already) return;
       // Reload at most once per document so a rejected cookie cannot loop.

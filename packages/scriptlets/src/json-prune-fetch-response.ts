@@ -14,8 +14,16 @@ export default defineScriptlet({
       optional: true,
       doc: 'Space-separated `key:pattern` pairs selecting the requests to prune.',
     },
+    { name: 'extra1', optional: true, doc: 'Second half of a `propsToMatch, <value>` pair, or `stack`.' },
+    { name: 'extra2', optional: true, doc: 'Further trailing extra argument name.' },
+    { name: 'extra3', optional: true, doc: 'Value of `extra2`.' },
   ],
-  fn: function (propsToRemove: string, requiredProps?: string, propsToMatch?: string) {
+  fn: function (
+    propsToRemove: string,
+    requiredProps?: string,
+    propsToMatch?: string,
+    ...extra: string[]
+  ) {
     try {
       const gt: any = globalThis;
       if (typeof gt.fetch !== 'function' || typeof gt.Response !== 'function') return;
@@ -79,8 +87,19 @@ export default defineScriptlet({
         for (const parts of toPrune) remove(root, parts, 0);
         return root;
       };
+      const KNOWN = ['propsToMatch', 'stack', 'logLevel', 'dontOverwrite'];
+      let match = String(propsToMatch ?? '');
+      if (KNOWN.indexOf(match.trim()) !== -1) {
+        const opts: Record<string, string> = {};
+        const all = [match, ...extra];
+        for (let i = 0; i + 1 < all.length; i += 2) {
+          const k = String(all[i] ?? '').trim();
+          if (k !== '') opts[k] = String(all[i + 1] ?? '');
+        }
+        match = opts['propsToMatch'] ?? '';
+      }
       const needles: { key: string; re: RegExp; negate: boolean }[] = [];
-      for (const tok of String(propsToMatch ?? '')
+      for (const tok of String(match)
         .split(/\s+/)
         .filter((t) => t !== '')) {
         if (tok === '*') continue;

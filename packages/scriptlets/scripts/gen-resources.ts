@@ -169,6 +169,22 @@ function noopMp4(seconds: number): Buffer {
 const NOOP_JS = '(function () {})();\n';
 const NOOP_TXT = '';
 const NOOP_CSS = '';
+const NOOP_JSON = '{}';
+
+// An empty but structurally valid VAST/VMAP document: players parse it, find no ads,
+// and fall straight through to the content stream.
+const NOOP_VAST2 = `<?xml version="1.0" encoding="UTF-8"?>
+<VAST version="2.0"></VAST>
+`;
+const NOOP_VAST3 = `<?xml version="1.0" encoding="UTF-8"?>
+<VAST version="3.0"></VAST>
+`;
+const NOOP_VAST4 = `<?xml version="1.0" encoding="UTF-8"?>
+<VAST version="4.0"></VAST>
+`;
+const NOOP_VMAP1 = `<?xml version="1.0" encoding="UTF-8"?>
+<vmap:VMAP xmlns:vmap="http://www.iab.net/videosuite/vmap" version="1.0"></vmap:VMAP>
+`;
 const NOOP_HTML = `<!doctype html>
 <html lang="en">
   <head>
@@ -306,6 +322,11 @@ export function generateResources(dir: string = outDir): string[] {
   write('noop.txt', NOOP_TXT);
   write('noop.css', NOOP_CSS);
   write('noop.html', NOOP_HTML);
+  write('noop.json', NOOP_JSON);
+  write('noop-vast2.xml', NOOP_VAST2);
+  write('noop-vast3.xml', NOOP_VAST3);
+  write('noop-vast4.xml', NOOP_VAST4);
+  write('noop-vmap1.0.xml', NOOP_VMAP1);
   write('empty', '');
   write('click2load.html', CLICK2LOAD_HTML);
   write('click2load.js', CLICK2LOAD_JS);

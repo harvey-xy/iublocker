@@ -7,8 +7,13 @@ export default defineScriptlet({
     { name: 'attrs', doc: '`|`-separated attribute names.' },
     { name: 'selector', optional: true, doc: 'CSS selector; defaults to `[attr]` for each attribute.' },
     { name: 'behaviour', optional: true, doc: '`stay` keeps watching the DOM, `complete` waits for load.' },
+   {
+      name: 'extra',
+      optional: true,
+      doc: 'Further behaviour token; accepted for uBO compatibility.',
+    },
   ],
-  fn: function (attrs: string, selector?: string, behaviour?: string) {
+  fn: function (attrs: string, selector?: string, behaviour?: string, _extra?: string) {
     try {
       const gt: any = globalThis;
       const doc: any = typeof document !== 'undefined' ? document : undefined;

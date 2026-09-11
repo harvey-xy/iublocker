@@ -10,8 +10,12 @@ export default defineScriptlet({
       optional: true,
       doc: 'Literal or /regex/ matched against the handler source; `!` negates.',
     },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`elements`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
+    { name: 'extra3', optional: true, doc: 'Further extra argument name.' },
+    { name: 'extra4', optional: true, doc: 'Value of `extra3`.' },
   ],
-  fn: function (type?: string, pattern?: string) {
+  fn: function (type?: string, pattern?: string, ...extra: string[]) {
     try {
       const gt: any = globalThis;
       const ET: any = gt.EventTarget;
@@ -42,6 +46,23 @@ export default defineScriptlet({
         rawPat = rawPat.slice(1);
       }
       const rePat = toRe(rawPat);
+      const opts: Record<string, string> = {};
+      for (let i = 0; i + 1 < extra.length; i += 2) {
+        const k = String(extra[i] ?? '').trim();
+        if (k !== '') opts[k] = String(extra[i + 1] ?? '');
+      }
+      const elements = String(opts['elements'] ?? '').trim();
+      const onTarget = (target: any): boolean => {
+        if (elements === '') return true;
+        try {
+          if (elements === 'window') return target === gt;
+          if (elements === 'document') return target === gt.document;
+          if (target === null || target === undefined) return false;
+          return typeof target.matches === 'function' && target.matches(elements);
+        } catch {
+          return false;
+        }
+      };
       const nk = Symbol.for('iub.nativeMap');
       let nmap: WeakMap<any, any> = gt[nk];
       if (nmap === undefined) {
@@ -72,7 +93,7 @@ export default defineScriptlet({
             if (negType) mt = !mt;
             let mp = rePat.test(src);
             if (negPat) mp = !mp;
-            defuse = mt && mp;
+            defuse = mt && mp && onTarget(this);
           } catch {
             /* matching must never break the page */
           }

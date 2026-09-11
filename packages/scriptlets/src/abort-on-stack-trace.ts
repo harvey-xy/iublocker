@@ -5,9 +5,13 @@ export default defineScriptlet({
   aliases: ['aost'],
   args: [
     { name: 'property', doc: 'Property chain whose read triggers the stack check.' },
-    { name: 'needle', doc: 'Literal or /regex/ matched against the call stack.' },
+    {
+      name: 'needle',
+      optional: true,
+      doc: 'Literal or /regex/ matched against the call stack; empty matches every stack.',
+    },
   ],
-  fn: function (property: string, needle: string) {
+  fn: function (property: string, needle?: string) {
     try {
       if (typeof property !== 'string' || property === '') return;
       const toRe = (s: string | undefined): RegExp | null => {

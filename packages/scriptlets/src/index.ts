@@ -45,12 +45,52 @@ import trustedSetConstant from './trusted-set-constant';
 import trustedSetCookie from './trusted-set-cookie';
 import trustedSetLocalStorageItem from './trusted-set-local-storage-item';
 
+import alertBuster from './alert-buster';
+import hrefSanitizer from './href-sanitizer';
+import jsonEdit from './json-edit';
+import jsonEditFetchRequest from './json-edit-fetch-request';
+import jsonEditFetchResponse from './json-edit-fetch-response';
+import jsonEditXhrResponse from './json-edit-xhr-response';
+import jsonlEditXhrResponse from './jsonl-edit-xhr-response';
+import m3uPrune from './m3u-prune';
+import noWebrtc from './nowebrtc';
+import preventCanvas from './prevent-canvas';
+import preventClipboardWrite from './prevent-clipboard-write';
+import preventInnerHTML from './prevent-innerHTML';
+import preventRefresh from './prevent-refresh';
+import spoofCss from './spoof-css';
+import trustedClickElement from './trusted-click-element';
+import trustedCreateHtml from './trusted-create-html';
+import trustedEditInboundObject from './trusted-edit-inbound-object';
+import trustedJsonEdit from './trusted-json-edit';
+import trustedJsonEditFetchResponse from './trusted-json-edit-fetch-response';
+import trustedJsonEditXhrRequest from './trusted-json-edit-xhr-request';
+import trustedJsonEditXhrResponse from './trusted-json-edit-xhr-response';
+import trustedOverrideElementMethod from './trusted-override-element-method';
+import trustedPreventDomBypass from './trusted-prevent-dom-bypass';
+import trustedPreventFetch from './trusted-prevent-fetch';
+import trustedPreventXhr from './trusted-prevent-xhr';
+import trustedReplaceArgument from './trusted-replace-argument';
+import trustedReplaceNodeText from './trusted-replace-node-text';
+import trustedReplaceOutboundText from './trusted-replace-outbound-text';
+import trustedSetAttr from './trusted-set-attr';
+import trustedSetCookieReload from './trusted-set-cookie-reload';
+import trustedSetSessionStorageItem from './trusted-set-session-storage-item';
+import trustedSuppressNativeMethod from './trusted-suppress-native-method';
+import windowCloseIf from './window-close-if';
+import xmlPrune from './xml-prune';
+
 import addthisWidget from './surrogates/addthis-widget';
 import amazonAds from './surrogates/amazon-ads';
+import amazonApstag from './surrogates/amazon-apstag';
 import ampprojectV0 from './surrogates/ampproject-v0';
+import atiSmarttag from './surrogates/ati-smarttag';
 import chartbeat from './surrogates/chartbeat';
 import doubleclickInstreamAdStatus from './surrogates/doubleclick-instream-ad-status';
+import fingerprint2 from './surrogates/fingerprint2';
+import fingerprint3 from './surrogates/fingerprint3';
 import fuckadblock from './surrogates/fuckadblock';
+import googleIma from './surrogates/google-ima';
 import googleAnalyticsAnalytics from './surrogates/google-analytics-analytics';
 import googleAnalyticsCxApi from './surrogates/google-analytics-cx-api';
 import googleAnalyticsGa from './surrogates/google-analytics-ga';
@@ -61,6 +101,7 @@ import hdMain from './surrogates/hd-main';
 import ligatusAngularTag from './surrogates/ligatus-angular-tag';
 import monkeybroker from './surrogates/monkeybroker';
 import nobab from './surrogates/nobab';
+import nobab2 from './surrogates/nobab2';
 import nofab from './surrogates/nofab';
 import outbrainWidget from './surrogates/outbrain-widget';
 import popads from './surrogates/popads';
@@ -71,6 +112,40 @@ import scorecardresearchBeacon from './surrogates/scorecardresearch-beacon';
 /** Every scriptlet, in declaration order. */
 const definitions: ScriptletDefinition[] = [
   abortCurrentScript,
+  alertBuster,
+  hrefSanitizer,
+  jsonEdit,
+  jsonEditFetchRequest,
+  jsonEditFetchResponse,
+  jsonEditXhrResponse,
+  jsonlEditXhrResponse,
+  m3uPrune,
+  noWebrtc,
+  preventCanvas,
+  preventClipboardWrite,
+  preventInnerHTML,
+  preventRefresh,
+  spoofCss,
+  trustedClickElement,
+  trustedCreateHtml,
+  trustedEditInboundObject,
+  trustedJsonEdit,
+  trustedJsonEditFetchResponse,
+  trustedJsonEditXhrRequest,
+  trustedJsonEditXhrResponse,
+  trustedOverrideElementMethod,
+  trustedPreventDomBypass,
+  trustedPreventFetch,
+  trustedPreventXhr,
+  trustedReplaceArgument,
+  trustedReplaceNodeText,
+  trustedReplaceOutboundText,
+  trustedSetAttr,
+  trustedSetCookieReload,
+  trustedSetSessionStorageItem,
+  trustedSuppressNativeMethod,
+  windowCloseIf,
+  xmlPrune,
   abortOnPropertyRead,
   abortOnPropertyWrite,
   abortOnStackTrace,
@@ -108,9 +183,13 @@ const definitions: ScriptletDefinition[] = [
   trustedSetLocalStorageItem,
   addthisWidget,
   amazonAds,
+  amazonApstag,
   ampprojectV0,
+  atiSmarttag,
   chartbeat,
   doubleclickInstreamAdStatus,
+  fingerprint2,
+  fingerprint3,
   fuckadblock,
   googleAnalyticsAnalytics,
   googleAnalyticsCxApi,
@@ -121,7 +200,9 @@ const definitions: ScriptletDefinition[] = [
   hdMain,
   ligatusAngularTag,
   monkeybroker,
+  googleIma,
   nobab,
+  nobab2,
   nofab,
   outbrainWidget,
   popads,
@@ -154,6 +235,16 @@ const staticResources: Record<string, string> = {
   noopcss: 'noop.css',
   'noop.html': 'noop.html',
   noopframe: 'noop.html',
+  'noop.json': 'noop.json',
+  noopjson: 'noop.json',
+  'noop-vmap1.0.xml': 'noop-vmap1.0.xml',
+  'noopvmap-1.0': 'noop-vmap1.0.xml',
+  'noop-vast2.xml': 'noop-vast2.xml',
+  'noopvast-2.0': 'noop-vast2.xml',
+  'noop-vast3.xml': 'noop-vast3.xml',
+  'noopvast-3.0': 'noop-vast3.xml',
+  'noop-vast4.xml': 'noop-vast4.xml',
+  'noopvast-4.0': 'noop-vast4.xml',
   'noop-0.1s.mp3': 'noop-0.1s.mp3',
   'noopmp3-0.1s': 'noop-0.1s.mp3',
   'noop-1s.mp4': 'noop-1s.mp4',
@@ -186,6 +277,8 @@ const staticResources: Record<string, string> = {
 /** uBO's long-form `$redirect=` spellings for the surrogates. */
 const surrogateAliases: Record<string, string[]> = {
   'googletagservices_gpt.js': [
+    'googletagservices-gpt',
+    'googletagservices-gpt.js',
     'googletagservices.com/gpt.js',
     'googletagservices.com/tag/js/gpt.js',
     'googletagservices.com/tag/js/gpt_mobile.js',
@@ -195,6 +288,8 @@ const surrogateAliases: Record<string, string[]> = {
   'google-analytics_cx_api.js': ['google-analytics.com/cx/api.js'],
   'googletagmanager_gtm.js': ['googletagmanager.com/gtm.js', 'googletagmanager_gtm.js'],
   'googlesyndication_adsbygoogle.js': [
+    'googlesyndication-adsbygoogle',
+    'googlesyndication-adsbygoogle.js',
     'googlesyndication.com/adsbygoogle.js',
     'googlesyndication_adsbygoogle.js',
   ],
@@ -208,6 +303,11 @@ const surrogateAliases: Record<string, string[]> = {
   'addthis_widget.js': ['addthis.com/addthis_widget.js'],
   'ligatus_angular-tag.js': ['ligatus.com/*/angular-tag.js'],
   'popads.js': ['popads.net.js'],
+  'google-ima.js': ['google-ima3', 'imasdk.googleapis.com/js/sdkloader/ima3.js'],
+  'amazon_apstag.js': ['amazon-adsystem.com/aax2/apstag.js'],
+  'fingerprint2.js': ['fingerprintjs2'],
+  'fingerprint3.js': ['fingerprintjs3'],
+  'ati-smarttag.js': ['ati-smarttag'],
   'nobab.js': ['bab-defuser.js', 'prevent-bab.js'],
 };
 

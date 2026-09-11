@@ -13,10 +13,17 @@ export default defineScriptlet({
     {
       name: 'condition',
       optional: true,
-      doc: 'Only touch nodes whose text also matches this literal or /regex/.',
+      doc: 'Legacy positional form; also settable as a trailing `condition, <value>` pair.',
     },
+    { name: 'extra1', optional: true, doc: 'Trailing `name, value` extra argument (`condition`, `sedCount`, `stay`, `log`).' },
+    { name: 'extra2', optional: true, doc: 'Value of `extra1`.' },
+    { name: 'extra3', optional: true, doc: 'Further extra argument name.' },
+    { name: 'extra4', optional: true, doc: 'Value of `extra3`.' },
+    { name: 'extra5', optional: true, doc: 'Further extra argument name.' },
+    { name: 'extra6', optional: true, doc: 'Value of `extra5`.' },
+    { name: 'extra7', optional: true, doc: 'Further extra argument name.' },
   ],
-  fn: function (nodeName: string, pattern: string, replacement?: string, condition?: string) {
+  fn: function (nodeName: string, pattern: string, replacement?: string, ...extra: string[]) {
     try {
       const gt: any = globalThis;
       const doc: any = typeof document !== 'undefined' ? document : undefined;
@@ -34,11 +41,29 @@ export default defineScriptlet({
         }
         return new RegExp(s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
       };
+      const KNOWN = ['condition', 'sedCount', 'stay', 'log'];
+      const opts: Record<string, string> = {};
+      if (extra.length === 1 && KNOWN.indexOf(String(extra[0] ?? '').trim()) === -1) {
+        opts['condition'] = String(extra[0] ?? '');
+      } else {
+        for (let i = 0; i + 1 < extra.length; i += 2) {
+          const k = String(extra[i] ?? '').trim();
+          if (k !== '') opts[k] = String(extra[i + 1] ?? '');
+        }
+        if (extra.length % 2 === 1 && KNOWN.indexOf(String(extra[0] ?? '').trim()) === -1) {
+          opts['condition'] = String(extra[0] ?? '');
+        }
+      }
       const reName = toRe(nodeName, '');
       if (reName === null) return;
       const rePattern = toRe(pattern, 'g');
-      const reCondition = toRe(condition, '');
+      const reCondition = toRe(opts['condition'], '');
       const repl = typeof replacement === 'string' ? replacement : '';
+      const maxEdits = (() => {
+        const n = parseInt(String(opts['sedCount'] ?? ''), 10);
+        return isNaN(n) || n <= 0 ? Infinity : n;
+      })();
+      let edits = 0;
       const handle = (node: any): void => {
         try {
           const text: string = String(node.textContent ?? '');
@@ -53,7 +78,10 @@ export default defineScriptlet({
             rePattern.lastIndex = 0;
             out = text.replace(rePattern, repl);
           }
-          if (out !== text) node.textContent = out;
+          if (out === text) return;
+          if (edits >= maxEdits) return;
+          edits += 1;
+          node.textContent = out;
         } catch {
           /* node went away */
         }
