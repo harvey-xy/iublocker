@@ -206,9 +206,7 @@ other.com##+js(noop)
   });
 
   it('returns only generic calls for an unrelated host', () => {
-    expect(lookupScriptlets([db], 'unrelated.test')).toEqual([
-      { name: 'remove-attr', args: ['href'] },
-    ]);
+    expect(lookupScriptlets([db], 'unrelated.test')).toEqual([{ name: 'remove-attr', args: ['href'] }]);
   });
 
   it('is case-insensitive', () => {
@@ -216,9 +214,7 @@ other.com##+js(noop)
   });
 
   it('does not match a partial suffix', () => {
-    expect(lookupScriptlets([db], 'notexample.com')).toEqual([
-      { name: 'remove-attr', args: ['href'] },
-    ]);
+    expect(lookupScriptlets([db], 'notexample.com')).toEqual([{ name: 'remove-attr', args: ['href'] }]);
   });
 
   it('removes calls by name via exceptions along the walk', () => {
@@ -227,9 +223,7 @@ example.com##+js(set-constant, a, 1)
 example.com##+js(noop)
 sub.example.com#@#+js(set-constant)
     `).db;
-    expect(lookupScriptlets([withException], 'sub.example.com')).toEqual([
-      { name: 'noop', args: [] },
-    ]);
+    expect(lookupScriptlets([withException], 'sub.example.com')).toEqual([{ name: 'noop', args: [] }]);
     expect(lookupScriptlets([withException], 'example.com')).toHaveLength(2);
   });
 
@@ -289,6 +283,13 @@ describe('mergeScriptletDB', () => {
       { name: 'set-constant', args: ['a', '1'] },
       { name: 'abort-on-property-read', args: ['z'] },
     ]);
+  });
+
+  it('unions exception names on a shared hostname', () => {
+    const a = compile('x.com#@#+js(noop)\nx.com#@#+js(set)', { listId: 'a' }).db;
+    const b = compile('x.com#@#+js(set)\nx.com#@#+js(aopr)', { listId: 'b' }).db;
+    mergeScriptletDB(a, b);
+    expect(a.exceptions['x.com']).toEqual(['noop', 'set-constant', 'abort-on-property-read']);
   });
 
   it('does not alias arrays with the source', () => {

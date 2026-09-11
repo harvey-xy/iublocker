@@ -1,7 +1,7 @@
 # Public-suffix snapshot
 
 `suffixes.ts` holds a compact, hand-curated snapshot of the public suffixes needed to
-expand filter *entities* (`example.*` in `$domain=`, `$to=` and in cosmetic filters).
+expand filter _entities_ (`example.*` in `$domain=`, `$to=` and in cosmetic filters).
 
 We do not ship the full Public Suffix List (~9,500 rules, ~80 KB): entity expansion is
 capped at `ENTITY_EXPANSION_LIMIT` (300) hostnames anyway, so only the suffixes that
@@ -17,7 +17,7 @@ because the fallback expansion is `PUBLIC_SUFFIXES.slice(0, limit)`.
    `co.in`, `co.za`, `com.tw`, `com.mx`, `com.ar`, …) including the full `*.br` and
    `*.pl` second-level sets, which are the ones filter lists actually use.
 
-Wildcard rules (`*.ck`) and exception rules (`!www.ck`) from the real PSL are *not*
+Wildcard rules (`*.ck`) and exception rules (`!www.ck`) from the real PSL are _not_
 modelled: they never appear in filter-list entities.
 
 ## Regenerating

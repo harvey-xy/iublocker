@@ -150,7 +150,10 @@ function buildResourceTypes(f: NetworkFilter, condition: DNRCondition, forceDocu
   condition.excludedResourceTypes = ['main_frame'];
 }
 
-function applyPattern(f: NetworkFilter, condition: DNRCondition): { ok: true } | { ok: false; reason: string } {
+function applyPattern(
+  f: NetworkFilter,
+  condition: DNRCondition,
+): { ok: true } | { ok: false; reason: string } {
   if (f.kind === 'regex') {
     const source = f.regex ?? '';
     const check = checkRe2(source);
@@ -203,7 +206,9 @@ function applyDomains(f: NetworkFilter, condition: DNRCondition, ctx: ConvertCon
   if (f.domainType !== undefined) condition.domainType = f.domainType;
   if (f.header !== undefined) {
     const info: DNRHeaderInfo =
-      f.header.value === undefined ? { header: f.header.name } : { header: f.header.name, values: [f.header.value] };
+      f.header.value === undefined
+        ? { header: f.header.name }
+        : { header: f.header.name, values: [f.header.value] };
     if (f.header.negated) condition.excludedResponseHeaders = [info];
     else condition.responseHeaders = [info];
   }

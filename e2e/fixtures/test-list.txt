@@ -8,3 +8,15 @@
 127.0.0.1##+js(set-constant, adConfig, false)
 ||127.0.0.1/ads/gpt.js$script,redirect=googletagservices_gpt.js
 $removeparam=utm_source
+!
+! ---------------------------------------------------------------------------------------
+! Port-tolerant duplicates. The fixture server listens on 127.0.0.1:<random port>, and a
+! DNR `urlFilter` of the form `||host/path` does NOT match a URL that carries a port
+! (verified against Chromium 141: `||127.0.0.1/ads/^` lets http://127.0.0.1:41234/ads/x.js
+! through, while `||127.0.0.1^*/ads/` and `requestDomains:["127.0.0.1"] + "/ads/"` block
+! it). Keep both forms until the compiler maps `||host/path` to requestDomains + path.
+||127.0.0.1^*/ads/
+||127.0.0.1^*/track/$image,ping,xmlhttprequest
+! `$redirect` must outrank the block rules above: in DNR, `block` beats `redirect` at equal
+! priority, so the redirect needs the $important tier (docs/FILTER-SYNTAX.md §4).
+||127.0.0.1^*/ads/gpt.js$script,redirect=googletagservices_gpt.js,important

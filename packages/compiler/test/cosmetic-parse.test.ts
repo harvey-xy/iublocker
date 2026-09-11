@@ -193,66 +193,257 @@ describe('parseCosmeticFilter — native selectors', () => {
 
 describe('parseCosmeticFilter — procedural operators', () => {
   const cases: [string, ProceduralTask[]][] = [
-    ['##.a:has-text(Sponsored)', [['css', '.a'], ['has-text', 'Sponsored']]],
-    ['##.a:has-text(/spon\\w+/i)', [['css', '.a'], ['has-text', '/spon\\w+/i']]],
-    ["##.a:has-text(don't)", [['css', '.a'], ['has-text', "don't"]]],
-    ['##.a:contains(x)', [['css', '.a'], ['has-text', 'x']]],
-    ['##.a:-abp-contains(x)', [['css', '.a'], ['has-text', 'x']]],
-    ['##.a:matches-css(display: none)', [['css', '.a'], ['matches-css', 'display: none']]],
+    [
+      '##.a:has-text(Sponsored)',
+      [
+        ['css', '.a'],
+        ['has-text', 'Sponsored'],
+      ],
+    ],
+    [
+      '##.a:has-text(/spon\\w+/i)',
+      [
+        ['css', '.a'],
+        ['has-text', '/spon\\w+/i'],
+      ],
+    ],
+    [
+      "##.a:has-text(don't)",
+      [
+        ['css', '.a'],
+        ['has-text', "don't"],
+      ],
+    ],
+    [
+      '##.a:contains(x)',
+      [
+        ['css', '.a'],
+        ['has-text', 'x'],
+      ],
+    ],
+    [
+      '##.a:-abp-contains(x)',
+      [
+        ['css', '.a'],
+        ['has-text', 'x'],
+      ],
+    ],
+    [
+      '##.a:matches-css(display: none)',
+      [
+        ['css', '.a'],
+        ['matches-css', 'display: none'],
+      ],
+    ],
     [
       '##.a:matches-css-before(content: ads)',
-      [['css', '.a'], ['matches-css-before', 'content: ads']],
+      [
+        ['css', '.a'],
+        ['matches-css-before', 'content: ads'],
+      ],
     ],
-    ['##.a:matches-css-after(content: x)', [['css', '.a'], ['matches-css-after', 'content: x']]],
-    ['##.a:matches-attr(data-ad)', [['css', '.a'], ['matches-attr', 'data-ad']]],
-    ['##.a:matches-path(/shop)', [['css', '.a'], ['matches-path', '/shop']]],
+    [
+      '##.a:matches-css-after(content: x)',
+      [
+        ['css', '.a'],
+        ['matches-css-after', 'content: x'],
+      ],
+    ],
+    [
+      '##.a:matches-attr(data-ad)',
+      [
+        ['css', '.a'],
+        ['matches-attr', 'data-ad'],
+      ],
+    ],
+    [
+      '##.a:matches-path(/shop)',
+      [
+        ['css', '.a'],
+        ['matches-path', '/shop'],
+      ],
+    ],
     [
       '##.a:matches-media((min-width: 100px))',
-      [['css', '.a'], ['matches-media', '(min-width: 100px)']],
+      [
+        ['css', '.a'],
+        ['matches-media', '(min-width: 100px)'],
+      ],
     ],
-    ['##.a:min-text-length(10)', [['css', '.a'], ['min-text-length', 10]]],
-    ['##.a:min-text-length(0)', [['css', '.a'], ['min-text-length', 0]]],
-    ['##.a:upward(3)', [['css', '.a'], ['upward', 3]]],
-    ['##.a:upward(div.wrap)', [['css', '.a'], ['upward', 'div.wrap']]],
-    ['##.a:nth-ancestor(2)', [['css', '.a'], ['upward', 2]]],
-    ['##.a:xpath(//div[@id="b"])', [['css', '.a'], ['xpath', '//div[@id="b"]']]],
-    ['##.a:watch-attr(class)', [['css', '.a'], ['watch-attr', 'class']]],
+    [
+      '##.a:min-text-length(10)',
+      [
+        ['css', '.a'],
+        ['min-text-length', 10],
+      ],
+    ],
+    [
+      '##.a:min-text-length(0)',
+      [
+        ['css', '.a'],
+        ['min-text-length', 0],
+      ],
+    ],
+    [
+      '##.a:upward(3)',
+      [
+        ['css', '.a'],
+        ['upward', 3],
+      ],
+    ],
+    [
+      '##.a:upward(div.wrap)',
+      [
+        ['css', '.a'],
+        ['upward', 'div.wrap'],
+      ],
+    ],
+    [
+      '##.a:nth-ancestor(2)',
+      [
+        ['css', '.a'],
+        ['upward', 2],
+      ],
+    ],
+    [
+      '##.a:xpath(//div[@id="b"])',
+      [
+        ['css', '.a'],
+        ['xpath', '//div[@id="b"]'],
+      ],
+    ],
+    [
+      '##.a:watch-attr(class)',
+      [
+        ['css', '.a'],
+        ['watch-attr', 'class'],
+      ],
+    ],
     ['##.a:others()', [['css', '.a'], ['others']]],
     ['##.a:remove()', [['css', '.a'], ['remove']]],
     ['##.a:has-text(x):remove()', [['css', '.a'], ['has-text', 'x'], ['remove']]],
     [
       '##.a:has(.b:has-text(x))',
-      [['css', '.a'], ['has', { raw: '.b:has-text(x)', tasks: [['css', '.b'], ['has-text', 'x']] }]],
+      [
+        ['css', '.a'],
+        [
+          'has',
+          {
+            raw: '.b:has-text(x)',
+            tasks: [
+              ['css', '.b'],
+              ['has-text', 'x'],
+            ],
+          },
+        ],
+      ],
     ],
     [
       '##.a:not(.b:has-text(x))',
-      [['css', '.a'], ['not', { raw: '.b:has-text(x)', tasks: [['css', '.b'], ['has-text', 'x']] }]],
+      [
+        ['css', '.a'],
+        [
+          'not',
+          {
+            raw: '.b:has-text(x)',
+            tasks: [
+              ['css', '.b'],
+              ['has-text', 'x'],
+            ],
+          },
+        ],
+      ],
     ],
     [
       '##.a:if(.b:has-text(x))',
-      [['css', '.a'], ['has', { raw: '.b:has-text(x)', tasks: [['css', '.b'], ['has-text', 'x']] }]],
+      [
+        ['css', '.a'],
+        [
+          'has',
+          {
+            raw: '.b:has-text(x)',
+            tasks: [
+              ['css', '.b'],
+              ['has-text', 'x'],
+            ],
+          },
+        ],
+      ],
     ],
     [
       '##.a:if-not(.b:has-text(x))',
-      [['css', '.a'], ['not', { raw: '.b:has-text(x)', tasks: [['css', '.b'], ['has-text', 'x']] }]],
+      [
+        ['css', '.a'],
+        [
+          'not',
+          {
+            raw: '.b:has-text(x)',
+            tasks: [
+              ['css', '.b'],
+              ['has-text', 'x'],
+            ],
+          },
+        ],
+      ],
     ],
     // implicit `*` when the chain starts with an operator
-    ['##:has-text(Ad)', [['css', '*'], ['has-text', 'Ad']]],
+    [
+      '##:has-text(Ad)',
+      [
+        ['css', '*'],
+        ['has-text', 'Ad'],
+      ],
+    ],
     // plain CSS between and after operators becomes `css` steps
-    ['##.a:has-text(x) .b', [['css', '.a'], ['has-text', 'x'], ['css', '.b']]],
-    ['##.a:has-text(x) > .b', [['css', '.a'], ['has-text', 'x'], ['css', '> .b']]],
+    [
+      '##.a:has-text(x) .b',
+      [
+        ['css', '.a'],
+        ['has-text', 'x'],
+        ['css', '.b'],
+      ],
+    ],
+    [
+      '##.a:has-text(x) > .b',
+      [
+        ['css', '.a'],
+        ['has-text', 'x'],
+        ['css', '> .b'],
+      ],
+    ],
     [
       '##.a:has-text(x) .b:upward(1)',
-      [['css', '.a'], ['has-text', 'x'], ['css', '.b'], ['upward', 1]],
+      [
+        ['css', '.a'],
+        ['has-text', 'x'],
+        ['css', '.b'],
+        ['upward', 1],
+      ],
     ],
     // arguments are trimmed
-    ['##.a:has-text(  x  )', [['css', '.a'], ['has-text', 'x']]],
+    [
+      '##.a:has-text(  x  )',
+      [
+        ['css', '.a'],
+        ['has-text', 'x'],
+      ],
+    ],
     // procedural inside a `#?#` filter
-    ['example.com#?#.a:has-text(x)', [['css', '.a'], ['has-text', 'x']]],
+    [
+      'example.com#?#.a:has-text(x)',
+      [
+        ['css', '.a'],
+        ['has-text', 'x'],
+      ],
+    ],
     // AdGuard `#$?#` = procedural + style
     [
       'example.com#$?#.a:has-text(x) { color: red }',
-      [['css', '.a'], ['has-text', 'x'], ['style', 'color: red']],
+      [
+        ['css', '.a'],
+        ['has-text', 'x'],
+        ['style', 'color: red'],
+      ],
     ],
   ];
   for (const [raw, expected] of cases) {

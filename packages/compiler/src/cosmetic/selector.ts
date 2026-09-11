@@ -13,13 +13,7 @@ function at(s: string, i: number): string {
 }
 
 export function isNameChar(c: string): boolean {
-  return (
-    (c >= 'a' && c <= 'z') ||
-    (c >= 'A' && c <= 'Z') ||
-    (c >= '0' && c <= '9') ||
-    c === '-' ||
-    c === '_'
-  );
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c === '-' || c === '_';
 }
 
 /** Characters that may appear in an id/class identifier (escapes handled separately). */
@@ -228,10 +222,7 @@ export function scanSelector(s: string): ScanResult {
   return { ok: true, scan: { pseudos, commas, siblings, firstCompoundEnd } };
 }
 
-export type GenericKey =
-  | { kind: 'id'; key: string }
-  | { kind: 'class'; key: string }
-  | { kind: 'complex' };
+export type GenericKey = { kind: 'id'; key: string } | { kind: 'class'; key: string } | { kind: 'complex' };
 
 /**
  * Generic-hiding key of a selector (docs/COSMETIC-FILTERING.md §2).

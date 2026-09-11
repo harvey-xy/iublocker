@@ -24,11 +24,7 @@ com##.tld
     `);
 
   it('returns the union along the walk', () => {
-    expect(lookupCosmetic([list], 'sub.example.com').selectors).toEqual([
-      '.child',
-      '.parent',
-      '.tld',
-    ]);
+    expect(lookupCosmetic([list], 'sub.example.com').selectors).toEqual(['.child', '.parent', '.tld']);
   });
 
   it('does not leak from a sibling hostname', () => {
@@ -40,19 +36,11 @@ com##.tld
   });
 
   it('walks deep subdomains', () => {
-    expect(lookupCosmetic([list], 'a.b.sub.example.com').selectors).toEqual([
-      '.child',
-      '.parent',
-      '.tld',
-    ]);
+    expect(lookupCosmetic([list], 'a.b.sub.example.com').selectors).toEqual(['.child', '.parent', '.tld']);
   });
 
   it('is case-insensitive', () => {
-    expect(lookupCosmetic([list], 'Sub.Example.COM').selectors).toEqual([
-      '.child',
-      '.parent',
-      '.tld',
-    ]);
+    expect(lookupCosmetic([list], 'Sub.Example.COM').selectors).toEqual(['.child', '.parent', '.tld']);
   });
 
   it('returns an empty result for an unknown hostname', () => {
@@ -177,6 +165,14 @@ describe('lookupCosmetic — multiple databases', () => {
     const b = db('example.com#@#.ad', 'b');
     expect(lookupCosmetic([a, b], 'example.com').selectors).toEqual([]);
     expect(lookupCosmetic([b, a], 'example.com').selectors).toEqual([]);
+  });
+
+  it('dedupes identical styles and procedural filters across DBs', () => {
+    const a = db('example.com##.x:style(color: red)\nexample.com#?#.p:has-text(q)', 'a');
+    const b = db('example.com##.x:style(color: red)\nexample.com#?#.p:has-text(q)', 'b');
+    const result = lookupCosmetic([a, b], 'example.com');
+    expect(result.styles).toEqual([['.x', 'color: red']]);
+    expect(result.procedural).toHaveLength(1);
   });
 
   it('returns an empty result for no DBs', () => {

@@ -90,7 +90,8 @@ export function checkRe2(source: string): Re2Check {
       if (t === '>') return fail('atomic groups are not supported by RE2');
       if (t === '#') return fail('regex comments are not supported by RE2');
       if (t === '(') return fail('conditionals are not supported by RE2');
-      if (t === '{' || t === 'R' || t === '&' || t === '+') return fail('recursion/code is not supported by RE2');
+      if (t === '{' || t === 'R' || t === '&' || t === '+')
+        return fail('recursion/code is not supported by RE2');
       if (t === '<') {
         const u = source[i + 3];
         if (u === '=' || u === '!') return fail('lookbehind is not supported by RE2');

@@ -63,6 +63,7 @@ describe('splitScriptletArgs', () => {
     ['name, ', ['name']],
     // backslashes that are not comma escapes are preserved
     ['name, \\d+', ['name', '\\d+']],
+    ["name, 'a\\d+b'", ['name', 'a\\d+b']],
   ];
   for (const [text, expected] of cases) {
     it(`splits ${JSON.stringify(text)}`, () => {

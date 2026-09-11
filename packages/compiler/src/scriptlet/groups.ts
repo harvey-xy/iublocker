@@ -59,7 +59,10 @@ export function computeScriptletGroups(dbs: { listId: string; db: ScriptletDB }[
       groups.set(canonical, group);
     }
     group.hosts.push(host);
-    const keys = host === SCRIPTLET_GENERIC_HOST_KEY ? [SCRIPTLET_GENERIC_HOST_KEY] : [...hostnameWalk(host), SCRIPTLET_GENERIC_HOST_KEY];
+    const keys =
+      host === SCRIPTLET_GENERIC_HOST_KEY
+        ? [SCRIPTLET_GENERIC_HOST_KEY]
+        : [...hostnameWalk(host), SCRIPTLET_GENERIC_HOST_KEY];
     for (const { listId, db } of dbs) {
       if (group.listIds.includes(listId)) continue;
       if (keys.some((key) => db.byHost[key] !== undefined)) group.listIds.push(listId);
@@ -113,6 +116,10 @@ export function emitScriptletGroupBundle(
   lines.push('(function () {');
   lines.push('  "use strict";');
   lines.push('  try {');
+  // Some TS→JS pipelines (esbuild `keepNames`) rewrite nested function expressions to
+  // `__name(fn, "fn")`, and that helper is not part of `fn.toString()`. Providing an
+  // inert local shim keeps such sources runnable; it is unused otherwise.
+  lines.push('    var __name = function (f) { return f; };');
   lines.push('    var g = window.__iub_sl;');
   lines.push('    if (!g) { g = window.__iub_sl = {}; }');
   lines.push('    var run = function (key, fn, args) {');

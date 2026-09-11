@@ -306,10 +306,7 @@ describe('dedupe, merge and shadowing', () => {
   });
 
   it('merges initiator domains for identical patterns', () => {
-    const result = compile([
-      '||ads.example/x$domain=one.example',
-      '||ads.example/x$domain=two.example',
-    ]);
+    const result = compile(['||ads.example/x$domain=one.example', '||ads.example/x$domain=two.example']);
     expect(result.rules).toHaveLength(1);
     expect(result.rules[0]?.condition.initiatorDomains).toEqual(['one.example', 'two.example']);
   });

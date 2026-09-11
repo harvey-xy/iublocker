@@ -173,7 +173,7 @@ export function buildRuleResources(
   return resources;
 }
 
-function buildManifest(
+export function buildManifest(
   version: string,
   ruleResources: RuleResource[],
   exists: (relPath: string) => boolean,

@@ -68,6 +68,23 @@ describe('canonicalCalls', () => {
     expect(canonicalCalls(a)).toBe(canonicalCalls(b));
   });
 
+  it('is stable for equal names and arguments', () => {
+    const calls: ScriptletCall[] = [
+      { name: 'noop', args: [] },
+      { name: 'noop', args: [] },
+    ];
+    expect(canonicalCalls(calls)).toBe('[{"name":"noop","args":[]},{"name":"noop","args":[]}]');
+  });
+
+  it('orders by argument when names are equal', () => {
+    expect(
+      canonicalCalls([
+        { name: 'set-constant', args: ['b'] },
+        { name: 'set-constant', args: ['a'] },
+      ]),
+    ).toBe('[{"name":"set-constant","args":["a"]},{"name":"set-constant","args":["b"]}]');
+  });
+
   it('distinguishes different arguments', () => {
     expect(canonicalCalls([{ name: 'set-constant', args: ['a', '1'] }])).not.toBe(
       canonicalCalls([{ name: 'set-constant', args: ['a', '2'] }]),
@@ -234,10 +251,7 @@ describe('emitScriptletGroupBundle', () => {
   });
 
   it('escapes "</" so the source is safe to inline', () => {
-    const source = emitScriptletGroupBundle(
-      group([{ name: 'log-args', args: ['</script>'] }]),
-      fakeResolve,
-    );
+    const source = emitScriptletGroupBundle(group([{ name: 'log-args', args: ['</script>'] }]), fakeResolve);
     expect(source).not.toContain('</script>');
     expect(runBundle(source)).toEqual([['log-args', '</script>', undefined]]);
   });
@@ -278,6 +292,25 @@ describe('emitScriptletGroupBundle', () => {
     const source = emitScriptletGroupBundle(group([]), fakeResolve);
     expect(source.startsWith('/* iuBlocker scriptlet bundle deadbeef1234 */')).toBe(true);
     expect(runBundle(source)).toEqual([]);
+  });
+
+  it('shims the esbuild __name helper so keepNames output still runs', () => {
+    const named = (_name: string) => ({
+      name: 'named',
+      // What esbuild's `keepNames` produces inside a transpiled scriptlet body.
+      fn: new Function(
+        'return function () { var inner = __name(function () {}, "inner"); window.__log.push(["named", typeof inner]); }',
+      )() as (...args: string[]) => void,
+    });
+    const source = emitScriptletGroupBundle(group([{ name: 'named', args: [] }]), named);
+    expect(runBundle(source)).toEqual([['named', 'function']]);
+  });
+
+  it('falls back to the bundled registry when no resolver is given', () => {
+    // T3 fills @iublocker/scriptlets; either way the emitted file must stay valid JS.
+    const source = emitScriptletGroupBundle(group([{ name: 'noop', args: [] }]));
+    expect(source.startsWith('/* iuBlocker scriptlet bundle deadbeef1234 */')).toBe(true);
+    expect(() => new Function('window', source)).not.toThrow();
   });
 
   it('round-trips a compiled list end to end', () => {

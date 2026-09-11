@@ -8,7 +8,7 @@ import { deflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { registry } from '../src/index';
+import { registry, serializeScriptletFn } from '../src/index';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outDir = join(here, '..', '..', 'extension', 'public', 'resources');
@@ -321,7 +321,7 @@ export function generateResources(dir: string = outDir): string[] {
 
   for (const def of Object.values(registry)) {
     if (def.redirectResource === undefined) continue;
-    write(def.redirectResource, surrogateSource(def.name, def.fn.toString()));
+    write(def.redirectResource, surrogateSource(def.name, serializeScriptletFn(def.fn, def.name)));
   }
   return written;
 }

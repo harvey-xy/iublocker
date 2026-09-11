@@ -99,7 +99,15 @@ describe('evaluateIfExpression', () => {
 describe('classifyLines', () => {
   it('captures list metadata', () => {
     const { meta } = classifyLines(
-      ['[Adblock Plus 2.0]', '! Title: Test List', '! Version: 2026.1', '! Expires: 4 days', '! Homepage: https://x.invalid', '! Last modified: today', '! Licence: GPL-3.0'].join('\n'),
+      [
+        '[Adblock Plus 2.0]',
+        '! Title: Test List',
+        '! Version: 2026.1',
+        '! Expires: 4 days',
+        '! Homepage: https://x.invalid',
+        '! Last modified: today',
+        '! Licence: GPL-3.0',
+      ].join('\n'),
     );
     expect(meta).toEqual({
       title: 'Test List',
@@ -209,7 +217,9 @@ describe('classifyLines', () => {
   });
 
   it('routes AdGuard scriptlets and raw JS separately', () => {
-    const result = classifyLines('example.com#%#//scriptlet("set-constant", "a", "1")\nexample.com#%#window.x = 1');
+    const result = classifyLines(
+      'example.com#%#//scriptlet("set-constant", "a", "1")\nexample.com#%#window.x = 1',
+    );
     expect(result.scriptlet).toHaveLength(1);
     expect(result.html).toHaveLength(1);
   });

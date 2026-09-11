@@ -48,10 +48,7 @@ function callId(call: ScriptletCall): string {
 }
 
 /** Compile `##+js(...)` / `#@#+js(...)` lines into a `ScriptletDB`. */
-export function compileScriptlets(
-  lines: RawLine[],
-  opts: ScriptletCompileOptions,
-): CompileScriptletResult {
+export function compileScriptlets(lines: RawLine[], opts: ScriptletCompileOptions): CompileScriptletResult {
   const dropped: DroppedFilter[] = [];
   const warnings: string[] = [];
   const resolve = resolverOf(opts);

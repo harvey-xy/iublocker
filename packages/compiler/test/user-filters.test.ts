@@ -6,7 +6,10 @@ const OPTS = { trusted: false, allowTrustedScriptlets: false };
 
 describe('compileUserFilters', () => {
   it('compiles network filters into dynamic rules in the user range', () => {
-    const result = compileUserFilters('||ads.example.com^\n@@||safe.example.com^\n||x.example^$important', OPTS);
+    const result = compileUserFilters(
+      '||ads.example.com^\n@@||safe.example.com^\n||x.example^$important',
+      OPTS,
+    );
     expect(result.dnr.map((r) => r.id)).toEqual([
       ID_RANGE.USER.start,
       ID_RANGE.USER.start + 1,
@@ -69,5 +72,30 @@ describe('compileUserFilters', () => {
       readFileSync(new URL('../src/user.ts', import.meta.url), 'utf8'),
     );
     expect(source).not.toMatch(/from 'node:/);
+  });
+});
+
+describe('package entry point', () => {
+  it('re-exports the T1 API without name collisions', async () => {
+    const api = await import('../src/index');
+    for (const name of [
+      'classifyLines',
+      'parseNetworkFilter',
+      'compileNetwork',
+      'collectBadfilterKeys',
+      'compileUserFilters',
+    ]) {
+      expect(typeof (api as Record<string, unknown>)[name], name).toBe('function');
+    }
+  });
+
+  it('exposes the dnr and parser barrels', async () => {
+    const dnr = await import('../src/dnr');
+    expect(typeof dnr.checkRe2).toBe('function');
+    expect(typeof dnr.convertFilter).toBe('function');
+    expect(typeof dnr.optimize).toBe('function');
+    const parser = await import('../src/parser');
+    expect(typeof parser.classifyLines).toBe('function');
+    expect(typeof parser.parseNetworkFilter).toBe('function');
   });
 });

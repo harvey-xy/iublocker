@@ -41,3 +41,26 @@ export function defineScriptlet(spec: ScriptletSpec): ScriptletDefinition {
   if (spec.redirectResource !== undefined) def.redirectResource = spec.redirectResource;
   return def;
 }
+
+/**
+ * Serialise a scriptlet for injection.
+ *
+ * `fn.toString()` is almost enough, but a transpiler may rewrite named inner functions
+ * into `__name(fn, "fn")` calls (esbuild's `keepNames`, which `tsx` turns on). That helper
+ * lives in module scope, so the serialised body would stop being self-contained. Splice a
+ * local no-op shim into the body when — and only when — the transpiler did that, and refuse
+ * to emit anything that still depends on some other helper we do not know about.
+ */
+export function serializeScriptletFn(fn: (...args: any[]) => void, name = 'scriptlet'): string {
+  const source = fn.toString();
+  const open = source.indexOf('{');
+  if (open === -1) throw new Error(`scriptlets: cannot serialise "${name}": no function body`);
+  const needsName = /\b__name\s*\(/.test(source);
+  const shim = needsName ? 'var __name=function(f){return f};' : '';
+  const out = source.slice(0, open + 1) + shim + source.slice(open + 1);
+  const leftover = /\b__(?!name\b)[A-Za-z$_][\w$]*\s*\(/.exec(out);
+  if (leftover !== null) {
+    throw new Error(`scriptlets: "${name}" depends on transpiler helper ${leftover[0]}; rewrite it`);
+  }
+  return out;
+}

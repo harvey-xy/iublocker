@@ -75,7 +75,13 @@ describe('compileCosmetic — generic', () => {
   it('stores generic procedural and style filters under "*"', () => {
     const { db } = compile('#?#.a:has-text(Ad)\n##.b:style(color: red)');
     expect(db.procedural['*']).toEqual([
-      { raw: '.a:has-text(Ad)', tasks: [['css', '.a'], ['has-text', 'Ad']] },
+      {
+        raw: '.a:has-text(Ad)',
+        tasks: [
+          ['css', '.a'],
+          ['has-text', 'Ad'],
+        ],
+      },
     ]);
     expect(db.styles['*']).toEqual([['.b', 'color: red']]);
     expect(db.specific).toEqual({});
@@ -97,7 +103,13 @@ example.com##.c:remove()
     `);
     expect(db.styles['example.com']).toEqual([['.ad', 'opacity: 0.1']]);
     expect(db.procedural['example.com']).toEqual([
-      { raw: '.b:has-text(Ad)', tasks: [['css', '.b'], ['has-text', 'Ad']] },
+      {
+        raw: '.b:has-text(Ad)',
+        tasks: [
+          ['css', '.b'],
+          ['has-text', 'Ad'],
+        ],
+      },
       { raw: '.c:remove()', tasks: [['css', '.c'], ['remove']] },
     ]);
     expect(db.specific['example.com']).toBeUndefined();
@@ -105,11 +117,7 @@ example.com##.c:remove()
 
   it('expands entities against the suffix snapshot', () => {
     const { db } = compile('example.*##.ad');
-    expect(Object.keys(db.specific).sort()).toEqual([
-      'example.co.uk',
-      'example.com',
-      'example.net',
-    ]);
+    expect(Object.keys(db.specific).sort()).toEqual(['example.co.uk', 'example.com', 'example.net']);
   });
 
   it('honours the entity expansion cap', () => {
@@ -132,11 +140,7 @@ describe('compileCosmetic — negations and exceptions', () => {
 
   it('expands negated entities', () => {
     const { db } = compile('example.com,~other.*##.ad');
-    expect(Object.keys(db.exceptions.selectors).sort()).toEqual([
-      'other.co.uk',
-      'other.com',
-      'other.net',
-    ]);
+    expect(Object.keys(db.exceptions.selectors).sort()).toEqual(['other.co.uk', 'other.com', 'other.net']);
   });
 
   it('a specific exception removes the specific selector', () => {
@@ -276,10 +280,22 @@ example.com,~sub.example.com##.neg
     expect(merged.exceptions.elemhide).toEqual(['x.com']);
   });
 
+  it('dedupes styles and procedural filters on a shared hostname', () => {
+    const a = compile('example.com##.x:style(color: red)\nexample.com#?#.p:has-text(a)').db;
+    const b = compile(
+      'example.com##.x:style(color: red)\nexample.com##.y:style(color: blue)\nexample.com#?#.p:has-text(a)\nexample.com#?#.q:has-text(b)',
+    ).db;
+    mergeCosmeticDB(a, b);
+    expect(a.styles['example.com']).toEqual([
+      ['.x', 'color: red'],
+      ['.y', 'color: blue'],
+    ]);
+    expect(a.procedural['example.com']?.map((f) => f.raw)).toEqual(['.p:has-text(a)', '.q:has-text(b)']);
+  });
+
   it('does not alias arrays with the source', () => {
     const a = emptyCosmeticDB('a');
-    const b = compile('example.com##.x\nexample.com##.y:style(color: red)\nexample.com#?#.z:remove()')
-      .db;
+    const b = compile('example.com##.x\nexample.com##.y:style(color: red)\nexample.com#?#.z:remove()').db;
     mergeCosmeticDB(a, b);
     const aSpecific = a.specific['example.com'];
     const bSpecific = b.specific['example.com'];

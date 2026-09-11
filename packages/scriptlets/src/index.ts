@@ -6,7 +6,7 @@ import type { ScriptletRegistryJSON } from '@iublocker/shared';
 import type { ScriptletDefinition } from './_define';
 
 export type { ScriptletDefinition, ScriptletSpec } from './_define';
-export { defineScriptlet } from './_define';
+export { defineScriptlet, serializeScriptletFn } from './_define';
 
 import abortCurrentScript from './abort-current-script';
 import abortOnPropertyRead from './abort-on-property-read';

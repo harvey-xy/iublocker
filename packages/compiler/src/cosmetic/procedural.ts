@@ -188,8 +188,7 @@ export function normalizeNativeSelector(sel: string): Result<string> {
 }
 
 export type ParsedSelector =
-  | { procedural: false; css: string }
-  | { procedural: true; tasks: ProceduralTask[] };
+  { procedural: false; css: string } | { procedural: true; tasks: ProceduralTask[] };
 
 /**
  * Parse a cosmetic selector into either a validated plain CSS selector or a

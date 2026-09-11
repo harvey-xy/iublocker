@@ -234,7 +234,10 @@ describe('modifier options', () => {
   });
 
   it('$removeheader knows request and response targets', () => {
-    expect(parse('||a.com^$removeheader=refresh').removeHeader).toEqual({ target: 'response', name: 'refresh' });
+    expect(parse('||a.com^$removeheader=refresh').removeHeader).toEqual({
+      target: 'response',
+      name: 'refresh',
+    });
     expect(parse('||a.com^$removeheader=request:cookie').removeHeader).toEqual({
       target: 'request',
       name: 'cookie',

@@ -106,7 +106,17 @@ const TYPE_ALIASES: Record<string, DNRResourceType> = {
   doc: 'main_frame',
 };
 
-const METHODS = new Set<string>(['connect', 'delete', 'get', 'head', 'options', 'patch', 'post', 'put', 'other']);
+const METHODS = new Set<string>([
+  'connect',
+  'delete',
+  'get',
+  'head',
+  'options',
+  'patch',
+  'post',
+  'put',
+  'other',
+]);
 
 /** Options MV3 cannot express; dropped with a warning (docs/FILTER-SYNTAX.md §2.2). */
 const UNSUPPORTED_OPTIONS = new Set([
@@ -421,7 +431,8 @@ export function parseNetworkFilter(
           break;
         case 'permissions':
           if (value === '') {
-            if (!isException) return { ok: false, reason: '$permissions without a value is only valid on @@' };
+            if (!isException)
+              return { ok: false, reason: '$permissions without a value is only valid on @@' };
             f.permissions = '';
           } else {
             f.permissions = value.trim().split('\\,').join(',');
@@ -443,7 +454,8 @@ export function parseNetworkFilter(
           const colon = value.indexOf(':');
           const hname = (colon === -1 ? value : value.slice(0, colon)).toLowerCase().trim();
           const hvalue = colon === -1 ? undefined : value.slice(colon + 1);
-          f.header = hvalue === undefined ? { name: hname, negated } : { name: hname, value: hvalue, negated };
+          f.header =
+            hvalue === undefined ? { name: hname, negated } : { name: hname, value: hvalue, negated };
           break;
         }
         case 'elemhide':

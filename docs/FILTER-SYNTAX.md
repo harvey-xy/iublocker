@@ -43,7 +43,7 @@ digit, or one of `_ - . %`, or end of URL). Non‑ASCII hostnames are punycoded.
 | `ad/banner*.gif` | `urlFilter: "ad/banner*.gif"` | Direct. |
 | `/ads?[0-9]+\.js/` | `regexFilter` | RE2 only; validated with `isRegexSupported` at build time; ≤ 1,000 per ruleset. |
 | pattern with `^` in the middle | `urlFilter` | Direct. |
-| Pure hostname `example.com` (hosts‑file style lists) | `requestDomains: ["example.com"]` | Peter Lowe / hosts lists. |
+| Pure hostname `example.com` (hosts‑file style lists) | `requestDomains: ["example.com"]` | Peter Lowe / hosts lists. Only for lists whose `format` is `hosts` (or lines shaped `0.0.0.0 host`, which the classifier rewrites to `||host^`): in an ABP list a bare `ads.js` is a substring pattern, as in uBO. |
 
 `isUrlFilterCaseSensitive` is `false` unless `$match-case`.
 

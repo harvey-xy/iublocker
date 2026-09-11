@@ -214,7 +214,9 @@ export function checkBudgets(entries: readonly RulesetListEntry[], scriptletByte
     failures.push(`${entries.length} rulesets declared, Chrome allows ${DNR_LIMITS.MAX_STATIC_RULESETS}`);
   }
   if (scriptletBytes > BUILD_BUDGET.SCRIPTLET_GROUP_BYTES) {
-    failures.push(`scriptlet bundles total ${scriptletBytes} bytes, budget is ${BUILD_BUDGET.SCRIPTLET_GROUP_BYTES}`);
+    failures.push(
+      `scriptlet bundles total ${scriptletBytes} bytes, budget is ${BUILD_BUDGET.SCRIPTLET_GROUP_BYTES}`,
+    );
   }
   return failures;
 }
@@ -308,8 +310,10 @@ export function runCli(argv: readonly string[]): number {
 
   const { compileCosmetic, addCosmeticNetworkExceptions } = cosmeticApi();
   const { compileScriptlets } = scriptletApi();
-  if (compileCosmetic === undefined) warningsGlobal.push('cosmetic compiler (T2) unavailable — empty cosmetic DBs');
-  if (compileScriptlets === undefined) warningsGlobal.push('scriptlet compiler (T2) unavailable — empty scriptlet DBs');
+  if (compileCosmetic === undefined)
+    warningsGlobal.push('cosmetic compiler (T2) unavailable — empty cosmetic DBs');
+  if (compileScriptlets === undefined)
+    warningsGlobal.push('scriptlet compiler (T2) unavailable — empty scriptlet DBs');
 
   const entries: RulesetListEntry[] = [];
   const reportLists: RulesetReport['lists'] = {};
@@ -322,6 +326,7 @@ export function runCli(argv: readonly string[]): number {
     const listId = job.source.id;
     const compileOptions: CompileOptions = { listId, trusted: job.source.trusted === true };
     const warnings: string[] = [];
+    const droppedBefore = allDropped.length;
 
     const network = compileNetwork(job.classified.network, {
       ...compileOptions,
@@ -359,7 +364,12 @@ export function runCli(argv: readonly string[]): number {
     scriptletDbs.push({ listId, db: scriptlets });
 
     for (const line of job.classified.html) {
-      allDropped.push({ listId, line: line.line, raw: line.raw, reason: 'HTML filtering is unsupported on MV3' });
+      allDropped.push({
+        listId,
+        line: line.line,
+        raw: line.raw,
+        reason: 'HTML filtering is unsupported on MV3',
+      });
     }
 
     const files = {
@@ -372,7 +382,7 @@ export function runCli(argv: readonly string[]): number {
     writeJson(join(outDir, files.scriptlets), scriptlets);
 
     const cosmeticCounts = countCosmetic(cosmetic);
-    const droppedForList = allDropped.filter((d) => d.listId === listId).length;
+    const droppedForList = allDropped.length - droppedBefore;
     const counts: RulesetListEntry['counts'] = {
       dnr: network.rules.length,
       regex: network.counts.regex,
@@ -455,7 +465,9 @@ export function runCli(argv: readonly string[]): number {
     `${pad('total', idWidth)}  ${padLeft(String(staticRulesTotal), 8)} ${padLeft(String(regexTotal), 6)}`,
   );
   console.info('');
-  console.info(`version ${version} · ${entries.length} lists · default-enabled rules ${staticRulesDefaultEnabled}`);
+  console.info(
+    `version ${version} · ${entries.length} lists · default-enabled rules ${staticRulesDefaultEnabled}`,
+  );
   for (const w of warningsGlobal) console.warn(`warning: ${w}`);
 
   // ---- budgets (docs/RULESETS.md §3) --------------------------------------

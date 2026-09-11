@@ -5,13 +5,21 @@ import { FORBIDDEN_MODIFY_HEADERS, STATIC_TIERS, USER_TIERS, toExtensionPath } f
 import { MAX_DOMAINS_PER_RULE, optimize, ruleKey } from '../src/dnr/optimize';
 import { parseNetworkFilter } from '../src/parser/network-filter';
 
-function entry(raw: string, rule: ConvertedRule['rule'], category: ConvertedRule['category'] = 'block'): ConvertedRule {
+function entry(
+  raw: string,
+  rule: ConvertedRule['rule'],
+  category: ConvertedRule['category'] = 'block',
+): ConvertedRule {
   const parsed = parseNetworkFilter(raw, 1);
   if (!parsed.ok) throw new Error(parsed.reason);
   return { rule, filter: parsed.filter, isRegex: rule.condition.regexFilter !== undefined, category };
 }
 
-function block(domains: string[], extra: Record<string, unknown> = {}, priority = PRIORITY.BLOCK): ConvertedRule['rule'] {
+function block(
+  domains: string[],
+  extra: Record<string, unknown> = {},
+  priority = PRIORITY.BLOCK,
+): ConvertedRule['rule'] {
   return {
     priority,
     action: { type: 'block' },
@@ -61,8 +69,16 @@ describe('FORBIDDEN_MODIFY_HEADERS', () => {
 
 describe('ruleKey', () => {
   it('ignores property order', () => {
-    const a = { priority: 1, action: { type: 'block' }, condition: { requestDomains: ['a'], resourceTypes: ['script'] } };
-    const b = { priority: 1, action: { type: 'block' }, condition: { resourceTypes: ['script'], requestDomains: ['a'] } };
+    const a = {
+      priority: 1,
+      action: { type: 'block' },
+      condition: { requestDomains: ['a'], resourceTypes: ['script'] },
+    };
+    const b = {
+      priority: 1,
+      action: { type: 'block' },
+      condition: { resourceTypes: ['script'], requestDomains: ['a'] },
+    };
     expect(ruleKey(a as never)).toBe(ruleKey(b as never));
   });
 
@@ -87,11 +103,15 @@ describe('optimize', () => {
     const result = optimize(
       [
         entry('||a.example^', block(['a.example'])),
-        entry('@@||b.example^', {
-          priority: PRIORITY.ALLOW,
-          action: { type: 'allow' },
-          condition: { requestDomains: ['b.example'], excludedResourceTypes: ['main_frame'] },
-        }, 'allow'),
+        entry(
+          '@@||b.example^',
+          {
+            priority: PRIORITY.ALLOW,
+            action: { type: 'allow' },
+            condition: { requestDomains: ['b.example'], excludedResourceTypes: ['main_frame'] },
+          },
+          'allow',
+        ),
       ],
       { firstRuleId: 100, maxRegexRules: 1000 },
     );
@@ -164,11 +184,15 @@ describe('optimize', () => {
     const result = optimize(
       [
         entry('||ads.example^', block(['ads.example'])),
-        entry('@@||ads.example/ok', {
-          priority: PRIORITY.ALLOW,
-          action: { type: 'allow' },
-          condition: { urlFilter: '||ads.example/ok', excludedResourceTypes: ['main_frame'] },
-        }, 'allow'),
+        entry(
+          '@@||ads.example/ok',
+          {
+            priority: PRIORITY.ALLOW,
+            action: { type: 'allow' },
+            condition: { urlFilter: '||ads.example/ok', excludedResourceTypes: ['main_frame'] },
+          },
+          'allow',
+        ),
       ],
       { firstRuleId: 1, maxRegexRules: 1000 },
     );

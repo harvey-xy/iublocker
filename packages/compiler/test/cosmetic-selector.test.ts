@@ -86,6 +86,10 @@ describe('genericKey', () => {
     ['.a, .b', { kind: 'complex' }],
     ['.a[', { kind: 'complex' }],
     ['#', { kind: 'complex' }],
+    ['[data-x=".a"].bar', { kind: 'class', key: 'bar' }],
+    ["[data-x='#a']#real", { kind: 'id', key: 'real' }],
+    ['.a\\.b', { kind: 'class', key: 'a.b' }],
+    ['.a:not(.b) .c', { kind: 'class', key: 'a' }],
   ];
   for (const [selector, expected] of cases) {
     it(`keys ${selector}`, () => {
@@ -162,11 +166,12 @@ describe('entities', () => {
     expect(hosts).toContain('example.co.jp');
   });
 
+  it('skips duplicate suffixes', () => {
+    expect(expandEntity('example', ['com', 'com', 'net'])).toEqual(['example.com', 'example.net']);
+  });
+
   it('honours an explicit cap and suffix set', () => {
-    expect(expandEntity('example', ['com', 'net', 'org'], 2)).toEqual([
-      'example.com',
-      'example.net',
-    ]);
+    expect(expandEntity('example', ['com', 'net', 'org'], 2)).toEqual(['example.com', 'example.net']);
   });
 
   it('ships more suffixes than the per-entity cap', () => {
