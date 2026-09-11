@@ -61,7 +61,7 @@ function splitScriptletArgsRaw(text: string): ParseResult<RawArg[]> {
     while (i < n && isWs(at(text, i))) i++;
 
     const c = at(text, i);
-    if (c === '"' || c === "'") {
+    if (c === '"' || c === "'" || c === '`') {
       const quote = c;
       let value = '';
       let j = i + 1;

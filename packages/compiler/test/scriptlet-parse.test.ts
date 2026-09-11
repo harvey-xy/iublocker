@@ -151,3 +151,11 @@ describe('parseScriptletFilter', () => {
     });
   }
 });
+
+describe('backtick-quoted arguments (uBO)', () => {
+  it('keeps commas inside backticks', () => {
+    const r = splitScriptletArgs('replace-node-text, script, `a,b,c`, `x, y`');
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value).toEqual(['replace-node-text', 'script', 'a,b,c', 'x, y']);
+  });
+});
