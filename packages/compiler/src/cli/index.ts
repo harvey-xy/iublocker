@@ -319,7 +319,6 @@ export function runCli(argv: readonly string[]): number {
   const reportLists: RulesetReport['lists'] = {};
   const allDropped: DroppedFilter[] = [];
   const scriptletDbs: { listId: string; db: ScriptletDB }[] = [];
-  let nextRuleId = ID_RANGE.STATIC.start;
   const allSourceMeta: SourceMeta[] = [];
 
   for (const job of jobs) {
@@ -328,14 +327,16 @@ export function runCli(argv: readonly string[]): number {
     const warnings: string[] = [];
     const droppedBefore = allDropped.length;
 
+    // Rule IDs are unique *per ruleset*, not per build: every list numbers from 1
+    // (docs/FILTER-SYNTAX.md §6). The logger identifies a rule by the
+    // `(rulesetId, ruleId)` pair `getMatchedRules` returns.
     const network = compileNetwork(job.classified.network, {
       ...compileOptions,
-      firstRuleId: nextRuleId,
+      firstRuleId: ID_RANGE.STATIC.start,
       maxRuleId: ID_RANGE.STATIC.end,
       hostsFormat: job.source.format === 'hosts',
       extraBadfilters,
     });
-    nextRuleId += network.rules.length;
     warnings.push(...network.warnings);
     allDropped.push(...network.dropped);
 

@@ -105,7 +105,16 @@ function captureMeta(meta: ListMeta, comment: string): void {
   if (value !== '' && meta[field] === undefined) meta[field] = value;
 }
 
-/** Identifiers that are true for the Chromium MV3 build. */
+/**
+ * Identifiers that are true for the Chromium MV3 build.
+ *
+ * `adguard_ext_chromium_mv3` matters far more than it looks: AdGuard's lists gate their
+ * huge CNAME-tracker sections on `!adguard_ext_chromium_mv3` precisely because an MV3
+ * extension cannot afford them inside the 330,000-rule budget (AdGuard Spyware alone
+ * carries ~210,000 such lines), and they gate MV3-adapted replacements on the positive
+ * form. We are exactly the platform that token describes, so claiming it is both correct
+ * and what keeps the list inside `BUILD_BUDGET.STATIC_RULES_PER_LIST`.
+ */
 const TRUE_TOKENS = new Set([
   'env_chromium',
   'env_chrome',
@@ -113,6 +122,7 @@ const TRUE_TOKENS = new Set([
   'ext_ublock',
   'ublock',
   'cap_user_stylesheet',
+  'adguard_ext_chromium_mv3',
 ]);
 
 /** Evaluate a `!#if` expression (`!`, `&&`, `||`, parentheses, identifiers, `env=chromium`). */
