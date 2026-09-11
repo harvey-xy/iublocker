@@ -23,7 +23,9 @@ describe('disable-newtab-links', () => {
   });
 
   it('is idempotent', () => {
-    const win = makeWindow('<!doctype html><html><body><a id="a" href="#" target="_blank">x</a></body></html>');
+    const win = makeWindow(
+      '<!doctype html><html><body><a id="a" href="#" target="_blank">x</a></body></html>',
+    );
     inject(win, def);
     inject(win, def);
     expect(

@@ -6,7 +6,11 @@ export default defineScriptlet({
   args: [
     { name: 'property', doc: 'Property chain whose read triggers the check.' },
     { name: 'needle', optional: true, doc: 'Literal or /regex/ matched against the script text (or src).' },
-    { name: 'context', optional: true, doc: 'Literal or /regex/ matched against the script src / document URL.' },
+    {
+      name: 'context',
+      optional: true,
+      doc: 'Literal or /regex/ matched against the script src / document URL.',
+    },
   ],
   fn: function (property: string, needle?: string, context?: string) {
     try {

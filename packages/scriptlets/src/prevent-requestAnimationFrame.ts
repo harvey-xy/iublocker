@@ -4,7 +4,11 @@ export default defineScriptlet({
   name: 'prevent-requestAnimationFrame',
   aliases: ['norafif', 'no-requestAnimationFrame-if'],
   args: [
-    { name: 'needle', optional: true, doc: 'Literal or /regex/ matched against the callback source; `!` negates.' },
+    {
+      name: 'needle',
+      optional: true,
+      doc: 'Literal or /regex/ matched against the callback source; `!` negates.',
+    },
   ],
   fn: function (needle?: string) {
     try {
@@ -46,26 +50,23 @@ export default defineScriptlet({
         return p;
       };
       const orig = gt.requestAnimationFrame;
-      gt.requestAnimationFrame = keep(
-        orig,
-        function (this: any, cb: any, ...rest: any[]): any {
-          let defuse = false;
-          try {
-            const src = typeof cb === 'function' ? String(cb) : String(cb ?? '');
-            let m = re.test(src);
-            if (negate) m = !m;
-            defuse = m;
-          } catch {
-            /* matching must never break the page */
-          }
-          if (defuse) {
-            return orig.call(this === undefined ? gt : this, function () {
-              /* defused */
-            });
-          }
-          return orig.call(this === undefined ? gt : this, cb, ...rest);
-        },
-      );
+      gt.requestAnimationFrame = keep(orig, function (this: any, cb: any, ...rest: any[]): any {
+        let defuse = false;
+        try {
+          const src = typeof cb === 'function' ? String(cb) : String(cb ?? '');
+          let m = re.test(src);
+          if (negate) m = !m;
+          defuse = m;
+        } catch {
+          /* matching must never break the page */
+        }
+        if (defuse) {
+          return orig.call(this === undefined ? gt : this, function () {
+            /* defused */
+          });
+        }
+        return orig.call(this === undefined ? gt : this, cb, ...rest);
+      });
     } catch {
       /* never throw into the page */
     }

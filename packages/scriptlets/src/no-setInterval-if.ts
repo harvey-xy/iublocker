@@ -4,7 +4,11 @@ export default defineScriptlet({
   name: 'no-setInterval-if',
   aliases: ['nosiif', 'setInterval-defuser', 'prevent-setInterval'],
   args: [
-    { name: 'needle', optional: true, doc: 'Literal or /regex/ matched against the callback source; `!` negates.' },
+    {
+      name: 'needle',
+      optional: true,
+      doc: 'Literal or /regex/ matched against the callback source; `!` negates.',
+    },
     { name: 'delay', optional: true, doc: 'Only defuse this delay; `!` negates.' },
   ],
   fn: function (needle?: string, delay?: string) {
@@ -56,31 +60,32 @@ export default defineScriptlet({
         return p;
       };
       const orig = gt.setInterval;
-      gt.setInterval = keep(
-        orig,
-        function (this: any, cb: any, ms?: any, ...rest: any[]): any {
-          let defuse = false;
-          try {
-            const src = typeof cb === 'function' ? String(cb) : typeof cb === 'string' ? cb : '';
-            let m = reNeedle.test(src);
-            if (negateNeedle) m = !m;
-            let d = true;
-            if (wantDelay !== -1) {
-              const actual = parseInt(String(ms ?? 0), 10) || 0;
-              d = negateDelay ? actual !== wantDelay : actual === wantDelay;
-            }
-            defuse = m && d;
-          } catch {
-            /* matching must never break the page */
+      gt.setInterval = keep(orig, function (this: any, cb: any, ms?: any, ...rest: any[]): any {
+        let defuse = false;
+        try {
+          const src = typeof cb === 'function' ? String(cb) : typeof cb === 'string' ? cb : '';
+          let m = reNeedle.test(src);
+          if (negateNeedle) m = !m;
+          let d = true;
+          if (wantDelay !== -1) {
+            const actual = parseInt(String(ms ?? 0), 10) || 0;
+            d = negateDelay ? actual !== wantDelay : actual === wantDelay;
           }
-          if (defuse) {
-            return orig.call(this === undefined ? gt : this, function () {
+          defuse = m && d;
+        } catch {
+          /* matching must never break the page */
+        }
+        if (defuse) {
+          return orig.call(
+            this === undefined ? gt : this,
+            function () {
               /* defused */
-            }, ms);
-          }
-          return orig.call(this === undefined ? gt : this, cb, ms, ...rest);
-        },
-      );
+            },
+            ms,
+          );
+        }
+        return orig.call(this === undefined ? gt : this, cb, ms, ...rest);
+      });
     } catch {
       /* never throw into the page */
     }

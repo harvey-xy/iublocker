@@ -55,7 +55,9 @@ export default defineScriptlet({
           case 'noopPromiseResolve':
             return function () {
               return Promise.resolve(
-                typeof Response === 'function' ? new Response('', { status: 200, statusText: 'OK' }) : undefined,
+                typeof Response === 'function'
+                  ? new Response('', { status: 200, statusText: 'OK' })
+                  : undefined,
               );
             };
           case 'noopPromiseReject':

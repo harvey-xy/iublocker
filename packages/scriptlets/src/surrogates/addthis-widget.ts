@@ -10,9 +10,12 @@ export default defineScriptlet({
       const noop = function () {
         /* noop */
       };
-      const layers: any = { refresh: noop, Share: function () {
-        /* noop */
-      } };
+      const layers: any = {
+        refresh: noop,
+        Share: function () {
+          /* noop */
+        },
+      };
       gt.addthis = {
         addEventListener: noop,
         button: noop,

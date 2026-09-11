@@ -4,7 +4,10 @@ export default defineScriptlet({
   name: 'remove-node-text',
   aliases: ['rmnt'],
   args: [
-    { name: 'nodeName', doc: 'Literal or /regex/ matched against the element name (`#text` for text nodes).' },
+    {
+      name: 'nodeName',
+      doc: 'Literal or /regex/ matched against the element name (`#text` for text nodes).',
+    },
     { name: 'includes', doc: 'Only empty nodes whose text matches this literal or /regex/.' },
     { name: 'excludes', optional: true, doc: 'Skip nodes whose text matches this literal or /regex/.' },
   ],
@@ -75,7 +78,8 @@ export default defineScriptlet({
           for (const r of records) {
             if (r.type === 'characterData') {
               if (matchesName(r.target)) handle(r.target);
-              else if (r.target.parentNode !== null && matchesName(r.target.parentNode)) handle(r.target.parentNode);
+              else if (r.target.parentNode !== null && matchesName(r.target.parentNode))
+                handle(r.target.parentNode);
               continue;
             }
             const added = r.addedNodes;

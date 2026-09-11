@@ -16,9 +16,11 @@ export default defineScriptlet({
         try {
           if (doc === undefined) return;
           const el = doc.documentElement;
-          if (el !== null && el !== undefined && el.classList !== undefined) el.classList.remove('async-hide');
+          if (el !== null && el !== undefined && el.classList !== undefined)
+            el.classList.remove('async-hide');
           const style = doc.getElementById('gtm-hide');
-          if (style !== null && style !== undefined && style.parentNode !== null) style.parentNode.removeChild(style);
+          if (style !== null && style !== undefined && style.parentNode !== null)
+            style.parentNode.removeChild(style);
         } catch {
           /* nothing to unhide */
         }

@@ -24,7 +24,9 @@ describe('google-analytics_analytics.js', () => {
 
   it('replays calls queued on the pre-existing stub', () => {
     const win = makeWindow();
-    win.eval("window.ga = function () { window.ga.q.push(arguments); }; window.ga.q = []; ga('send', { hitCallback: function () { window.early = true; } });");
+    win.eval(
+      "window.ga = function () { window.ga.q.push(arguments); }; window.ga.q = []; ga('send', { hitCallback: function () { window.early = true; } });",
+    );
     inject(win, def);
     expect(win.early).toBe(true);
   });

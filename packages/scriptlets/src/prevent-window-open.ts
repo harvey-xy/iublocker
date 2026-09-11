@@ -61,7 +61,13 @@ export default defineScriptlet({
           parent: null,
           postMessage: noop,
           print: noop,
-          location: { href: 'about:blank', assign: noop, replace: noop, reload: noop, toString: () => 'about:blank' },
+          location: {
+            href: 'about:blank',
+            assign: noop,
+            replace: noop,
+            reload: noop,
+            toString: () => 'about:blank',
+          },
           document: {
             open: noop,
             close: noop,
@@ -77,44 +83,41 @@ export default defineScriptlet({
         return self0;
       };
       const orig = gt.open;
-      gt.open = keep(
-        orig,
-        function (this: any, url?: any, ...rest: any[]): any {
-          let block = false;
+      gt.open = keep(orig, function (this: any, url?: any, ...rest: any[]): any {
+        let block = false;
+        try {
+          let m = re.test(String(url ?? ''));
+          if (negate) m = !m;
+          block = m;
+        } catch {
+          /* matching must never break the page */
+        }
+        if (block === false) return orig.call(this === undefined ? gt : this, url, ...rest);
+        if (isNaN(autoClose) === false && autoClose >= 0) {
+          // Let the popup open, then close it shortly after (uBO's `delay` argument).
+          const w = orig.call(this === undefined ? gt : this, url, ...rest);
           try {
-            let m = re.test(String(url ?? ''));
-            if (negate) m = !m;
-            block = m;
+            gt.setTimeout(function () {
+              try {
+                if (w !== null && w !== undefined) w.close();
+              } catch {
+                /* already gone */
+              }
+            }, autoClose);
           } catch {
-            /* matching must never break the page */
+            /* no timers available */
           }
-          if (block === false) return orig.call(this === undefined ? gt : this, url, ...rest);
-          if (isNaN(autoClose) === false && autoClose >= 0) {
-            // Let the popup open, then close it shortly after (uBO's `delay` argument).
-            const w = orig.call(this === undefined ? gt : this, url, ...rest);
-            try {
-              gt.setTimeout(function () {
-                try {
-                  if (w !== null && w !== undefined) w.close();
-                } catch {
-                  /* already gone */
-                }
-              }, autoClose);
-            } catch {
-              /* no timers available */
-            }
-            return w;
+          return w;
+        }
+        if (decoy === 'blank') {
+          try {
+            return orig.call(this === undefined ? gt : this, 'about:blank', ...rest.slice(0, 1));
+          } catch {
+            /* fall through to the object decoy */
           }
-          if (decoy === 'blank') {
-            try {
-              return orig.call(this === undefined ? gt : this, 'about:blank', ...rest.slice(0, 1));
-            } catch {
-              /* fall through to the object decoy */
-            }
-          }
-          return makeDecoy();
-        },
-      );
+        }
+        return makeDecoy();
+      });
       if (gt.window !== undefined && gt.window !== null) {
         try {
           gt.window.open = gt.open;

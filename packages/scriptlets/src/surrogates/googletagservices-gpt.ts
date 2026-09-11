@@ -184,7 +184,8 @@ export default defineScriptlet({
         try {
           const doc: any = typeof document !== 'undefined' ? document : undefined;
           if (doc === undefined) return;
-          const id = typeof arg === 'string' ? arg : arg && arg.getSlotElementId ? arg.getSlotElementId() : '';
+          const id =
+            typeof arg === 'string' ? arg : arg && arg.getSlotElementId ? arg.getSlotElementId() : '';
           const el = id === '' ? null : doc.getElementById(id);
           if (el !== null && el !== undefined) el.innerHTML = '';
         } catch {

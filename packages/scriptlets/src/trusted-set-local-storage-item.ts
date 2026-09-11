@@ -4,7 +4,10 @@ export default defineScriptlet({
   name: 'trusted-set-local-storage-item',
   args: [
     { name: 'key', doc: 'Storage key to write.' },
-    { name: 'value', doc: 'Any string; `$remove$` deletes the key, `$currentDate$` writes an ISO timestamp.' },
+    {
+      name: 'value',
+      doc: 'Any string; `$remove$` deletes the key, `$currentDate$` writes an ISO timestamp.',
+    },
   ],
   trusted: true,
   fn: function (key: string, value: string) {

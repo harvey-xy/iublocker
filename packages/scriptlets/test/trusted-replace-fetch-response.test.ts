@@ -35,8 +35,12 @@ describe('trusted-replace-fetch-response', () => {
     const win = makeWindow();
     installFetchStub(win, 'original');
     inject(win, def, '*', 'replaced', 'url:/ads/');
-    const changed = await win.eval('fetch("https://example.com/ads/x").then(function (r) { return r.text(); })');
-    const intact = await win.eval('fetch("https://example.com/news").then(function (r) { return r.text(); })');
+    const changed = await win.eval(
+      'fetch("https://example.com/ads/x").then(function (r) { return r.text(); })',
+    );
+    const intact = await win.eval(
+      'fetch("https://example.com/news").then(function (r) { return r.text(); })',
+    );
     expect(changed).toBe('replaced');
     expect(intact).toBe('original');
   });

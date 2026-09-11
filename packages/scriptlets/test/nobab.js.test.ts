@@ -9,12 +9,16 @@ describe('nobab.js', () => {
   });
 
   it('stubs BlockAdBlock and removes its bait elements', () => {
-    const win = makeWindow('<!doctype html><html><body><div id="babasbmsgs1"></div><div class="babasbm-x"></div></body></html>');
+    const win = makeWindow(
+      '<!doctype html><html><body><div id="babasbmsgs1"></div><div class="babasbm-x"></div></body></html>',
+    );
     inject(win, def);
     expect(win.document.getElementById('babasbmsgs1')).toBeNull();
     expect(win.document.querySelector('.babasbm-x')).toBeNull();
     expect(
-      win.eval('window.ok = false; blockAdBlock.onNotDetected(function () { window.ok = true; }); window.ok;'),
+      win.eval(
+        'window.ok = false; blockAdBlock.onNotDetected(function () { window.ok = true; }); window.ok;',
+      ),
     ).toBe(true);
   });
 });

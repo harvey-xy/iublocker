@@ -27,7 +27,9 @@ describe('registry', () => {
 
   it('has a behaviour test for every scriptlet', () => {
     const here = dirname(fileURLToPath(import.meta.url));
-    const missing = Object.keys(registry).filter((name) => existsSync(join(here, `${name}.test.ts`)) === false);
+    const missing = Object.keys(registry).filter(
+      (name) => existsSync(join(here, `${name}.test.ts`)) === false,
+    );
     expect(missing).toEqual([]);
   });
 

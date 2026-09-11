@@ -25,7 +25,7 @@ export default defineScriptlet({
       const re = toRe(name);
       if (re === null) return;
       const expire = (key: string): void => {
-        const host = String(gt.location !== undefined ? gt.location.hostname ?? '' : '');
+        const host = String(gt.location !== undefined ? (gt.location.hostname ?? '') : '');
         const domains: string[] = [''];
         if (host !== '') {
           domains.push(host);

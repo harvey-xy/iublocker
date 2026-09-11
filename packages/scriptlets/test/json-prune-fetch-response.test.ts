@@ -15,8 +15,12 @@ describe('json-prune-fetch-response', () => {
     const win = makeWindow();
     installFetchStub(win, '{"ads":1,"keep":2}');
     inject(win, def, 'ads', '', 'url:/feed');
-    const pruned = await win.eval('fetch("https://example.com/feed").then(function (r) { return r.json(); })');
-    const intact = await win.eval('fetch("https://example.com/other").then(function (r) { return r.json(); })');
+    const pruned = await win.eval(
+      'fetch("https://example.com/feed").then(function (r) { return r.json(); })',
+    );
+    const intact = await win.eval(
+      'fetch("https://example.com/other").then(function (r) { return r.json(); })',
+    );
     expect(pruned).toEqual({ keep: 2 });
     expect(intact).toEqual({ ads: 1, keep: 2 });
   });
@@ -41,7 +45,9 @@ describe('json-prune-fetch-response', () => {
     const win = makeWindow();
     installFetchStub(win, '{"ads":1,"keep":2}');
     inject(win, def, 'ads');
-    const status = await win.eval('fetch("https://example.com/feed").then(function (r) { return r.status; })');
+    const status = await win.eval(
+      'fetch("https://example.com/feed").then(function (r) { return r.status; })',
+    );
     const url = await win.eval('fetch("https://example.com/feed").then(function (r) { return r.url; })');
     expect(status).toBe(200);
     expect(url).toBe('https://example.com/feed');

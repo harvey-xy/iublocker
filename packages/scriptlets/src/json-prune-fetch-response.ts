@@ -4,8 +4,16 @@ export default defineScriptlet({
   name: 'json-prune-fetch-response',
   args: [
     { name: 'propsToRemove', doc: 'Space-separated dot paths; `[]` and `*` match every key/index.' },
-    { name: 'requiredProps', optional: true, doc: 'Space-separated paths that must (or, with `!`, must not) exist.' },
-    { name: 'propsToMatch', optional: true, doc: 'Space-separated `key:pattern` pairs selecting the requests to prune.' },
+    {
+      name: 'requiredProps',
+      optional: true,
+      doc: 'Space-separated paths that must (or, with `!`, must not) exist.',
+    },
+    {
+      name: 'propsToMatch',
+      optional: true,
+      doc: 'Space-separated `key:pattern` pairs selecting the requests to prune.',
+    },
   ],
   fn: function (propsToRemove: string, requiredProps?: string, propsToMatch?: string) {
     try {
@@ -79,7 +87,11 @@ export default defineScriptlet({
         let key = 'url';
         let value = tok;
         const i = tok.indexOf(':');
-        if (i > 0 && /^[a-zA-Z_][\w-]*$/.test(tok.slice(0, i)) && tok.slice(i + 1).startsWith('//') === false) {
+        if (
+          i > 0 &&
+          /^[a-zA-Z_][\w-]*$/.test(tok.slice(0, i)) &&
+          tok.slice(i + 1).startsWith('//') === false
+        ) {
           key = tok.slice(0, i);
           value = tok.slice(i + 1);
         }
@@ -107,64 +119,61 @@ export default defineScriptlet({
         return p;
       };
       const orig = gt.fetch;
-      gt.fetch = keep(
-        orig,
-        function (this: any, input?: any, init?: any, ...rest: any[]): any {
-          const self0 = this === undefined ? gt : this;
-          let url = '';
-          const details: any = { method: 'GET' };
-          try {
-            if (typeof input === 'string') url = input;
-            else if (input !== null && input !== undefined && typeof input.url === 'string') {
-              url = input.url;
-              if (typeof input.method === 'string') details.method = input.method;
-            } else url = String(input ?? '');
-            if (init !== null && typeof init === 'object') {
-              for (const k of Object.keys(init)) details[k] = (init as any)[k];
-            }
-            details.url = url;
-          } catch {
-            /* matching must never break the page */
+      gt.fetch = keep(orig, function (this: any, input?: any, init?: any, ...rest: any[]): any {
+        const self0 = this === undefined ? gt : this;
+        let url = '';
+        const details: any = { method: 'GET' };
+        try {
+          if (typeof input === 'string') url = input;
+          else if (input !== null && input !== undefined && typeof input.url === 'string') {
+            url = input.url;
+            if (typeof input.method === 'string') details.method = input.method;
+          } else url = String(input ?? '');
+          if (init !== null && typeof init === 'object') {
+            for (const k of Object.keys(init)) details[k] = (init as any)[k];
           }
-          let matched = true;
-          for (const n of needles) {
-            const v = n.key === 'url' ? url : details[n.key];
-            const hit = v === undefined ? false : n.re.test(String(v));
-            if (hit === n.negate) {
-              matched = false;
-              break;
-            }
+          details.url = url;
+        } catch {
+          /* matching must never break the page */
+        }
+        let matched = true;
+        for (const n of needles) {
+          const v = n.key === 'url' ? url : details[n.key];
+          const hit = v === undefined ? false : n.re.test(String(v));
+          if (hit === n.negate) {
+            matched = false;
+            break;
           }
-          const promise = orig.call(self0, input, init, ...rest);
-          if (matched === false) return promise;
-          return promise.then((resp: any) => {
-            if (resp === null || resp === undefined || typeof resp.text !== 'function') return resp;
-            return resp
-              .clone()
-              .text()
-              .then((text: string) => {
+        }
+        const promise = orig.call(self0, input, init, ...rest);
+        if (matched === false) return promise;
+        return promise.then((resp: any) => {
+          if (resp === null || resp === undefined || typeof resp.text !== 'function') return resp;
+          return resp
+            .clone()
+            .text()
+            .then((text: string) => {
+              try {
+                const obj = JSON.parse(text);
+                const pruned = JSON.stringify(prune(obj));
+                const out = new gt.Response(pruned, {
+                  status: resp.status,
+                  statusText: resp.statusText,
+                  headers: resp.headers,
+                });
                 try {
-                  const obj = JSON.parse(text);
-                  const pruned = JSON.stringify(prune(obj));
-                  const out = new gt.Response(pruned, {
-                    status: resp.status,
-                    statusText: resp.statusText,
-                    headers: resp.headers,
-                  });
-                  try {
-                    Object.defineProperty(out, 'url', { value: resp.url });
-                  } catch {
-                    /* read-only in some engines */
-                  }
-                  return out;
+                  Object.defineProperty(out, 'url', { value: resp.url });
                 } catch {
-                  return resp;
+                  /* read-only in some engines */
                 }
-              })
-              .catch(() => resp);
-          });
-        },
-      );
+                return out;
+              } catch {
+                return resp;
+              }
+            })
+            .catch(() => resp);
+        });
+      });
     } catch {
       /* never throw into the page */
     }

@@ -17,7 +17,11 @@ export default defineScriptlet({
           try {
             let node: any = ev.target;
             while (node !== null && node !== undefined) {
-              if (typeof node.localName === 'string' && node.localName === 'a' && node.hasAttribute('target')) {
+              if (
+                typeof node.localName === 'string' &&
+                node.localName === 'a' &&
+                node.hasAttribute('target')
+              ) {
                 ev.stopPropagation();
                 ev.preventDefault();
                 break;

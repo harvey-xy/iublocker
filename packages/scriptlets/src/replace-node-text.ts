@@ -4,10 +4,17 @@ export default defineScriptlet({
   name: 'replace-node-text',
   aliases: ['rpnt'],
   args: [
-    { name: 'nodeName', doc: 'Literal or /regex/ matched against the element name (`#text` for text nodes).' },
+    {
+      name: 'nodeName',
+      doc: 'Literal or /regex/ matched against the element name (`#text` for text nodes).',
+    },
     { name: 'pattern', doc: 'Literal or /regex/ to replace inside the node text.' },
     { name: 'replacement', optional: true, doc: 'Replacement text; defaults to the empty string.' },
-    { name: 'condition', optional: true, doc: 'Only touch nodes whose text also matches this literal or /regex/.' },
+    {
+      name: 'condition',
+      optional: true,
+      doc: 'Only touch nodes whose text also matches this literal or /regex/.',
+    },
   ],
   fn: function (nodeName: string, pattern: string, replacement?: string, condition?: string) {
     try {
@@ -85,7 +92,8 @@ export default defineScriptlet({
           for (const r of records) {
             if (r.type === 'characterData') {
               if (matchesName(r.target)) handle(r.target);
-              else if (r.target.parentNode !== null && matchesName(r.target.parentNode)) handle(r.target.parentNode);
+              else if (r.target.parentNode !== null && matchesName(r.target.parentNode))
+                handle(r.target.parentNode);
               continue;
             }
             const added = r.addedNodes;

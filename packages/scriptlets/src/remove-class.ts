@@ -21,9 +21,7 @@ export default defineScriptlet({
       const sel =
         typeof selector === 'string' && selector !== ''
           ? selector
-          : names
-              .map((c) => '.' + (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(c) : c))
-              .join(',');
+          : names.map((c) => '.' + (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(c) : c)).join(',');
       const flags = String(behaviour ?? '').split(/\s+/);
       const stay = flags.indexOf('stay') !== -1;
       const complete = flags.indexOf('complete') !== -1;

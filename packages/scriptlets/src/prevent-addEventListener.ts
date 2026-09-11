@@ -5,7 +5,11 @@ export default defineScriptlet({
   aliases: ['aeld', 'addEventListener-defuser'],
   args: [
     { name: 'type', optional: true, doc: 'Literal or /regex/ matched against the event type; `!` negates.' },
-    { name: 'pattern', optional: true, doc: 'Literal or /regex/ matched against the handler source; `!` negates.' },
+    {
+      name: 'pattern',
+      optional: true,
+      doc: 'Literal or /regex/ matched against the handler source; `!` negates.',
+    },
   ],
   fn: function (type?: string, pattern?: string) {
     try {

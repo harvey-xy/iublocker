@@ -43,9 +43,12 @@ export default defineScriptlet({
         return 1;
       };
       const pending: any[] = Array.isArray(gt.AMP) ? gt.AMP.slice() : [];
-      gt.AMP = { push, isExperimentOn: function () {
-        return false;
-      } };
+      gt.AMP = {
+        push,
+        isExperimentOn: function () {
+          return false;
+        },
+      };
       for (const fn of pending) push(fn);
       gt.ampUrl = gt.ampUrl ?? '';
       reveal();

@@ -179,10 +179,7 @@ const surrogateAliases: Record<string, string[]> = {
     'googletagservices.com/tag/js/gpt_mobile.js',
   ],
   'google-analytics_ga.js': ['google-analytics.com/ga.js'],
-  'google-analytics_analytics.js': [
-    'google-analytics.com/analytics.js',
-    'googletagmanager.com/analytics.js',
-  ],
+  'google-analytics_analytics.js': ['google-analytics.com/analytics.js', 'googletagmanager.com/analytics.js'],
   'google-analytics_cx_api.js': ['google-analytics.com/cx/api.js'],
   'googletagmanager_gtm.js': ['googletagmanager.com/gtm.js', 'googletagmanager_gtm.js'],
   'googlesyndication_adsbygoogle.js': [

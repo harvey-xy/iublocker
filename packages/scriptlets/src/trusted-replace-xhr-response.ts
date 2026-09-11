@@ -50,7 +50,11 @@ export default defineScriptlet({
         let key = 'url';
         let value = tok;
         const i = tok.indexOf(':');
-        if (i > 0 && /^[a-zA-Z_][\w-]*$/.test(tok.slice(0, i)) && tok.slice(i + 1).startsWith('//') === false) {
+        if (
+          i > 0 &&
+          /^[a-zA-Z_][\w-]*$/.test(tok.slice(0, i)) &&
+          tok.slice(i + 1).startsWith('//') === false
+        ) {
           key = tok.slice(0, i);
           value = tok.slice(i + 1);
         }

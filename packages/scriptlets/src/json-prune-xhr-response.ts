@@ -4,7 +4,11 @@ export default defineScriptlet({
   name: 'json-prune-xhr-response',
   args: [
     { name: 'propsToRemove', doc: 'Space-separated dot paths; `[]` and `*` match every key/index.' },
-    { name: 'requiredProps', optional: true, doc: 'Space-separated paths that must (or, with `!`, must not) exist.' },
+    {
+      name: 'requiredProps',
+      optional: true,
+      doc: 'Space-separated paths that must (or, with `!`, must not) exist.',
+    },
     { name: 'propsToMatch', optional: true, doc: 'Space-separated `key:pattern` pairs (url, method).' },
   ],
   fn: function (propsToRemove: string, requiredProps?: string, propsToMatch?: string) {
@@ -81,7 +85,11 @@ export default defineScriptlet({
         let key = 'url';
         let value = tok;
         const i = tok.indexOf(':');
-        if (i > 0 && /^[a-zA-Z_][\w-]*$/.test(tok.slice(0, i)) && tok.slice(i + 1).startsWith('//') === false) {
+        if (
+          i > 0 &&
+          /^[a-zA-Z_][\w-]*$/.test(tok.slice(0, i)) &&
+          tok.slice(i + 1).startsWith('//') === false
+        ) {
           key = tok.slice(0, i);
           value = tok.slice(i + 1);
         }

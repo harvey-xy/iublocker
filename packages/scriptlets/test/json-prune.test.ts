@@ -19,15 +19,15 @@ describe('json-prune', () => {
   it('supports [] and * wildcards', () => {
     const win = makeWindow();
     inject(win, def, 'items.[].ad');
-    expect(
-      win.eval('JSON.parse(\'{"items":[{"ad":1,"t":"a"},{"ad":2,"t":"b"}]}\')'),
-    ).toEqual({ items: [{ t: 'a' }, { t: 'b' }] });
+    expect(win.eval('JSON.parse(\'{"items":[{"ad":1,"t":"a"},{"ad":2,"t":"b"}]}\')')).toEqual({
+      items: [{ t: 'a' }, { t: 'b' }],
+    });
 
     const win2 = makeWindow();
     inject(win2, def, 'data.*.tracking');
-    expect(
-      win2.eval('JSON.parse(\'{"data":{"x":{"tracking":1,"k":2},"y":{"tracking":3}}}\')'),
-    ).toEqual({ data: { x: { k: 2 }, y: {} } });
+    expect(win2.eval('JSON.parse(\'{"data":{"x":{"tracking":1,"k":2},"y":{"tracking":3}}}\')')).toEqual({
+      data: { x: { k: 2 }, y: {} },
+    });
   });
 
   it('honours requiredProps', () => {

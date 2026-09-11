@@ -4,7 +4,11 @@ export default defineScriptlet({
   name: 'noeval-if',
   aliases: ['noeval', 'prevent-eval-if', 'silent-noeval'],
   args: [
-    { name: 'needle', optional: true, doc: 'Literal or /regex/ matched against the evaluated source; `!` negates.' },
+    {
+      name: 'needle',
+      optional: true,
+      doc: 'Literal or /regex/ matched against the evaluated source; `!` negates.',
+    },
   ],
   fn: function (needle?: string) {
     try {
@@ -46,21 +50,18 @@ export default defineScriptlet({
         return p;
       };
       const orig = gt.eval;
-      gt.eval = keep(
-        orig,
-        function (this: any, src: any, ...rest: any[]): any {
-          let block = false;
-          try {
-            let m = re.test(typeof src === 'string' ? src : String(src ?? ''));
-            if (negate) m = !m;
-            block = m;
-          } catch {
-            /* matching must never break the page */
-          }
-          if (block) return undefined;
-          return orig.call(this === undefined ? gt : this, src, ...rest);
-        },
-      );
+      gt.eval = keep(orig, function (this: any, src: any, ...rest: any[]): any {
+        let block = false;
+        try {
+          let m = re.test(typeof src === 'string' ? src : String(src ?? ''));
+          if (negate) m = !m;
+          block = m;
+        } catch {
+          /* matching must never break the page */
+        }
+        if (block) return undefined;
+        return orig.call(this === undefined ? gt : this, src, ...rest);
+      });
     } catch {
       /* never throw into the page */
     }

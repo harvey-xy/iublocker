@@ -4,7 +4,11 @@ export default defineScriptlet({
   name: 'no-fetch-if',
   aliases: ['prevent-fetch'],
   args: [
-    { name: 'propsToMatch', optional: true, doc: 'Space-separated `key:pattern` pairs; a bare token matches the URL.' },
+    {
+      name: 'propsToMatch',
+      optional: true,
+      doc: 'Space-separated `key:pattern` pairs; a bare token matches the URL.',
+    },
     { name: 'responseBody', optional: true, doc: "'' | emptyObj | emptyArr | emptyStr | a literal body." },
   ],
   fn: function (propsToMatch?: string, responseBody?: string) {
@@ -32,7 +36,11 @@ export default defineScriptlet({
         let value = tok;
         const i = tok.indexOf(':');
         // `https://host/path` must stay a URL pattern, `method:HEAD` must not.
-        if (i > 0 && /^[a-zA-Z_][\w-]*$/.test(tok.slice(0, i)) && tok.slice(i + 1).startsWith('//') === false) {
+        if (
+          i > 0 &&
+          /^[a-zA-Z_][\w-]*$/.test(tok.slice(0, i)) &&
+          tok.slice(i + 1).startsWith('//') === false
+        ) {
           key = tok.slice(0, i);
           value = tok.slice(i + 1);
         }
@@ -105,42 +113,39 @@ export default defineScriptlet({
         return p;
       };
       const orig = gt.fetch;
-      gt.fetch = keep(
-        orig,
-        function (this: any, input?: any, init?: any, ...rest: any[]): any {
-          let url = '';
-          const details: any = { method: 'GET' };
-          try {
-            if (typeof input === 'string') {
-              url = input;
-            } else if (input !== null && input !== undefined && typeof input.url === 'string') {
-              url = input.url;
-              if (typeof input.method === 'string') details.method = input.method;
-            } else {
-              url = String(input ?? '');
-            }
-            if (init !== null && typeof init === 'object') {
-              for (const k of Object.keys(init)) details[k] = (init as any)[k];
-            }
-            details.url = url;
-            details.method = String(details.method ?? 'GET');
-          } catch {
-            /* matching must never break the page */
+      gt.fetch = keep(orig, function (this: any, input?: any, init?: any, ...rest: any[]): any {
+        let url = '';
+        const details: any = { method: 'GET' };
+        try {
+          if (typeof input === 'string') {
+            url = input;
+          } else if (input !== null && input !== undefined && typeof input.url === 'string') {
+            url = input.url;
+            if (typeof input.method === 'string') details.method = input.method;
+          } else {
+            url = String(input ?? '');
           }
-          // No needles (empty or `*`) means "every request", as in uBO.
-          let matched = true;
-          for (const n of needles) {
-            const v = n.key === 'url' ? url : details[n.key];
-            const hit = v === undefined ? false : n.re.test(String(v));
-            if (hit === n.negate) {
-              matched = false;
-              break;
-            }
+          if (init !== null && typeof init === 'object') {
+            for (const k of Object.keys(init)) details[k] = (init as any)[k];
           }
-          if (matched) return Promise.resolve(makeResponse(url));
-          return orig.call(this === undefined ? gt : this, input, init, ...rest);
-        },
-      );
+          details.url = url;
+          details.method = String(details.method ?? 'GET');
+        } catch {
+          /* matching must never break the page */
+        }
+        // No needles (empty or `*`) means "every request", as in uBO.
+        let matched = true;
+        for (const n of needles) {
+          const v = n.key === 'url' ? url : details[n.key];
+          const hit = v === undefined ? false : n.re.test(String(v));
+          if (hit === n.negate) {
+            matched = false;
+            break;
+          }
+        }
+        if (matched) return Promise.resolve(makeResponse(url));
+        return orig.call(this === undefined ? gt : this, input, init, ...rest);
+      });
     } catch {
       /* never throw into the page */
     }

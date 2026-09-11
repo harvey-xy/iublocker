@@ -7,7 +7,9 @@ describe('no-fetch-if', () => {
     const win = makeWindow();
     installFetchStub(win, 'real body');
     inject(win, def, '/ads/');
-    const text = await win.eval('fetch("https://example.com/ads/banner").then(function (r) { return r.text(); })');
+    const text = await win.eval(
+      'fetch("https://example.com/ads/banner").then(function (r) { return r.text(); })',
+    );
     expect(text).toBe('');
     expect(win.__fetchCalls.length).toBe(0);
   });
@@ -16,7 +18,9 @@ describe('no-fetch-if', () => {
     const win = makeWindow();
     installFetchStub(win, 'real body');
     inject(win, def, '/ads/');
-    const text = await win.eval('fetch("https://example.com/api/news").then(function (r) { return r.text(); })');
+    const text = await win.eval(
+      'fetch("https://example.com/api/news").then(function (r) { return r.text(); })',
+    );
     expect(text).toBe('real body');
     expect(win.__fetchCalls.length).toBe(1);
   });
@@ -45,7 +49,9 @@ describe('no-fetch-if', () => {
     const win = makeWindow();
     installFetchStub(win, 'real');
     inject(win, def, 'https://ads.example/track');
-    const blocked = await win.eval('fetch("https://ads.example/track?a=1").then(function (r) { return r.text(); })');
+    const blocked = await win.eval(
+      'fetch("https://ads.example/track?a=1").then(function (r) { return r.text(); })',
+    );
     const allowed = await win.eval('fetch("https://example.com/ok").then(function (r) { return r.text(); })');
     expect(blocked).toBe('');
     expect(allowed).toBe('real');

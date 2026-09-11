@@ -125,7 +125,7 @@ export default defineScriptlet({
           return tracker;
         },
         _getTrackers: function () {
-            return [];
+          return [];
         },
         aa: noop,
         ab: noop,

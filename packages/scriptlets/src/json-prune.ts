@@ -4,7 +4,11 @@ export default defineScriptlet({
   name: 'json-prune',
   args: [
     { name: 'propsToRemove', doc: 'Space-separated dot paths; `[]` and `*` match every key/index.' },
-    { name: 'requiredProps', optional: true, doc: 'Space-separated paths that must (or, with `!`, must not) exist.' },
+    {
+      name: 'requiredProps',
+      optional: true,
+      doc: 'Space-separated paths that must (or, with `!`, must not) exist.',
+    },
     { name: 'stack', optional: true, doc: 'Only prune when the call stack matches this literal or /regex/.' },
   ],
   fn: function (propsToRemove: string, requiredProps?: string, stack?: string) {

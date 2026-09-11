@@ -16,9 +16,13 @@ export default defineScriptlet({
       const pbjs: any = gt.pbjs ?? {};
       const pending: any[] = Array.isArray(pbjs.que) ? pbjs.que.slice() : [];
       pbjs.addAdUnits = noop;
-      pbjs.adServers = { dfp: { buildVideoUrl: function () {
-        return '';
-      } } };
+      pbjs.adServers = {
+        dfp: {
+          buildVideoUrl: function () {
+            return '';
+          },
+        },
+      };
       pbjs.adUnits = [];
       pbjs.aliasBidder = noop;
       pbjs.bidderSettings = {};

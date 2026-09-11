@@ -3,7 +3,11 @@ import { defineScriptlet } from './_define';
 export default defineScriptlet({
   name: 'adjust-setTimeout',
   args: [
-    { name: 'needle', optional: true, doc: 'Literal or /regex/ matched against the callback source; `!` negates.' },
+    {
+      name: 'needle',
+      optional: true,
+      doc: 'Literal or /regex/ matched against the callback source; `!` negates.',
+    },
     { name: 'delay', optional: true, doc: 'Only boost this delay; `!` negates.' },
     { name: 'boost', optional: true, doc: 'Multiplier applied to the delay (0.001…50, default 0.05).' },
   ],
@@ -59,26 +63,23 @@ export default defineScriptlet({
         return p;
       };
       const orig = gt.setTimeout;
-      gt.setTimeout = keep(
-        orig,
-        function (this: any, cb: any, ms?: any, ...rest: any[]): any {
-          let hit = false;
-          let actual = 0;
-          try {
-            actual = parseInt(String(ms ?? 0), 10) || 0;
-            const src = typeof cb === 'function' ? String(cb) : typeof cb === 'string' ? cb : '';
-            let m = reNeedle.test(src);
-            if (negateNeedle) m = !m;
-            let d = true;
-            if (wantDelay !== -1) d = negateDelay ? actual !== wantDelay : actual === wantDelay;
-            hit = m && d;
-          } catch {
-            /* matching must never break the page */
-          }
-          const next = hit ? Math.max(0, Math.round(actual * factor)) : ms;
-          return orig.call(this === undefined ? gt : this, cb, next, ...rest);
-        },
-      );
+      gt.setTimeout = keep(orig, function (this: any, cb: any, ms?: any, ...rest: any[]): any {
+        let hit = false;
+        let actual = 0;
+        try {
+          actual = parseInt(String(ms ?? 0), 10) || 0;
+          const src = typeof cb === 'function' ? String(cb) : typeof cb === 'string' ? cb : '';
+          let m = reNeedle.test(src);
+          if (negateNeedle) m = !m;
+          let d = true;
+          if (wantDelay !== -1) d = negateDelay ? actual !== wantDelay : actual === wantDelay;
+          hit = m && d;
+        } catch {
+          /* matching must never break the page */
+        }
+        const next = hit ? Math.max(0, Math.round(actual * factor)) : ms;
+        return orig.call(this === undefined ? gt : this, cb, next, ...rest);
+      });
     } catch {
       /* never throw into the page */
     }
