@@ -47,6 +47,24 @@ digit, or one of `_ - . %`, or end of URL). Non‑ASCII hostnames are punycoded.
 
 `isUrlFilterCaseSensitive` is `false` unless `$match-case`.
 
+**`urlFilter` validity is load-bearing.** Chrome validates _every declared ruleset_ when
+the extension loads — enabled or not — and one malformed rule makes it refuse to load the
+extension entirely, taking the service worker with it. The compiler therefore checks each
+`urlFilter` it emits (`urlFilterProblem` in `src/dnr/convert.ts`) and drops the filter with
+a reason rather than shipping it: no empty filter, no non-ASCII, no `|` anchor in the
+middle, and never a leading `||*`. `||*.example.com^` is rewritten to the substring
+`.example.com^` (which is what it means) instead of being emitted as `||*…`, and a pattern
+that is nothing but `||*` is dropped.
+
+**Entities in network rules.** DNR has no concept of `example.*`, so `$domain=`, `$to=`
+and `$denyallow=` entities are expanded to concrete hostnames at compile time. The
+expansion prefers hostnames the same list spells out elsewhere (`||news.co.uk^` and
+`||news.de^` in the list ⇒ `$domain=news.*` expands to exactly those two) and only falls
+back to the most common public suffixes when the list never names one; the fallback is
+capped at `ENTITY_EXPANSION_LIMIT` = **100** hostnames. Cosmetic and scriptlet filters do
+_not_ expand — they keep the entity key and match it at lookup time
+(docs/COSMETIC-FILTERING.md §2, docs/SCRIPTLETS.md §2).
+
 ### 2.2 Options → `condition` / `action`
 
 | Option                                                                                                                                                                                                                          | Mapping                                                                                                                                                    | Support                                                                  |
@@ -56,11 +74,11 @@ digit, or one of `_ - . %`, or end of URL). Non‑ASCII hostnames are punycoded.
 | `$all`                                                                                                                                                                                                                          | every resource type                                                                                                                                        | ✅ (`$popup` part dropped)                                               |
 | `$third-party` / `$3p` / `~first-party`                                                                                                                                                                                         | `domainType: "thirdParty"`                                                                                                                                 | ✅                                                                       |
 | `$first-party` / `$1p` / `~third-party`                                                                                                                                                                                         | `domainType: "firstParty"`                                                                                                                                 | ✅                                                                       |
-| `$domain=a.com                                                                                                                                                                                                                  | ~b.com`                                                                                                                                                    | `initiatorDomains` / `excludedInitiatorDomains`                          | ✅ Entities (`a.*`) expanded from the public‑suffix table. Regex domains (`/…/`) dropped. |
+| `$domain=a.com                                                                                                                                                                                                                  | ~b.com`                                                                                                                                                    | `initiatorDomains` / `excludedInitiatorDomains`                          | ✅ Entities (`a.*`) expanded from the public‑suffix table (see below). Regex domains (`/…/`) dropped. |
 | `$from=`                                                                                                                                                                                                                        | alias of `$domain=`                                                                                                                                        | ✅                                                                       |
-| `$to=a.com                                                                                                                                                                                                                      | ~b.com`                                                                                                                                                    | `requestDomains` / `excludedRequestDomains`                              | ✅                                                                                        |
+| `$to=a.com                                                                                                                                                                                                                      | ~b.com`                                                                                                                                                    | `requestDomains` / `excludedRequestDomains`                              | ✅                                                                                                    |
 | `$denyallow=a.com`                                                                                                                                                                                                              | `excludedRequestDomains` (on a rule whose `initiatorDomains` is set)                                                                                       | ✅                                                                       |
-| `$method=get                                                                                                                                                                                                                    | ~post`                                                                                                                                                     | `requestMethods` / `excludedRequestMethods`                              | ✅                                                                                        |
+| `$method=get                                                                                                                                                                                                                    | ~post`                                                                                                                                                     | `requestMethods` / `excludedRequestMethods`                              | ✅                                                                                                    |
 | `$match-case`                                                                                                                                                                                                                   | `isUrlFilterCaseSensitive: true`                                                                                                                           | ✅                                                                       |
 | `$important`                                                                                                                                                                                                                    | priority tier 3 (§4)                                                                                                                                       | ✅                                                                       |
 | `$badfilter`                                                                                                                                                                                                                    | removes the identical filter (compile‑time, across all lists in the same build)                                                                            | ✅                                                                       |
@@ -74,6 +92,19 @@ digit, or one of `_ - . %`, or end of URL). Non‑ASCII hostnames are punycoded.
 | `$elemhide`, `$generichide`, `$specifichide`, `$ghide`, `$shide`, `$ehide`                                                                                                                                                      | not DNR; recorded in the cosmetic DB as exceptions keyed by `initiatorDomains`/pattern hostname                                                            | ✅ (cosmetic engine)                                                     |
 
 Unknown options make the whole filter invalid (dropped with a warning), matching uBO.
+
+AdGuard-only options (`$stealth`, `$cookie`, `$app`, `$jsinject`, `$referrerpolicy`,
+`$uritransform`, `$content`, `$removeparam-regexp`) and AdGuard's HTML-filtering syntax
+(`domains$$element[attr="…"]`, which puts a second `$` at the head of the option list) are
+dropped with a reason that names them, not as "unknown option" — AdGuard's own lists ship
+tens of thousands of such lines and they are not list bugs.
+
+The compiler evaluates `!#if` directives as a **Chromium MV3 extension**: `env_chromium`,
+`env_chrome`, `env_mv3`, `ext_ublock`, `cap_user_stylesheet` and `adguard_ext_chromium_mv3`
+are true. That last one matters for scale: AdGuard's lists gate their CNAME-tracker
+sections on `!adguard_ext_chromium_mv3` precisely because MV3 cannot afford them (AdGuard
+Spyware alone carries ~210,000 such lines), and gate MV3-adapted replacements on the
+positive form.
 
 ## 3. Resource types
 
@@ -124,9 +155,16 @@ Order of operations, per ruleset:
 2. Canonicalise: lowercase hostnames, sort option lists, punycode.
 3. **Domain merge**: filters that differ only in the pattern hostname and are
    `||host^` with identical options merge into one rule with `requestDomains: [h1, h2, …]`
-   (cap 5,000 domains per rule to keep rules cheap to evaluate).
+   (cap 5,000 domains per rule to keep rules cheap to evaluate). A group with more than
+   5,000 distinct domains is **chunked** into `ceil(n / 5,000)` rules — it is never left
+   unmerged. This is what keeps hosts-format lists and AdGuard's domain sections inside
+   the per-list budget: Peter Lowe's ~3,500 hosts become a single rule, and a 100,000-host
+   section becomes 20. A rule that already carries more than the cap (a long `$to=` list)
+   is left alone. `||host^`, `||host^$third-party` and `||host^$3p` all merge, because
+   `$3p` canonicalises to the same `domainType` and the option list is sorted before the
+   dedupe key is taken (step 2).
 4. **Initiator merge**: identical pattern + options except `$domain=` merge their
-   `initiatorDomains`.
+   `initiatorDomains`, with the same chunking rule.
 5. Drop rules shadowed by a broader rule in the same tier (e.g. `||a.com/x` when
    `||a.com^` exists with a superset of types) — only when provably redundant.
 6. Rank regex rules by list order; keep the first 1,000 per ruleset, warn on the rest.
@@ -136,13 +174,23 @@ Order of operations, per ruleset:
 
 ## 6. Rule ID ranges
 
-| Range             | Owner                                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------------------- |
-| 1 – 299,999       | static rulesets (IDs are per‑ruleset, but the compiler keeps them globally unique for logging) |
-| 300,000 – 319,999 | delta updates (dynamic)                                                                        |
-| 320,000 – 329,999 | user custom filters (dynamic)                                                                  |
-| 330,000 – 334,999 | site allow / per‑site overrides (session)                                                      |
-| 335,000 – 335,999 | picker / temporary (session)                                                                   |
+**Static rule IDs are per ruleset.** Chrome only requires a rule ID to be unique _within_
+its own ruleset, and `declarativeNetRequest.getMatchedRules()` identifies a match by the
+`(rulesetId, ruleId)` pair — never by the ID alone. The compiler therefore numbers every
+list from 1 independently: `dnr/easylist.json` and `dnr/easyprivacy.json` both start at
+rule 1. Anything that names a rule (the logger, `report.json`, `delta.json`'s
+`dnr.disable` map, `updateStaticRules`) must carry the ruleset ID alongside it.
+
+Numbering globally instead used to exhaust the 299,999-ID static range after two large
+lists, after which _every_ remaining list compiled to zero rules.
+
+| Range             | Owner                                                        |
+| ----------------- | ------------------------------------------------------------ |
+| 1 – 299,999       | static rulesets — **per ruleset**, each list numbered from 1 |
+| 300,000 – 319,999 | delta updates (dynamic)                                      |
+| 320,000 – 329,999 | user custom filters (dynamic)                                |
+| 330,000 – 334,999 | site allow / per‑site overrides (session)                    |
+| 335,000 – 335,999 | picker / temporary (session)                                 |
 
 ## 7. Validation examples (test fixtures live in `packages/compiler/test/fixtures/`)
 

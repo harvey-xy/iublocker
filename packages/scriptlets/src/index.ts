@@ -169,6 +169,18 @@ const staticResources: Record<string, string> = {
   empty: 'empty',
   'click2load.html': 'click2load.html',
   click2load: 'click2load.html',
+  // ABP `$rewrite=abp-resource:` spellings (ABP-syntax lists use these names).
+  'blank-text': 'noop.txt',
+  'blank-css': 'noop.css',
+  'blank-js': 'noop.js',
+  'blank-html': 'noop.html',
+  'blank-mp3': 'noop-0.1s.mp3',
+  'blank-mp4': 'noop-1s.mp4',
+  'blank-gif': '1x1.gif',
+  '1x1-transparent-gif': '1x1.gif',
+  '2x2-transparent-png': '2x2.png',
+  '3x2-transparent-png': '3x2.png',
+  '32x32-transparent-png': '32x32.png',
 };
 
 /** uBO's long-form `$redirect=` spellings for the surrogates. */

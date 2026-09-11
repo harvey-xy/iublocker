@@ -35,7 +35,8 @@ MV3 dictates the architecture. The relevant facts, with the Chrome version they 
 | --------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | No blocking `webRequest`                            | —                                                                        | All network blocking is declarative (`declarativeNetRequest`, "DNR").                                 |
 | Static rulesets                                     | ≤ 100 declared, ≤ 50 enabled (Chrome 120)                                | Each filter list = one ruleset; users toggle lists by enabling rulesets.                              |
-| Global static rule budget                           | 330,000 rules across enabled rulesets (Chrome 121), 30,000 guaranteed    | Compiler must dedupe aggressively and report budget usage.                                            |
+| Global static rule budget                           | 330,000 rules across enabled rulesets (Chrome 121), 30,000 guaranteed    | Compiler must dedupe and merge aggressively and report budget usage.                                  |
+| Static rule IDs                                     | unique per ruleset; `getMatchedRules` returns `(rulesetId, ruleId)`      | Each list numbers its rules from 1 (`docs/FILTER-SYNTAX.md` §6).                                      |
 | Regex rules                                         | ≤ 1,000 per ruleset, RE2 syntax, ≤ 2 KB compiled memory                  | Regex filters are a scarce resource; the compiler ranks and drops.                                    |
 | Dynamic rules                                       | ≤ 30,000 (Chrome 121); ≤ 5,000 may be "unsafe" (redirect/modifyHeaders…) | Used for user filters, per‑site overrides and differential list updates.                              |
 | Session rules                                       | ≤ 5,000                                                                  | Used for transient state (site temporarily disabled, picker preview).                                 |
@@ -54,6 +55,8 @@ MV3 dictates the architecture. The relevant facts, with the Chrome version they 
 │ packages/compiler  →  dist/rulesets/dnr/<list>.json      (static rulesets)│
 │                       dist/rulesets/cosmetic/<list>.json (cosmetic DB)    │
 │                       dist/rulesets/scriptlets/<list>.json                │
+│                       dist/rulesets/scriptlet-lib/<name>.js  (fn bodies)  │
+│                       dist/rulesets/scriptlet-groups/<hash>.js (calls)    │
 │                       dist/rulesets/manifest.json         (RulesetManifest)│
 │ packages/scriptlets → dist/scriptlets/registry.js  (bundled MAIN‑world code)│
 └───────────────────────────────────────────────────────────────────────────┘
@@ -143,7 +146,7 @@ Compile‑time pipeline, one list = one static ruleset (`docs/RULESETS.md`):
 list.txt ─parse─▶ Filter[] ─classify─▶ network / cosmetic / scriptlet / unsupported
 network   ─convert─▶ DNRRule[] ─dedupe/merge/rank─▶ dnr/<id>.json (+ budget report)
 cosmetic  ─index──▶ cosmetic/<id>.json  (generic tables + per‑domain specific/procedural/exceptions)
-scriptlet ─index──▶ scriptlets/<id>.json (per‑domain [name, args]) + host groups for registration
+scriptlet ─index──▶ scriptlets/<id>.json (per‑domain [name, args]) + scriptlet-lib/ + host groups
 ```
 
 Runtime pipeline for user filters (same parser, in the worker): network → dynamic

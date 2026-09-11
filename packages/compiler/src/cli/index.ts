@@ -33,6 +33,13 @@ import * as scriptletModule from '../scriptlet';
 interface ScriptletGroupApi {
   computeScriptletGroups?: (dbs: { listId: string; db: ScriptletDB }[]) => ScriptletGroup[];
   emitScriptletGroupBundle?: (group: ScriptletGroup) => string;
+  emitScriptletLib?: (name: string) => string | null;
+  collectScriptletLibs?: (groups: readonly ScriptletGroup[]) => string[];
+  capScriptletGroups?: (groups: readonly ScriptletGroup[]) => {
+    groups: ScriptletGroup[];
+    dynamicHosts: string[];
+  };
+  SCRIPTLET_LIB_DIR?: string;
 }
 
 function scriptletGroupApi(): ScriptletGroupApi {
@@ -307,6 +314,7 @@ export function runCli(argv: readonly string[]): number {
   rmSync(join(outDir, 'cosmetic'), { recursive: true, force: true });
   rmSync(join(outDir, 'scriptlets'), { recursive: true, force: true });
   rmSync(join(outDir, 'scriptlet-groups'), { recursive: true, force: true });
+  rmSync(join(outDir, 'scriptlet-lib'), { recursive: true, force: true });
 
   const { compileCosmetic, addCosmeticNetworkExceptions } = cosmeticApi();
   const { compileScriptlets } = scriptletApi();
@@ -415,17 +423,47 @@ export function runCli(argv: readonly string[]): number {
     allSourceMeta.push(...job.sources);
   }
 
-  // ---- scriptlet groups ----------------------------------------------------
+  // ---- scriptlet libs + groups ---------------------------------------------
+  // One `scriptlet-lib/<name>.js` per scriptlet name (the function bodies, shared by every
+  // group that uses them) plus one tiny `scriptlet-groups/<hash>.js` per group (nothing but
+  // `run(key, name, args)` calls). docs/SCRIPTLETS.md §3.
   const groupApi = scriptletGroupApi();
-  const groups: ScriptletGroup[] = groupApi.computeScriptletGroups?.(scriptletDbs) ?? [];
-  let scriptletBytes = 0;
+  const allGroups: ScriptletGroup[] = groupApi.computeScriptletGroups?.(scriptletDbs) ?? [];
+  const capped = groupApi.capScriptletGroups?.(allGroups) ?? { groups: allGroups, dynamicHosts: [] };
+  const groups = capped.groups;
+  if (capped.dynamicHosts.length > 0) {
+    warningsGlobal.push(
+      `${allGroups.length - groups.length} scriptlet group(s) demoted to the dynamic path ` +
+        `(${capped.dynamicHosts.length} hosts) — per-list group cap`,
+    );
+  }
+
+  let scriptletLibBytes = 0;
+  const libFiles = groupApi.collectScriptletLibs?.(groups) ?? [];
+  const libDir = groupApi.SCRIPTLET_LIB_DIR ?? 'scriptlet-lib';
+  for (const libFile of libFiles) {
+    const name = libFile.slice(libDir.length + 1, -'.js'.length);
+    const source = groupApi.emitScriptletLib?.(name) ?? null;
+    if (source === null) {
+      warningsGlobal.push(`scriptlet lib for "${name}" could not be emitted`);
+      continue;
+    }
+    const file = join(outDir, libFile);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, source);
+    scriptletLibBytes += Buffer.byteLength(source);
+  }
+
+  let scriptletGroupBytes = 0;
   for (const group of groups) {
     const source = groupApi.emitScriptletGroupBundle?.(group) ?? '';
     const file = join(outDir, 'scriptlet-groups', `${group.hash}.js`);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, source);
-    scriptletBytes += Buffer.byteLength(source);
+    scriptletGroupBytes += Buffer.byteLength(source);
   }
+  // Each file is counted once, not once per group that registers it.
+  const scriptletBytes = scriptletLibBytes + scriptletGroupBytes;
 
   // ---- manifest + report ---------------------------------------------------
   const version = rulesetVersion(allSourceMeta);
@@ -439,6 +477,7 @@ export function runCli(argv: readonly string[]): number {
     lists: entries,
     budget: { staticRulesTotal, staticRulesDefaultEnabled, regexTotal },
     scriptletGroups: groups.map(({ calls: _calls, ...rest }) => rest),
+    ...(capped.dynamicHosts.length > 0 ? { scriptletDynamicHosts: capped.dynamicHosts } : {}),
   };
   writeJson(join(outDir, 'manifest.json'), manifest);
 
@@ -468,6 +507,10 @@ export function runCli(argv: readonly string[]): number {
   console.info('');
   console.info(
     `version ${version} · ${entries.length} lists · default-enabled rules ${staticRulesDefaultEnabled}`,
+  );
+  console.info(
+    `scriptlets · ${libFiles.length} lib files (${scriptletLibBytes} B) · ` +
+      `${groups.length} groups (${scriptletGroupBytes} B)`,
   );
   for (const w of warningsGlobal) console.warn(`warning: ${w}`);
 

@@ -290,3 +290,88 @@ describe('rejections', () => {
     expect(reason('   ')).toBe('empty line');
   });
 });
+
+describe('AdGuard-only syntax is dropped with a reason', () => {
+  const reason = (raw: string): string => {
+    const result = parseNetworkFilter(raw, 1);
+    return result.ok ? '' : result.reason;
+  };
+
+  it('names AdGuard HTML filtering ($$) instead of guessing an option', () => {
+    expect(reason('animex.club$$script[tag-content="x"][max-length="20000"]')).toBe(
+      'AdGuard HTML filtering ("$$") is unsupported on MV3',
+    );
+    expect(reason('adshrink.it$$script:contains(displayMessage:)')).toBe(
+      'AdGuard HTML filtering ("$$") is unsupported on MV3',
+    );
+    expect(reason('/javascript.js^$$script,subdocument,third-party')).toBe(
+      'AdGuard HTML filtering ("$$") is unsupported on MV3',
+    );
+  });
+
+  it('names AdGuard-only options', () => {
+    expect(reason('||example.com^$stealth')).toBe('AdGuard-only option "stealth" has no MV3 equivalent');
+    expect(reason('||example.com^$cookie=/.+/')).toBe('AdGuard-only option "cookie" has no MV3 equivalent');
+    expect(reason('||example.com^$app=org.example')).toBe('AdGuard-only option "app" has no MV3 equivalent');
+    expect(reason('||example.com^$jsinject')).toBe('AdGuard-only option "jsinject" has no MV3 equivalent');
+  });
+
+  it('still reports a genuinely unknown option as unknown', () => {
+    expect(reason('||example.com^$definitelynotanoption')).toBe('unknown option "definitelynotanoption"');
+  });
+});
+
+describe('urlhaus-style $all filters', () => {
+  it('keeps every resource type and anchors on the hostname', () => {
+    const result = parseNetworkFilter('||malware.example^$all', 1);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.filter.isAll).toBe(true);
+    expect(result.filter.hostname).toBe('malware.example');
+    expect(result.filter.hostRest).toBe('^');
+    expect(result.filter.resourceTypes).toContain('main_frame');
+    expect(result.filter.resourceTypes).toContain('script');
+  });
+});
+
+describe('ABP abp-resource redirects', () => {
+  it('resolves the blank-* spellings', () => {
+    for (const name of ['blank-js', 'blank-mp3', 'blank-gif', 'blank-text']) {
+      const result = parseNetworkFilter(`||example.com^$rewrite=abp-resource:${name}`, 1);
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.filter.redirect).toBe(name);
+    }
+  });
+});
+
+describe('||* patterns (DNR rejects a urlFilter starting with "||*")', () => {
+  const filterOf = (raw: string) => {
+    const result = parseNetworkFilter(raw, 1);
+    return result.ok ? result.filter : null;
+  };
+
+  it('drops the domain anchor and keeps the remainder as a substring', () => {
+    expect(filterOf('||*.libaishuo.com^$third-party')?.pattern).toBe('.libaishuo.com^');
+    expect(filterOf('||*-aaa.net^')?.pattern).toBe('-aaa.net^');
+    expect(filterOf('||*.servimg.com/u/f45/')?.pattern).toBe('.servimg.com/u/f45/');
+    expect(filterOf('||*/ad/')?.pattern).toBe('/ad/');
+  });
+
+  it('keeps them as plain text patterns, never host-anchored', () => {
+    const f = filterOf('||*.libaishuo.com^');
+    expect(f?.kind).toBe('text');
+    expect(f?.hostname).toBeUndefined();
+  });
+
+  it('drops a pattern that is nothing but "||*"', () => {
+    const result = parseNetworkFilter('||*', 1);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('pattern "||*" matches everything');
+  });
+
+  it('leaves a normal host anchor alone', () => {
+    const f = filterOf('||example.com^');
+    expect(f?.kind).toBe('hostAnchor');
+    expect(f?.hostname).toBe('example.com');
+  });
+});

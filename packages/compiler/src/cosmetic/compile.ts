@@ -1,11 +1,16 @@
 /**
  * `CosmeticDB` construction, merging and network-exception folding.
  * docs/COSMETIC-FILTERING.md §2.
+ *
+ * Hostname keys are stored exactly as the filter wrote them: a concrete hostname, the
+ * generic bucket `"*"`, or an **entity key** such as `example.*`. Entities are resolved at
+ * lookup time (`lookupCosmetic` → `entityKeysFor`), never expanded here — expanding them
+ * against the public-suffix snapshot used to multiply every `example.*##…` filter by a few
+ * hundred and was the single biggest source of dead selectors in the compiled DBs.
  */
 import type { CosmeticDB, DroppedFilter, ProceduralFilter } from '@iublocker/shared';
 import { emptyCosmeticDB } from '@iublocker/shared';
 import type { CompileCosmeticResult, CompileOptions, CosmeticNetworkExceptions, RawLine } from '../types';
-import { expandEntity, isEntity, MAX_ENTITY_EXPANSION, PUBLIC_SUFFIXES } from './entities';
 import type { CosmeticForm, ParsedCosmetic } from './parse';
 import { parseCosmeticFilter } from './parse';
 import { genericKey } from './selector';
@@ -17,12 +22,8 @@ export const GENERIC_HOST_KEY = '*';
 export const MAX_GENERIC_COMPLEX = 2000;
 
 export interface CosmeticCompileOptions extends CompileOptions {
-  /** Override the embedded public-suffix snapshot (used by tests). */
-  suffixes?: readonly string[];
   /** Cap on `generic.complex` (default {@link MAX_GENERIC_COMPLEX}). */
   maxGenericComplex?: number;
-  /** Cap on hostnames generated per `example.*` entity (default 300). */
-  maxEntityExpansion?: number;
 }
 
 const NUL = '\u0000';
@@ -61,18 +62,7 @@ function exceptionKey(body: CosmeticForm, rawBody: string): string {
 export function compileCosmetic(lines: RawLine[], opts: CosmeticCompileOptions): CompileCosmeticResult {
   const dropped: DroppedFilter[] = [];
   const warnings: string[] = [];
-  const suffixes = opts.suffixes ?? PUBLIC_SUFFIXES;
-  const entityCap = opts.maxEntityExpansion ?? MAX_ENTITY_EXPANSION;
   const complexCap = opts.maxGenericComplex ?? MAX_GENERIC_COMPLEX;
-
-  const expand = (entries: string[]): string[] => {
-    const out: string[] = [];
-    for (const entry of entries) {
-      if (isEntity(entry)) out.push(...expandEntity(entry.slice(0, -2), suffixes, entityCap));
-      else out.push(entry);
-    }
-    return out;
-  };
 
   // Phase A — parse.
   const records: ParsedCosmetic[] = [];
@@ -95,12 +85,12 @@ export function compileCosmetic(lines: RawLine[], opts: CosmeticCompileOptions):
   for (const parsed of records) {
     const key = exceptionKey(parsed.body, parsed.rawBody);
     if (parsed.exception) {
-      const hosts = expand(parsed.domains.include);
+      const hosts = parsed.domains.include;
       if (hosts.length === 0) globalExceptions.add(key);
       else for (const host of hosts) push(hostExceptions, host, key);
       continue;
     }
-    for (const host of expand(parsed.domains.exclude)) push(hostExceptions, host, key);
+    for (const host of parsed.domains.exclude) push(hostExceptions, host, key);
   }
 
   // Phase C — build.
@@ -123,7 +113,7 @@ export function compileCosmetic(lines: RawLine[], opts: CosmeticCompileOptions):
   let genericExcluded = 0;
   for (const parsed of records) {
     if (parsed.exception) continue;
-    const hosts = expand(parsed.domains.include);
+    const hosts = parsed.domains.include;
     const body = parsed.body;
 
     if (hosts.length === 0) {

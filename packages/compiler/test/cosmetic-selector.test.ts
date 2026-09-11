@@ -5,7 +5,7 @@ import {
   normalizeNativeSelector,
   parseProceduralFilter,
 } from '../src/cosmetic/procedural';
-import { expandEntity, isEntity, PUBLIC_SUFFIXES } from '../src/cosmetic/entities';
+import { expandEntity, isEntity, MAX_ENTITY_EXPANSION, PUBLIC_SUFFIXES } from '../src/cosmetic/entities';
 
 describe('scanSelector', () => {
   it('collects top-level pseudo-classes', () => {
@@ -159,7 +159,7 @@ describe('entities', () => {
 
   it('expands against the embedded suffix snapshot', () => {
     const hosts = expandEntity('example');
-    expect(hosts).toHaveLength(300);
+    expect(hosts).toHaveLength(100);
     expect(hosts[0]).toBe('example.com');
     expect(hosts).toContain('example.co.uk');
     expect(hosts).toContain('example.com.au');
@@ -176,6 +176,7 @@ describe('entities', () => {
 
   it('ships more suffixes than the per-entity cap', () => {
     expect(PUBLIC_SUFFIXES.length).toBeGreaterThan(300);
+    expect(PUBLIC_SUFFIXES.length).toBeGreaterThan(MAX_ENTITY_EXPANSION);
     expect(new Set(PUBLIC_SUFFIXES).size).toBe(PUBLIC_SUFFIXES.length);
   });
 });

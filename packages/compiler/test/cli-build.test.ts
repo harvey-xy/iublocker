@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { RulesetListEntry, RulesetManifest, RulesetReport, DNRRule } from '@iublocker/shared';
@@ -258,8 +266,11 @@ describe('runCli', () => {
 
     const hostsRules = JSON.parse(readFileSync(join(out, 'dnr/hosts-sample.json'), 'utf8')) as DNRRule[];
     expect(hostsRules[0]?.condition.requestDomains).toEqual(['hosts-a.example.com', 'hosts-b.example.com']);
-    // Rule ids stay globally unique across rulesets.
-    expect(Math.min(...hostsRules.map((r) => r.id))).toBeGreaterThan(Math.max(...rules.map((r) => r.id)));
+    // Rule ids are unique *per ruleset* and every list numbers from 1
+    // (docs/FILTER-SYNTAX.md §6) — they are deliberately NOT globally unique.
+    expect(new Set(hostsRules.map((r) => r.id)).size).toBe(hostsRules.length);
+    expect(Math.min(...hostsRules.map((r) => r.id))).toBe(1);
+    expect(Math.min(...rules.map((r) => r.id))).toBe(1);
 
     const report = JSON.parse(readFileSync(join(out, 'report.json'), 'utf8')) as RulesetReport;
     expect(report.version).toBe(manifest.version);
@@ -401,5 +412,79 @@ describe('runCli', () => {
     expect(runCli(['--lists', lists, '--cache', cache, '--out', out])).toBe(0);
     const rules = JSON.parse(readFileSync(join(out, 'dnr/a.json'), 'utf8')) as DNRRule[];
     expect(rules).toEqual([]);
+  });
+});
+
+describe('runCli — scriptlet libs and groups (docs/RULESETS.md §2)', () => {
+  function build(): { out: string } {
+    const { lists, cache, out } = setup();
+    writeLists(lists, [{ id: 'sample', title: 'Sample', urls: [], group: 'ads', defaultEnabled: true }]);
+    writeFileSync(join(cache, 'sample.txt'), SAMPLE);
+    expect(runCli(['--lists', lists, '--cache', cache, '--out', out])).toBe(0);
+    return { out };
+  }
+
+  it('writes one lib file per scriptlet name and one tiny file per group', () => {
+    const { out } = build();
+    const manifest = JSON.parse(readFileSync(join(out, 'manifest.json'), 'utf8')) as RulesetManifest;
+    expect(manifest.scriptletGroups.length).toBeGreaterThan(0);
+
+    const libDir = join(out, 'scriptlet-lib');
+    expect(existsSync(libDir)).toBe(true);
+    const libs = readdirSync(libDir);
+    expect(libs.length).toBeGreaterThan(0);
+
+    for (const group of manifest.scriptletGroups) {
+      // Every lib the manifest promises exists on disk and is referenced by path.
+      expect(group.libs.length).toBeGreaterThan(0);
+      for (const lib of group.libs) {
+        expect(lib.startsWith('scriptlet-lib/')).toBe(true);
+        expect(existsSync(join(out, lib))).toBe(true);
+      }
+      const source = readFileSync(join(out, group.file), 'utf8');
+      expect(source).toContain('self.__iub_lib');
+      // The call list only, so it stays far smaller than any scriptlet body.
+      expect(source.length).toBeLessThan(2_000);
+    }
+  });
+
+  it('defines the scriptlet on self.__iub_lib in the lib file', () => {
+    const { out } = build();
+    const name = readdirSync(join(out, 'scriptlet-lib'))[0] as string;
+    const source = readFileSync(join(out, 'scriptlet-lib', name), 'utf8');
+    expect(source).toContain('self.__iub_lib');
+    expect(source).toContain(JSON.stringify(name.replace(/\.js$/, '')));
+    // The whole point: the function body lives here, not in the group files.
+    expect(source.length).toBeGreaterThan(200);
+  });
+
+  it('reports lib and group bytes separately in the summary', () => {
+    build();
+    expect(logs.join('\n')).toMatch(/scriptlets · \d+ lib files \(\d+ B\) · \d+ groups \(\d+ B\)/);
+  });
+
+  it('clears scriptlet-lib/ between builds', () => {
+    const { lists, cache, out } = setup();
+    writeLists(lists, [{ id: 'sample', title: 'Sample', urls: [], group: 'ads', defaultEnabled: true }]);
+    writeFileSync(join(cache, 'sample.txt'), SAMPLE);
+    expect(runCli(['--lists', lists, '--cache', cache, '--out', out])).toBe(0);
+    writeFileSync(join(out, 'scriptlet-lib', 'stale.js'), '// stale');
+    expect(runCli(['--lists', lists, '--cache', cache, '--out', out])).toBe(0);
+    expect(existsSync(join(out, 'scriptlet-lib', 'stale.js'))).toBe(false);
+  });
+
+  it('numbers every ruleset from 1', () => {
+    const { lists, cache, out } = setup();
+    writeLists(lists, [
+      { id: 'a', title: 'A', urls: [], group: 'ads', defaultEnabled: true },
+      { id: 'b', title: 'B', urls: [], group: 'ads', defaultEnabled: true },
+    ]);
+    writeFileSync(join(cache, 'a.txt'), '||a1.example^$script\n||a2.example^$image\n');
+    writeFileSync(join(cache, 'b.txt'), '||b1.example^$script\n||b2.example^$image\n');
+    expect(runCli(['--lists', lists, '--cache', cache, '--out', out])).toBe(0);
+    const a = JSON.parse(readFileSync(join(out, 'dnr/a.json'), 'utf8')) as DNRRule[];
+    const b = JSON.parse(readFileSync(join(out, 'dnr/b.json'), 'utf8')) as DNRRule[];
+    expect(a.map((r) => r.id)).toEqual(b.map((r) => r.id));
+    expect(Math.min(...a.map((r) => r.id))).toBe(1);
   });
 });

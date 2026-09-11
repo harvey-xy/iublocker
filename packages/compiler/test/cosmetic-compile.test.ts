@@ -20,7 +20,6 @@ function lines(text: string): RawLine[] {
 const OPTS: CosmeticCompileOptions = {
   listId: 'test',
   trusted: false,
-  suffixes: ['com', 'net', 'co.uk'],
 };
 
 function compile(text: string, opts: Partial<CosmeticCompileOptions> = {}) {
@@ -115,14 +114,20 @@ example.com##.c:remove()
     expect(db.specific['example.com']).toBeUndefined();
   });
 
-  it('expands entities against the suffix snapshot', () => {
+  it('keys entities by the entity key instead of expanding them', () => {
     const { db } = compile('example.*##.ad');
-    expect(Object.keys(db.specific).sort()).toEqual(['example.co.uk', 'example.com', 'example.net']);
+    expect(db.specific).toEqual({ 'example.*': ['.ad'] });
   });
 
-  it('honours the entity expansion cap', () => {
-    const { db } = compile('example.*##.ad', { maxEntityExpansion: 2 });
-    expect(Object.keys(db.specific)).toHaveLength(2);
+  it('keys entity :style() and procedural filters the same way', () => {
+    const { db } = compile('example.*##.ad:style(opacity:0)\nexample.*#?#.x:has-text(Ad)');
+    expect(db.styles['example.*']).toEqual([['.ad', 'opacity:0']]);
+    expect(db.procedural['example.*']).toHaveLength(1);
+  });
+
+  it('keeps entity and concrete keys apart', () => {
+    const { db } = compile('example.*##.a\nexample.com##.b');
+    expect(Object.keys(db.specific).sort()).toEqual(['example.*', 'example.com']);
   });
 
   it('dedupes repeated specific selectors', () => {
@@ -138,9 +143,15 @@ describe('compileCosmetic — negations and exceptions', () => {
     expect(db.exceptions.selectors).toEqual({ 'sub.example.com': ['.ad'] });
   });
 
-  it('expands negated entities', () => {
+  it('records negated entities under the entity key', () => {
     const { db } = compile('example.com,~other.*##.ad');
-    expect(Object.keys(db.exceptions.selectors).sort()).toEqual(['other.co.uk', 'other.com', 'other.net']);
+    expect(db.exceptions.selectors).toEqual({ 'other.*': ['.ad'] });
+  });
+
+  it('an entity exception cancels the entity filter', () => {
+    const { db } = compile('example.*##.ad\nexample.*#@#.ad');
+    expect(db.specific['example.*']).toBeUndefined();
+    expect(db.exceptions.selectors['example.*']).toEqual(['.ad']);
   });
 
   it('a specific exception removes the specific selector', () => {

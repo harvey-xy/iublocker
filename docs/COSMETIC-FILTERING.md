@@ -11,7 +11,7 @@ compiled database format, the runtime engine, and mode behaviour.
 | `##.ad`                                         | generic element hiding (all sites) | content script, `complete` mode only                                                                       |
 | `example.com##.ad`                              | specific hiding                    | worker `insertCSS` at `onCommitted`, `optimal`+                                                            |
 | `example.com,~sub.example.com##.ad`             | with negations                     | same                                                                                                       |
-| `example.*##.ad`                                | entity (any public suffix)         | expanded via PSL at compile time                                                                           |
+| `example.*##.ad`                                | entity (any public suffix)         | stored under the entity key `example.*`, matched via PSL at lookup time                                    |
 | `example.com#@#.ad`                             | exception for a specific selector  | removes from specific set; for generic, adds to per‑domain exclusion                                       |
 | `#@#.ad`                                        | generic exception                  | drops generic selector globally                                                                            |
 | `example.com#?#.x:has-text(Sponsored)`          | procedural                         | content script, `complete` mode (or `optimal` when the list marks it `!#trusted`? — no: always `complete`) |
@@ -59,11 +59,13 @@ interface CosmeticDB {
     complex: string[];
     // Global generic exceptions already applied; per‑domain exceptions below.
   };
-  specific: Record<string, string[]>; // hostname → plain selectors (joined into CSS)
+  // Keys below are an exact hostname, the generic bucket "*", or an entity key
+  // ending in the literal ".*" ("example.*"). See "Hostname keys" below.
+  specific: Record<string, string[]>; // key → plain selectors (joined into CSS)
   styles: Record<string, [selector: string, style: string][]>; // :style()
-  procedural: Record<string, ProceduralFilter[]>; // hostname → compiled procedural chains
+  procedural: Record<string, ProceduralFilter[]>; // key → compiled procedural chains
   exceptions: {
-    selectors: Record<string, string[]>; // hostname → selectors excluded (#@#)
+    selectors: Record<string, string[]>; // key → selectors excluded (#@# or ~negation)
     elemhide: string[]; // hostnames with $elemhide
     generichide: string[]; // hostnames with $generichide
     specifichide: string[]; // hostnames with $specifichide
@@ -76,16 +78,39 @@ interface ProceduralFilter {
 }
 ```
 
-Hostname keys: exact hostnames only, with negations compiled into `exceptions.selectors`
-under the negated hostname (`~sub.example.com##.ad` on `example.com` → specific under
-`example.com`, exception under `sub.example.com`). Entities are expanded to concrete
-suffixes present in the PSL snapshot (`example.com`, `example.co.uk`, …), capped at 300
-per entity.
+**Hostname keys.** A key in `specific`, `styles`, `procedural` and
+`exceptions.selectors` is one of three things:
 
-Lookup at runtime for hostname `a.b.example.com`: union of entries for `a.b.example.com`,
-`b.example.com`, `example.com` minus exceptions for the same walk. Specific selectors
-are deduped and joined as `sel1,sel2,…{display:none!important}` in chunks of 1,000
-selectors per `insertCSS` call to avoid oversized rules.
+1. an exact hostname (`sub.example.com`),
+2. the generic bucket `"*"` (§2.1), or
+3. an **entity key** — a base plus the literal `.*` suffix (`example.*`).
+
+Entities are **not** expanded at compile time. `example.*##.ad` is stored once, under the
+key `example.*`; a negated entity (`~example.*`) is recorded in `exceptions.selectors`
+under the same key. Expanding entities against the public-suffix snapshot (the old
+behaviour, capped at 300 hostnames per entity) multiplied every entity filter by a few
+hundred: uBlock filters alone compiled to 453,402 specific selectors, of which the
+overwhelming majority named hostnames that do not exist.
+
+Negations of concrete hostnames are unchanged: `example.com,~sub.example.com##.ad` stores
+the selector under `example.com` and an exception under `sub.example.com`.
+
+**Lookup.** `lookupCosmetic(dbs, hostname)` matches a hostname against two key sets:
+
+- the **suffix walk** — `a.b.example.co.uk` → `a.b.example.co.uk`, `b.example.co.uk`,
+  `example.co.uk`, `co.uk`, `uk`;
+- the **entity keys** — the public suffix is computed with the compiler's own compact PSL
+  (`packages/compiler/src/psl`, the project's only suffix snapshot), and every label prefix
+  above it yields a key: `a.b.example.*`, `b.example.*`, `example.*`.
+
+The result is the union over both sets, minus the exceptions recorded under _any_ of them.
+A hostname whose public suffix is not in the snapshot (an IP literal, `localhost`, an
+unlisted TLD) simply has no entity keys, and a bare public suffix never produces one
+(`co.uk` is not `co.*`). The key lists are memoised, so the walk costs one `Map` hit per
+`onCommitted`.
+
+Specific selectors are deduped and joined as `sel1,sel2,…{display:none!important}` in
+chunks of 1,000 selectors per `insertCSS` call to avoid oversized rules.
 
 ### 2.1 Compiler notes
 
@@ -114,9 +139,11 @@ selectors per `insertCSS` call to avoid oversized rules.
   this is order‑independent: exceptions are collected before the DB is built.
 - **`generic.complex` cap.** Above 2,000 entries the compiler keeps the first 2,000 (list
   order) and emits a warning.
-- **Entity expansion** uses a compact public‑suffix snapshot embedded in
-  `packages/compiler/src/cosmetic/entities.ts` (≈500 suffixes, first 300 used per entity),
-  independent of the network compiler's PSL.
+- **One public-suffix snapshot.** `packages/compiler/src/psl` is the only suffix table in
+  the project; `packages/compiler/src/cosmetic/entities.ts` re-exports it. The cosmetic and
+  scriptlet compilers use it only through `entityKeysFor()` at lookup time — they never
+  expand. `expandEntity()` survives for the network compiler, where DNR needs concrete
+  domains (docs/FILTER-SYNTAX.md §2.1).
 - **`lookupCosmetic` returns the `elemhide`/`generichide`/`specifichide` flags but does not
   pre‑filter on them** — the worker and content script gate on the flags together with the
   site mode.

@@ -7,7 +7,29 @@
  */
 import type { CosmeticDB, CosmeticLookup, ProceduralFilter } from '@iublocker/shared';
 import { hostnameWalk } from '@iublocker/shared';
+import { entityKeysFor } from '../psl';
 import { GENERIC_HOST_KEY } from './compile';
+
+/**
+ * Keys that apply to a hostname, most specific first: the suffix walk
+ * (`a.b.example.com` → `a.b.example.com`, `b.example.com`, `example.com`, `com`) followed
+ * by the entity keys above the public suffix (`a.b.example.*`, `b.example.*`,
+ * `example.*`). docs/COSMETIC-FILTERING.md §2.
+ *
+ * Memoised: `onCommitted` asks for the same handful of hostnames over and over, and the
+ * compiler asks once per `byHost` key when it builds scriptlet groups.
+ */
+const keyCache = new Map<string, string[]>();
+const KEY_CACHE_MAX = 4096;
+
+export function cosmeticKeysFor(hostname: string): string[] {
+  const cached = keyCache.get(hostname);
+  if (cached !== undefined) return cached;
+  const keys = [...hostnameWalk(hostname), ...entityKeysFor(hostname)];
+  if (keyCache.size >= KEY_CACHE_MAX) keyCache.clear();
+  keyCache.set(hostname, keys);
+  return keys;
+}
 
 interface HideIndex {
   elemhide: Set<string>;
@@ -32,13 +54,14 @@ function hideIndex(db: CosmeticDB): HideIndex {
 
 /**
  * Union of everything that applies to `hostname` across `dbs`, minus the `#@#` exceptions
- * recorded anywhere along the suffix walk.
+ * recorded anywhere along the suffix walk **or under a matching entity key**
+ * (`~example.*#@#…` is stored under `example.*`).
  *
  * Filters stored under the `"*"` hostname key (generic `:style()` and generic procedural
  * filters) are always included; callers gate them by site mode.
  */
 export function lookupCosmetic(dbs: CosmeticDB[], hostname: string): CosmeticLookup {
-  const walk = hostnameWalk(hostname.toLowerCase());
+  const walk = cosmeticKeysFor(hostname.toLowerCase());
 
   const excludedSet = new Set<string>();
   let elemhide = false;

@@ -224,3 +224,31 @@ describe('classifyLines', () => {
     expect(result.html).toHaveLength(1);
   });
 });
+
+describe('AdGuard platform tokens', () => {
+  it('is true for adguard_ext_chromium_mv3', () => {
+    expect(evaluateIfExpression('adguard_ext_chromium_mv3', 'chromium')).toBe(true);
+    expect(evaluateIfExpression('(adguard_ext_chromium_mv3 || adguard_ext_firefox)', 'chromium')).toBe(true);
+  });
+
+  it('skips the sections AdGuard excludes from MV3 builds', () => {
+    // AdGuard Spyware guards its ~210k-line CNAME tracker section exactly like this.
+    const text = [
+      '||keep.example^',
+      '!#if (!adguard_ext_safari && !adguard_app_ios && !adguard_ext_android_cb && !adguard_ext_chromium_mv3)',
+      '||cname-tracker.example^',
+      '!#endif',
+      '!#if (adguard_ext_chromium_mv3)',
+      '||mv3-only.example^',
+      '!#endif',
+    ].join('\n');
+    const result = classifyLines(text);
+    expect(result.network.map((l) => l.raw)).toEqual(['||keep.example^', '||mv3-only.example^']);
+  });
+
+  it('stays false for the other AdGuard platforms', () => {
+    for (const token of ['adguard_ext_safari', 'adguard_app_ios', 'adguard_ext_android_cb']) {
+      expect(evaluateIfExpression(token, 'chromium')).toBe(false);
+    }
+  });
+});

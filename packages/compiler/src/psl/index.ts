@@ -1,23 +1,42 @@
 /**
- * Public-suffix helpers for entity (`example.*`) expansion.
- * docs/FILTER-SYNTAX.md §2.2, docs/COSMETIC-FILTERING.md §1.
+ * Public-suffix helpers for filter *entities* (`example.*`).
+ *
+ * This is the project's only public-suffix snapshot: the network compiler expands
+ * entities into concrete `initiatorDomains`/`requestDomains` (DNR has no entity concept),
+ * while the cosmetic and scriptlet compilers keep the entity key verbatim and resolve it
+ * at lookup time with {@link entityKeysFor}.
+ *
+ * docs/FILTER-SYNTAX.md §2.2, docs/COSMETIC-FILTERING.md §2, docs/SCRIPTLETS.md §2.
  */
 import { hostnameWalk } from '@iublocker/shared';
 import { PUBLIC_SUFFIXES, isPublicSuffix } from './suffixes';
 
 export { PUBLIC_SUFFIXES, isPublicSuffix };
 
-/** Hard cap on how many hostnames one entity may expand to. */
-export const ENTITY_EXPANSION_LIMIT = 300;
+/** Literal suffix that marks an entity key (`example.*`). */
+export const ENTITY_SUFFIX = '.*';
+
+/**
+ * Hard cap on how many hostnames one entity may expand to for NETWORK rules.
+ *
+ * Only the network compiler expands at all, and it prefers hostnames that actually occur
+ * in the list, so the fallback only matters for entities the list never spells out.
+ */
+export const ENTITY_EXPANSION_LIMIT = 100;
 
 /** `example.*` → true. */
 export function isEntity(domain: string): boolean {
-  return domain.endsWith('.*');
+  return domain.endsWith(ENTITY_SUFFIX);
 }
 
 /** `example.*` → `example`. */
 export function entityBase(domain: string): string {
   return domain.slice(0, -2);
+}
+
+/** `example` → `example.*`. */
+export function entityKey(base: string): string {
+  return `${base}${ENTITY_SUFFIX}`;
 }
 
 /**
@@ -30,6 +49,34 @@ export function publicSuffixOf(hostname: string): string {
     if (candidate !== hostname && isPublicSuffix(candidate)) return candidate;
   }
   return '';
+}
+
+/**
+ * Entity keys a hostname may match, most specific first.
+ *
+ * `a.b.example.co.uk` → `['a.b.example.*', 'b.example.*', 'example.*']`: every label
+ * prefix above the public suffix. This is the lookup-time counterpart of compile-time
+ * entity expansion — the cosmetic and scriptlet DBs store `example.*` verbatim instead of
+ * exploding it into hundreds of concrete hostnames (docs/COSMETIC-FILTERING.md §2).
+ *
+ * Returns `[]` when the hostname is itself a public suffix (`co.uk` is not `co.*`) or when
+ * its public suffix is unknown (an IP literal, `localhost`, an unlisted TLD).
+ */
+export function entityKeysFor(hostname: string): string[] {
+  // A bare public suffix is not an entity: `co.uk` must not yield `co.*`.
+  if (isPublicSuffix(hostname)) return [];
+  const suffix = publicSuffixOf(hostname);
+  if (suffix === '') return [];
+  let head = hostname.slice(0, hostname.length - suffix.length - 1);
+  if (head === '') return [];
+  const out: string[] = [];
+  for (;;) {
+    out.push(head + ENTITY_SUFFIX);
+    const dot = head.indexOf('.');
+    if (dot === -1) break;
+    head = head.slice(dot + 1);
+  }
+  return out;
 }
 
 export interface ExpandEntityOptions {
@@ -45,7 +92,8 @@ export interface ExpandEntityOptions {
  * Expand `example.*` into concrete hostnames.
  *
  * Prefers hostnames that actually occur in the list (`opts.known`); falls back to the
- * most common public suffixes. Always capped at `limit` (default 300).
+ * most common public suffixes. Always capped at `limit` (default
+ * {@link ENTITY_EXPANSION_LIMIT}).
  */
 export function expandEntity(base: string, opts: ExpandEntityOptions = {}): string[] {
   const limit = opts.limit ?? ENTITY_EXPANSION_LIMIT;

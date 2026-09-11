@@ -137,16 +137,38 @@ describe('optimize', () => {
     expect(result.rules).toHaveLength(1);
   });
 
-  it('does not merge past the domain cap', () => {
+  it('chunks a merge that would exceed the domain cap', () => {
     const many = Array.from({ length: 3 }, (_, i) => entry(`||h${i}.example^`, block([`h${i}.example`])));
     const merged = optimize([...many], { firstRuleId: 1, maxRegexRules: 1000 });
     expect(merged.rules).toHaveLength(1);
 
+    // 5 domains with a cap of 2 → 3 rules of 2/2/1, not 5 unmerged rules.
     const capped = optimize(
-      Array.from({ length: 3 }, (_, i) => entry(`||h${i}.example^`, block([`h${i}.example`]))),
+      Array.from({ length: 5 }, (_, i) => entry(`||h${i}.example^`, block([`h${i}.example`]))),
       { firstRuleId: 1, maxRegexRules: 1000, maxDomainsPerRule: 2 },
     );
     expect(capped.rules).toHaveLength(3);
+    expect(capped.rules.map((r) => r.condition.requestDomains?.length)).toEqual([2, 2, 1]);
+    expect(capped.rules.flatMap((r) => r.condition.requestDomains ?? []).sort()).toEqual([
+      'h0.example',
+      'h1.example',
+      'h2.example',
+      'h3.example',
+      'h4.example',
+    ]);
+    expect(capped.savings.domainMerged).toBe(2);
+  });
+
+  it('leaves a rule that already exceeds the cap alone', () => {
+    const big = entry('||x.example^', block(['a.example', 'b.example', 'c.example']));
+    const small = entry('||y.example^', block(['d.example']));
+    const result = optimize([big, small], {
+      firstRuleId: 1,
+      maxRegexRules: 1000,
+      maxDomainsPerRule: 2,
+    });
+    expect(result.rules).toHaveLength(2);
+    expect(result.rules[0]?.condition.requestDomains).toHaveLength(3);
   });
 
   it('exposes the default domain cap', () => {

@@ -106,6 +106,27 @@ function isAscii(s: string): boolean {
   return true;
 }
 
+/**
+ * Reject a `urlFilter` Chrome would refuse.
+ *
+ * This is a hard safety net, not a nicety: Chrome validates **every declared ruleset** —
+ * enabled or not — when the extension loads, and a single malformed rule makes it refuse
+ * to load the extension at all ("Rule with id N specifies an incorrect value for the
+ * urlFilter key"), which takes the service worker down with it.
+ *
+ * Returns the reason the filter is invalid, or `null` when it is fine.
+ */
+export function urlFilterProblem(urlFilter: string): string | null {
+  if (urlFilter === '') return 'urlFilter is empty';
+  if (!isAscii(urlFilter)) return 'urlFilter contains non-ASCII characters';
+  if (urlFilter.startsWith('||*')) return 'urlFilter starts with "||*", which DNR rejects';
+  const start = urlFilter.startsWith('||') ? 2 : urlFilter.startsWith('|') ? 1 : 0;
+  const end = urlFilter.length - (urlFilter.length > start && urlFilter.endsWith('|') ? 1 : 0);
+  if (urlFilter.slice(start, end).includes('|'))
+    return 'urlFilter has a "|" anchor that is neither at the start nor at the end';
+  return null;
+}
+
 /** `/resources/<file>` from whatever shape the resource table uses. */
 export function toExtensionPath(file: string): string {
   let f = file;
@@ -201,7 +222,8 @@ function applyPattern(
   let urlFilter = f.pattern;
   if (f.rightAnchored) urlFilter += '|';
   if (urlFilter === '') return { ok: true };
-  if (!isAscii(urlFilter)) return { ok: false, reason: 'urlFilter contains non-ASCII characters' };
+  const problem = urlFilterProblem(urlFilter);
+  if (problem !== null) return { ok: false, reason: problem };
   condition.urlFilter = urlFilter;
   if (f.matchCase) condition.isUrlFilterCaseSensitive = true;
   return { ok: true };

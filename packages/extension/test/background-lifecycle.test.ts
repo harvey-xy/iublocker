@@ -37,7 +37,13 @@ const manifest = makeRulesetManifest({
     makeListEntry('easylist-zh', { defaultEnabled: false, group: 'regional', lang: ['zh'] }),
   ],
   scriptletGroups: [
-    { hash: 'aaa', file: 'scriptlet-groups/aaa.js', hosts: ['example.com'], listIds: ['easylist'] },
+    {
+      hash: 'aaa',
+      file: 'scriptlet-groups/aaa.js',
+      libs: ['scriptlet-lib/noop.js'],
+      hosts: ['example.com'],
+      listIds: ['easylist'],
+    },
   ],
 });
 

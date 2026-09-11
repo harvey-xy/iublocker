@@ -141,6 +141,23 @@ const UNSUPPORTED_OPTIONS = new Set([
   'hls',
 ]);
 
+/**
+ * AdGuard-only options with no MV3 equivalent. They are dropped like an unknown option,
+ * but with a reason that says *why* so `report.json` stays readable: AdGuard's own lists
+ * ship tens of thousands of these lines and they are not list bugs.
+ */
+const ADGUARD_ONLY_OPTIONS = new Set([
+  'stealth',
+  'cookie',
+  'app',
+  'jsinject',
+  'referrerpolicy',
+  'uritransform',
+  'content',
+  'removeparam-regexp',
+  'elemhide-unsupported',
+]);
+
 /** Allowed alone (no DNR effect). */
 const NOOP_OPTIONS = new Set(['_', 'noop']);
 
@@ -472,7 +489,13 @@ export function parseNetworkFilter(
           break;
         default:
           if (NOOP_OPTIONS.has(name)) break;
+          // `domains$$selector` is AdGuard HTML filtering: the second `$` lands in the
+          // option list, so the first option name still carries it.
+          if (name.charCodeAt(0) === 36 /* $ */)
+            return { ok: false, reason: 'AdGuard HTML filtering ("$$") is unsupported on MV3' };
           if (UNSUPPORTED_OPTIONS.has(name)) return { ok: false, reason: `unsupported option "${name}"` };
+          if (ADGUARD_ONLY_OPTIONS.has(name))
+            return { ok: false, reason: `AdGuard-only option "${name}" has no MV3 equivalent` };
           return { ok: false, reason: `unknown option "${name}"` };
       }
     }
@@ -512,9 +535,15 @@ function parsePattern(f: NetworkFilter, hostsFormat: boolean): { ok: true } | { 
     const end = findHostEnd(rest);
     const host = toASCIIHostname(rest.slice(0, end));
     if (host === '' || host.includes('*')) {
-      // `||*.example.com^` style — keep as a plain urlFilter.
+      // `||*.example.com^` style. DNR rejects a `urlFilter` beginning with `||*` outright
+      // — and one invalid rule makes Chrome refuse to load the whole extension — so drop
+      // the domain anchor and match the remainder as a substring, which is what the filter
+      // means anyway ("any host ending in .example.com").
+      let text = rest;
+      while (text.startsWith('*')) text = text.slice(1);
+      if (text === '') return { ok: false, reason: 'pattern "||*" matches everything' };
       f.kind = 'text';
-      f.pattern = p;
+      f.pattern = text;
       return { ok: true };
     }
     f.kind = 'hostAnchor';

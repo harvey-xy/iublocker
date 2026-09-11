@@ -3,6 +3,7 @@ import {
   ENTITY_EXPANSION_LIMIT,
   PUBLIC_SUFFIXES,
   entityBase,
+  entityKeysFor,
   expandDomains,
   expandEntity,
   isEntity,
@@ -86,5 +87,35 @@ describe('entities', () => {
 
   it('expandDomains dedupes', () => {
     expect(expandDomains(['a.example', 'a.example'])).toEqual(['a.example']);
+  });
+});
+
+describe('entityKeysFor', () => {
+  it('returns every label prefix above the public suffix, most specific first', () => {
+    expect(entityKeysFor('a.b.example.co.uk')).toEqual(['a.b.example.*', 'b.example.*', 'example.*']);
+  });
+
+  it('handles a single-label suffix', () => {
+    expect(entityKeysFor('example.com')).toEqual(['example.*']);
+    expect(entityKeysFor('sub.example.com')).toEqual(['sub.example.*', 'example.*']);
+  });
+
+  it('returns nothing for a bare public suffix', () => {
+    expect(entityKeysFor('com')).toEqual([]);
+    expect(entityKeysFor('co.uk')).toEqual([]);
+  });
+
+  it('returns nothing when the suffix is unknown', () => {
+    expect(entityKeysFor('localhost')).toEqual([]);
+    expect(entityKeysFor('example.invalidtld')).toEqual([]);
+  });
+
+  it('prefers the longest public suffix', () => {
+    // `co.uk`, not `uk`, so the entity base is `example` rather than `example.co`.
+    expect(entityKeysFor('example.co.uk')).toEqual(['example.*']);
+  });
+
+  it('never produces a key for an IP literal', () => {
+    expect(entityKeysFor('127.0.0.1')).toEqual([]);
   });
 });

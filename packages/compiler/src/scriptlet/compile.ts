@@ -1,11 +1,16 @@
 /**
  * `ScriptletDB` construction, merging and hostname lookup (docs/SCRIPTLETS.md §2 and §4).
+ *
+ * `byHost` / `exceptions` keys are concrete hostnames, the generic bucket `"*"`, or an
+ * **entity key** such as `example.*`. Entities are resolved on lookup through the
+ * public-suffix walk instead of being expanded at compile time; expanding them multiplied
+ * every `example.*##+js(…)` filter by a few hundred hosts and dominated the compiled DBs.
  */
 import type { DroppedFilter, ScriptletCall, ScriptletDB, ScriptletMeta } from '@iublocker/shared';
 import { emptyScriptletDB, hostnameWalk } from '@iublocker/shared';
 import { resolveScriptlet } from '@iublocker/scriptlets';
 import type { CompileOptions, CompileScriptletResult, RawLine } from '../types';
-import { expandEntity, isEntity, MAX_ENTITY_EXPANSION, PUBLIC_SUFFIXES } from '../cosmetic/entities';
+import { entityKeysFor } from '../psl';
 import { parseScriptletFilter, stripJsSuffix } from './parse';
 
 /** Hostname key for scriptlets that apply everywhere (`##+js(...)` with no domains). */
@@ -22,10 +27,6 @@ export interface ScriptletCompileOptions extends CompileOptions {
   resolve?: ScriptletResolver;
   /** Canonical name → metadata. Convenience alternative to `resolve` (used by tests). */
   registry?: Record<string, ScriptletMeta>;
-  /** Override the embedded public-suffix snapshot (used by tests). */
-  suffixes?: readonly string[];
-  /** Cap on hostnames generated per `example.*` entity (default 300). */
-  maxEntityExpansion?: number;
 }
 
 export function resolverFromRegistry(registry: Record<string, ScriptletMeta>): ScriptletResolver {
@@ -52,17 +53,6 @@ export function compileScriptlets(lines: RawLine[], opts: ScriptletCompileOption
   const dropped: DroppedFilter[] = [];
   const warnings: string[] = [];
   const resolve = resolverOf(opts);
-  const suffixes = opts.suffixes ?? PUBLIC_SUFFIXES;
-  const entityCap = opts.maxEntityExpansion ?? MAX_ENTITY_EXPANSION;
-
-  const expand = (entries: string[]): string[] => {
-    const out: string[] = [];
-    for (const entry of entries) {
-      if (isEntity(entry)) out.push(...expandEntity(entry.slice(0, -2), suffixes, entityCap));
-      else out.push(entry);
-    }
-    return out;
-  };
 
   const byHost = new Map<string, Map<string, ScriptletCall>>();
   const exceptions = new Map<string, Set<string>>();
@@ -93,7 +83,7 @@ export function compileScriptlets(lines: RawLine[], opts: ScriptletCompileOption
       if (parsed.name !== '' && meta === undefined) {
         warnings.push(`line ${line.line}: exception for unknown scriptlet "${parsed.name}"`);
       }
-      const hosts = expand(parsed.domains.include);
+      const hosts = parsed.domains.include;
       if (hosts.length === 0) addException(SCRIPTLET_GENERIC_HOST_KEY, name);
       else for (const host of hosts) addException(host, name);
       continue;
@@ -139,9 +129,9 @@ export function compileScriptlets(lines: RawLine[], opts: ScriptletCompileOption
     }
 
     const call: ScriptletCall = { name: meta.name, args: parsed.args };
-    const hosts = expand(parsed.domains.include);
+    const hosts = parsed.domains.include;
     pending.push({ hosts: hosts.length === 0 ? [SCRIPTLET_GENERIC_HOST_KEY] : hosts, call });
-    for (const host of expand(parsed.domains.exclude)) addException(host, meta.name);
+    for (const host of parsed.domains.exclude) addException(host, meta.name);
   }
 
   const globalExceptions = exceptions.get(SCRIPTLET_GENERIC_HOST_KEY) ?? new Set<string>();
@@ -209,38 +199,97 @@ export function mergeScriptletDB(target: ScriptletDB, source: ScriptletDB): Scri
 }
 
 /**
- * Effective scriptlet calls for `hostname`: the union along the suffix walk (plus the
- * `"*"` generic bucket) across every DB, minus every exception recorded along the same
- * walk in any DB. An exception for `"*"` disables all scriptlets on the hostname.
+ * `byHost` / `exceptions` keys that apply to a hostname: the suffix walk, the entity keys
+ * above the public suffix, and the generic `"*"` bucket.
+ *
+ * Memoised — the worker asks for the same handful of hostnames repeatedly and the group
+ * builder asks once per `byHost` key.
  */
-export function lookupScriptlets(dbs: ScriptletDB[], hostname: string): ScriptletCall[] {
-  const walk = hostnameWalk(hostname.toLowerCase());
-  const keys = [...walk, SCRIPTLET_GENERIC_HOST_KEY];
+const keyCache = new Map<string, { concrete: string[]; entity: string[] }>();
+const KEY_CACHE_MAX = 4096;
+
+export function scriptletKeysFor(hostname: string): { concrete: string[]; entity: string[] } {
+  const cached = keyCache.get(hostname);
+  if (cached !== undefined) return cached;
+  const keys = {
+    concrete: [...hostnameWalk(hostname), SCRIPTLET_GENERIC_HOST_KEY],
+    entity: entityKeysFor(hostname),
+  };
+  if (keyCache.size >= KEY_CACHE_MAX) keyCache.clear();
+  keyCache.set(hostname, keys);
+  return keys;
+}
+
+/** Calls for a hostname, split by how they were matched. docs/SCRIPTLETS.md §3. */
+export interface DetailedScriptletLookup {
+  /**
+   * Matched by a concrete hostname key (or the generic `"*"` bucket). These are the calls
+   * the build pre-registers as MAIN-world content scripts.
+   */
+  concrete: ScriptletCall[];
+  /**
+   * Matched *only* through an entity key (`example.*`). `registerContentScripts` needs
+   * literal match patterns, so these cannot be pre-registered and are injected from the
+   * worker at `onCommitted` instead.
+   */
+  entity: ScriptletCall[];
+}
+
+/**
+ * Effective scriptlet calls for `hostname`, split into the pre-registerable (concrete) and
+ * the dynamic (entity-only) halves.
+ *
+ * Exceptions are collected from every key — concrete *and* entity — in every DB first, so
+ * `~example.*##+js(…)` and `example.*#@#+js(…)` cancel calls exactly like a hostname
+ * exception. An exception for `"*"` disables every scriptlet on the hostname.
+ */
+export function lookupScriptletsDetailed(dbs: ScriptletDB[], hostname: string): DetailedScriptletLookup {
+  const { concrete: concreteKeys, entity: entityKeys } = scriptletKeysFor(hostname.toLowerCase());
 
   const excluded = new Set<string>();
   for (const db of dbs) {
-    for (const key of keys) {
+    for (const key of concreteKeys) {
       const names = db.exceptions[key];
-      if (names === undefined) continue;
-      for (const name of names) excluded.add(name);
+      if (names !== undefined) for (const name of names) excluded.add(name);
+    }
+    for (const key of entityKeys) {
+      const names = db.exceptions[key];
+      if (names !== undefined) for (const name of names) excluded.add(name);
     }
   }
-  if (excluded.has(ALL_SCRIPTLETS)) return [];
+  if (excluded.has(ALL_SCRIPTLETS)) return { concrete: [], entity: [] };
 
-  const out: ScriptletCall[] = [];
   const seen = new Set<string>();
-  for (const db of dbs) {
-    for (const key of keys) {
-      const calls = db.byHost[key];
-      if (calls === undefined) continue;
-      for (const call of calls) {
-        if (excluded.has(call.name)) continue;
-        const id = callId(call);
-        if (seen.has(id)) continue;
-        seen.add(id);
-        out.push(call);
+  const collect = (keys: readonly string[], out: ScriptletCall[]): void => {
+    for (const db of dbs) {
+      for (const key of keys) {
+        const calls = db.byHost[key];
+        if (calls === undefined) continue;
+        for (const call of calls) {
+          if (excluded.has(call.name)) continue;
+          const id = callId(call);
+          if (seen.has(id)) continue;
+          seen.add(id);
+          out.push(call);
+        }
       }
     }
-  }
-  return out;
+  };
+
+  // Concrete first: a call reachable both ways belongs to the pre-registered group.
+  const concrete: ScriptletCall[] = [];
+  collect(concreteKeys, concrete);
+  const entity: ScriptletCall[] = [];
+  if (entityKeys.length > 0) collect(entityKeys, entity);
+  return { concrete, entity };
+}
+
+/**
+ * Effective scriptlet calls for `hostname`: the union along the suffix walk and the
+ * matching entity keys (plus the `"*"` generic bucket) across every DB, minus every
+ * exception recorded under any of those keys in any DB.
+ */
+export function lookupScriptlets(dbs: ScriptletDB[], hostname: string): ScriptletCall[] {
+  const { concrete, entity } = lookupScriptletsDetailed(dbs, hostname);
+  return entity.length === 0 ? concrete : [...concrete, ...entity];
 }

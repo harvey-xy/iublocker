@@ -4,6 +4,7 @@ import { DNR_RESOURCE_TYPES, ID_RANGE, PRIORITY } from '@iublocker/shared';
 import type { RawLine } from '../src/types';
 import { classifyLines } from '../src/parser/classify';
 import { collectBadfilterKeys, compileNetwork } from '../src/network';
+import { urlFilterProblem } from '../src/dnr/convert';
 import type { CompileNetworkOptions } from '../src/network';
 
 /**
@@ -407,7 +408,8 @@ describe('ID allocation', () => {
 describe('entity expansion', () => {
   it('prefers hostnames that occur in the list', () => {
     const rule = onlyRule('||ads.example^$domain=news.*', {});
-    expect(rule.condition.initiatorDomains?.length).toBe(300);
+    // Fallback expansion only: capped at ENTITY_EXPANSION_LIMIT (docs/FILTER-SYNTAX.md §2.2).
+    expect(rule.condition.initiatorDomains?.length).toBe(100);
 
     const result = compile(['||news.co.uk^$script', '||news.de^$script', '||ads.example^$domain=news.*']);
     const withEntity = result.rules.find((r) => r.condition.initiatorDomains !== undefined);
@@ -444,5 +446,83 @@ describe('hosts-format lists', () => {
   it('accepts bare hostnames as domain rules in hosts format', () => {
     const result = compile(['bare.example.com'], { hostsFormat: true });
     expect(result.rules[0]?.condition.requestDomains).toEqual(['bare.example.com']);
+  });
+
+  it('folds a large hosts file into chunked requestDomains rules', () => {
+    const hosts = Array.from({ length: 25 }, (_, i) => `0.0.0.0 h${i}.example.com`).join('\n');
+    const classified = classifyLines(hosts, { format: 'hosts' });
+    const result = compileNetwork(classified.network, {
+      listId: 'hosts',
+      trusted: false,
+      hostsFormat: true,
+      redirectResources: REDIRECTS,
+      maxDomainsPerRule: 10,
+    });
+    // 25 hosts, cap 10 → 3 rules, never 25.
+    expect(result.rules).toHaveLength(3);
+    expect(result.rules.flatMap((r) => r.condition.requestDomains ?? [])).toHaveLength(25);
+  });
+});
+
+describe('domain merging at scale (docs/FILTER-SYNTAX.md §5.3)', () => {
+  it('merges plain ||host^ filters into one rule', () => {
+    const result = compile(Array.from({ length: 40 }, (_, i) => `||h${i}.example^`));
+    expect(result.rules).toHaveLength(1);
+    expect(result.rules[0]?.condition.requestDomains).toHaveLength(40);
+  });
+
+  it('merges $third-party and $3p together but apart from plain filters', () => {
+    const result = compile(['||a.example^', '||b.example^', '||c.example^$third-party', '||d.example^$3p']);
+    expect(result.rules).toHaveLength(2);
+    const thirdParty = result.rules.find((r) => r.condition.domainType === 'thirdParty');
+    expect(thirdParty?.condition.requestDomains).toEqual(['c.example', 'd.example']);
+    const plain = result.rules.find((r) => r.condition.domainType === undefined);
+    expect(plain?.condition.requestDomains).toEqual(['a.example', 'b.example']);
+  });
+
+  it('canonicalises option order and case before deduping', () => {
+    const result = compile(['||Example.COM^$script,third-party', '||example.com^$3p,script']);
+    expect(result.rules).toHaveLength(1);
+    expect(result.rules[0]?.condition.requestDomains).toEqual(['example.com']);
+  });
+
+  it('chunks a merge that exceeds the per-rule domain cap', () => {
+    const result = compile(
+      Array.from({ length: 7 }, (_, i) => `||h${i}.example^`),
+      { maxDomainsPerRule: 3 },
+    );
+    expect(result.rules).toHaveLength(3);
+    expect(result.rules.map((r) => r.condition.requestDomains?.length)).toEqual([3, 3, 1]);
+  });
+});
+
+describe('urlFilterProblem — rules Chrome would refuse to load', () => {
+  it('accepts the shapes the compiler emits', () => {
+    for (const ok of ['||example.com^', '|https://example.com/', '/ads/banner|', 'ad/banner*.gif']) {
+      expect(urlFilterProblem(ok)).toBeNull();
+    }
+  });
+
+  it('rejects the shapes Chrome refuses', () => {
+    expect(urlFilterProblem('')).not.toBeNull();
+    expect(urlFilterProblem('||*.example.com^')).toBe('urlFilter starts with "||*", which DNR rejects');
+    expect(urlFilterProblem('a|b')).toBe(
+      'urlFilter has a "|" anchor that is neither at the start nor at the end',
+    );
+    expect(urlFilterProblem('exämple.com')).toBe('urlFilter contains non-ASCII characters');
+  });
+
+  it('never lets an invalid urlFilter through compileNetwork', () => {
+    const result = compile([
+      '||*.libaishuo.com^$third-party',
+      '||*-aaa.net^',
+      '||*.$image,domain=rmdown.com',
+      '||ok.example^',
+    ]);
+    for (const rule of result.rules) {
+      if (rule.condition.urlFilter !== undefined) {
+        expect(urlFilterProblem(rule.condition.urlFilter)).toBeNull();
+      }
+    }
   });
 });

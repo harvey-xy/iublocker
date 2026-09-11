@@ -18,9 +18,9 @@ export default defineScriptlet({
   name: 'set-constant',
   aliases: ['set'],
   args: [{ name: 'property' }, { name: 'value' }, { name: 'stack', optional: true }],
-  // The function is serialised with Function.prototype.toString and injected as
-  // `(fn)(args)`. It MUST NOT close over module scope: no imports used inside,
-  // helpers are inlined or passed through the `$` helper bag.
+  // The function is serialised with `serializeScriptletFn` (never a raw toString) and
+  // injected as `(fn)(args)`. It MUST NOT close over module scope: no imports used
+  // inside, helpers are inlined or passed through the `$` helper bag.
   fn: function (property: string, value: string) {
     /* … */
   },
@@ -87,8 +87,10 @@ The list compiler emits per list `rulesets/scriptlets/<listId>.json`:
 interface ScriptletDB {
   version: 1;
   listId: string;
-  byHost: Record<string, ScriptletCall[]>; // hostname → [{name, args}]
-  exceptions: Record<string, string[]>; // hostname → names excluded via #@#+js
+  // Keys are an exact hostname, the generic bucket "*", or an entity key
+  // ending in the literal ".*" ("example.*").
+  byHost: Record<string, ScriptletCall[]>; // key → [{name, args}]
+  exceptions: Record<string, string[]>; // key → names excluded via #@#+js or ~negation
 }
 interface ScriptletCall {
   name: string;
@@ -96,20 +98,77 @@ interface ScriptletCall {
 }
 ```
 
+**Entity keys.** `example.*##+js(…)` is stored once under the key `example.*`, and
+`~example.*` under the same key in `exceptions` — entities are **not** expanded into
+concrete hostnames at compile time. Expanding them (the old behaviour, up to 300 hostnames
+per entity) turned uBlock filters into 1,018,817 scriptlet calls, nearly all of them for
+hostnames that do not exist.
+
+`lookupScriptlets(dbs, hostname)` matches both the suffix walk (plus `"*"`) and the entity
+keys above the hostname's public suffix, computed with the compiler's PSL
+(`packages/compiler/src/psl`): `a.b.example.co.uk` also tries `a.b.example.*`,
+`b.example.*` and `example.*`. Exceptions are collected from every one of those keys before
+any call is kept.
+
+`lookupScriptletsDetailed(dbs, hostname)` returns the same result split in two:
+
+```ts
+{ concrete: ScriptletCall[]; entity: ScriptletCall[] }
+```
+
+`concrete` is what matched a real hostname key (or `"*"`) and is therefore
+pre-registerable; `entity` is what matched _only_ through an entity key. A call reachable
+both ways counts as concrete. §3 explains why the split exists.
+
 ## 3. Injection strategy
 
 Two paths, both producing `(function(){ try{ (fn)(...args) }catch{} })()` code:
 
 1. **Pre‑registered (list scriptlets).** At install/update/ruleset‑toggle time the
-   `ScriptletRegistrar` groups hostnames by their _set of calls_, generates one JS
-   file per group under `rulesets/scriptlet-groups/<hash>.js` **at build time** (the
-   set of groups is known at build time from the shipped lists), and calls
-   `scripting.registerContentScripts([{ id: 'sl-<hash>', js: [file], matches:
+   `ScriptletRegistrar` groups hostnames by their _set of calls_ and calls
+   `scripting.registerContentScripts([{ id: 'sl-<hash>', js: [...libs, file], matches:
 ['*://*.host/*', …], world: 'MAIN', runAt: 'document_start', allFrames: true,
 persistAcrossSessions: true }])` for every group whose list is enabled. Hosts in
    `off`/`basic` mode are excluded via `excludeMatches`. Chrome caps the total size of
    registered scripts; the build fails if the sum exceeds 8 MB.
-2. **Dynamic (user scriptlets, delta‑added scriptlets).** At `webNavigation.onCommitted`
+
+   **Two files, not one.** Scriptlet function bodies are several kB each and are shared by
+   thousands of groups, so they are emitted **once per scriptlet name**:
+
+   ```
+   scriptlet-lib/<name>.js       self.__iub_lib = self.__iub_lib || {};
+                                 self.__iub_lib["<name>"] = <fn>;
+   scriptlet-groups/<hash>.js    run(key, "<name>", [args]) …  (nothing else)
+   ```
+
+   Chrome runs a script's `js` files in order, so listing the libs first guarantees the
+   functions are defined before the group file looks them up. A group file is a few hundred
+   bytes. Emitting each body into every group instead produced 28 MB of bundles for the
+   default lists; the same lists now cost ~67 kB of libs plus ~3.5 MB of group files.
+   `BUILD_BUDGET.SCRIPTLET_GROUP_BYTES` counts each file **once**, not once per group that
+   registers it.
+
+   Function sources are always produced with `serializeScriptletFn` from
+   `@iublocker/scriptlets`, never a raw `Function.prototype.toString()`: it splices in the
+   `__name` shim a transpiler may have left behind and refuses a body that depends on any
+   other transpiler helper.
+
+   **Only concrete hostnames are grouped.** `registerContentScripts` needs literal match
+   patterns, so a scriptlet that matches a page only through an entity key (`example.*`)
+   cannot be pre‑registered. Those calls are served by path 2 below —
+   `ScriptletIndex.lookupDynamic` returns them alongside the user/delta scriptlets, using
+   the `entity` half of `lookupScriptletsDetailed`.
+
+   **Group cap.** A single list may pre‑register at most
+   `SCRIPTLET_GROUPS_PER_LIST` = 3,000 groups. Above that the compiler demotes the smallest
+   groups (fewest hosts, then fewest calls, then hash — deterministic) until the list fits,
+   and records their hostnames in `manifest.scriptletDynamicHosts`. The worker injects
+   those hosts' calls with `executeScript` instead. The generic `"*"` group is never
+   demoted. uBlock filters currently produce ~4,400 distinct call lists, so ~1,400 of the
+   rarest ones take the dynamic path.
+
+2. **Dynamic (user scriptlets, delta‑added scriptlets, entity matches, demoted hosts).**
+   At `webNavigation.onCommitted`
    the worker calls `scripting.executeScript({ target:{tabId, frameIds:[frameId]},
 world: 'MAIN', injectImmediately: true, func: runner, args: [calls] })` where
    `runner` looks up function sources from the bundled registry (imported into the
@@ -124,24 +183,33 @@ until the next release folds them into path 1.
 
 ### 3.1 Compiler notes (group computation and bundle emission)
 
-- `computeScriptletGroups(dbs)` groups by the **canonical JSON of the effective call list**
-  — the calls surviving `lookupScriptlets` for that hostname, sorted by name then argument
-  JSON, so the grouping is order‑independent. Only hostnames that appear as a `byHost` key
-  are listed; subdomains inherit through the `*://*.host/*` match pattern. A hostname that
-  has its own calls therefore also carries its parent domains' calls, and both groups match
-  the page — the runtime guard below makes the overlap harmless.
+- `computeScriptletGroups(dbs, resolve?)` groups by the **canonical JSON of the effective
+  call list** — the `concrete` calls from `lookupScriptletsDetailed` for that hostname,
+  sorted by name then argument JSON, so the grouping is order‑independent. Only **concrete**
+  hostnames that appear as a `byHost` key are listed (entity keys are skipped); subdomains
+  inherit through the `*://*.host/*` match pattern. A hostname that has its own calls
+  therefore also carries its parent domains' calls, and both groups match the page — the
+  runtime guard below makes the overlap harmless.
+- `libsFor(calls, resolve?)` lists the `scriptlet-lib/<name>.js` files a call list needs, in
+  first‑use order, canonicalising aliases (so `set` and `set-constant` share one lib) and
+  skipping names that do not resolve. `collectScriptletLibs(groups)` is the deduped union
+  the CLI writes. `emitScriptletLib(name, resolve?)` returns the lib source or `null`.
+- `capScriptletGroups(groups, maxPerList?)` enforces the group cap and returns
+  `{ groups, dynamicHosts }`.
 - `hash` is the first 12 hex digits of a 64‑bit FNV‑1a digest of that canonical JSON
   (pure TS, no `node:crypto`, so the compiler stays isomorphic); `file` is
   `scriptlet-groups/<hash>.js`. Groups are returned sorted by hash for reproducible builds.
-- `emitScriptletGroupBundle(group, resolve?)` emits an IIFE that embeds each scriptlet's
-  `fn.toString()` verbatim (trusted, bundled code) and invokes it with `JSON.stringify`‑d
-  arguments, each call in its own `try/catch`. `U+2028`, `U+2029` and `</` are escaped.
+- `emitScriptletGroupBundle(group, resolve?)` emits an IIFE that invokes
+  `self.__iub_lib[name]` with `JSON.stringify`‑d arguments, each call in its own
+  `try/catch`, and does nothing if the lib is missing. `U+2028`, `U+2029` and `</` are
+  escaped. It contains no function bodies at all.
 - **Double‑execution guard.** `window.__iub_sl` maps `"<name>#<argsJSON>"` → `1`; a call
   whose key is already present is skipped. This is what makes overlapping group
   registrations (and a re‑injection after a soft navigation) safe.
-- The bundle declares a local inert `__name` shim, because `esbuild --keep-names` rewrites
-  nested function expressions to `__name(fn, "fn")` and that helper is not part of
-  `fn.toString()`. The scriptlets build should still avoid `keepNames`.
+- `serializeScriptletFn` splices a local inert `__name` shim into the body when a
+  transpiler rewrote nested function expressions to `__name(fn, "fn")` (esbuild
+  `--keep-names`), since that helper is not part of `fn.toString()`. The scriptlets build
+  should still avoid `keepNames`.
 - **Generic scriptlets.** `##+js(…)` with no domain list is stored under the `"*"` host key
   and becomes its own group (the registrar maps it to `<all_urls>`). `#@#+js(name)` with no
   domain list is a global exception, also stored under `"*"`; `#@#+js()` stores the name

@@ -32,12 +32,22 @@ export interface CosmeticGeneric {
 }
 
 export interface CosmeticExceptions {
+  /** Key (hostname, `"*"` or entity key) → selectors cancelled there. */
   selectors: Record<string, string[]>;
   elemhide: string[];
   generichide: string[];
   specifichide: string[];
 }
 
+/**
+ * Compiled per-list cosmetic database. docs/COSMETIC-FILTERING.md §2.
+ *
+ * Every key in `specific`, `styles`, `procedural` and `exceptions.selectors` is one of:
+ * an exact hostname, the generic bucket `"*"`, or an **entity key** ending in the literal
+ * `.*` (`example.*`). Entity keys are matched at lookup time against the label prefixes
+ * above the hostname's public suffix — they are never expanded into concrete hostnames at
+ * compile time.
+ */
 export interface CosmeticDB {
   version: 1;
   listId: string;

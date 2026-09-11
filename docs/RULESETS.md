@@ -209,11 +209,18 @@ directives need the part files instead, since `fetch-lists` only expands `!#incl
 ```
 manifest.json                 RulesetManifest (below)
 dnr/<listId>.json             DNR rules (declared in manifest.json → declarative_net_request.rule_resources)
+                              Rule IDs are per ruleset: every list numbers from 1
+                              (docs/FILTER-SYNTAX.md §6)
 cosmetic/<listId>.json        CosmeticDB
 scriptlets/<listId>.json      ScriptletDB
-scriptlet-groups/<hash>.js    MAIN‑world bundles for registerContentScripts
+scriptlet-lib/<name>.js       one scriptlet function body, assigned to self.__iub_lib
+scriptlet-groups/<hash>.js    MAIN‑world call list for one group (no function bodies)
 report.json                   per‑list RulesetReport (counts, dropped filters with reasons, budget)
 ```
+
+A group is registered as `js: [...group.libs, group.file]`, so the lib files run first and
+define the functions the group file calls (docs/SCRIPTLETS.md §3). Each lib is written
+once no matter how many groups use it.
 
 ```ts
 interface RulesetManifest {
@@ -241,7 +248,15 @@ interface RulesetManifest {
     files: { dnr: string; cosmetic: string; scriptlets: string };
   }>;
   budget: { staticRulesTotal: number; staticRulesDefaultEnabled: number; regexTotal: number };
-  scriptletGroups: Array<{ hash: string; file: string; hosts: string[]; listIds: string[] }>;
+  scriptletGroups: Array<{
+    hash: string;
+    file: string; // scriptlet-groups/<hash>.js
+    libs: string[]; // scriptlet-lib/<name>.js files, in the order they must load
+    hosts: string[]; // concrete hostnames only (or "*")
+    listIds: string[];
+  }>;
+  /** Hosts whose group the per-list group cap demoted to the dynamic path. */
+  scriptletDynamicHosts?: string[];
 }
 ```
 
@@ -251,7 +266,10 @@ interface RulesetManifest {
   for users enabling extras). Build fails above it.
 - Any single list ≤ 150,000 rules.
 - Regex ≤ 1,000 per list (compiler drops beyond with warnings; report lists them).
-- Scriptlet group bundles total ≤ 8 MB.
+- Scriptlet bundles total ≤ 8 MB — `scriptlet-lib/*.js` plus `scriptlet-groups/*.js`, each
+  file counted **once**, not once per group that registers it.
+- ≤ 3,000 pre-registered scriptlet groups per list; above that the compiler demotes the
+  smallest groups to the dynamic path (docs/SCRIPTLETS.md §3).
 - `manifest.json` (extension) declares ≤ 100 rulesets; the build fails otherwise.
 
 ## 4. Extension manifest wiring

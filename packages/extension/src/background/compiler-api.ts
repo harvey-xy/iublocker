@@ -7,6 +7,7 @@ export {
   compileUserFilters,
   lookupCosmetic,
   lookupScriptlets,
+  lookupScriptletsDetailed,
   mergeCosmeticDB,
   mergeScriptletDB,
 } from '@iublocker/compiler';

@@ -24,10 +24,17 @@ const groups = [
   {
     hash: 'aaa',
     file: 'scriptlet-groups/aaa.js',
+    libs: ['scriptlet-lib/set-constant.js', 'scriptlet-lib/noop.js'],
     hosts: ['example.com', 'b.example.org'],
     listIds: ['easylist'],
   },
-  { hash: 'bbb', file: 'scriptlet-groups/bbb.js', hosts: ['annoy.test'], listIds: ['annoy'] },
+  {
+    hash: 'bbb',
+    file: 'scriptlet-groups/bbb.js',
+    libs: ['scriptlet-lib/noop.js'],
+    hosts: ['annoy.test'],
+    listIds: ['annoy'],
+  },
 ];
 
 const manifest = makeRulesetManifest({
@@ -51,7 +58,12 @@ describe('registrar: desired scripts', () => {
     expect(desired).toHaveLength(1);
     expect(desired[0]).toEqual({
       id: 'sl-aaa',
-      js: ['rulesets/scriptlet-groups/aaa.js'],
+      // libs first (they define self.__iub_lib), then the group's call list.
+      js: [
+        'rulesets/scriptlet-lib/set-constant.js',
+        'rulesets/scriptlet-lib/noop.js',
+        'rulesets/scriptlet-groups/aaa.js',
+      ],
       matches: ['*://b.example.org/*', '*://*.b.example.org/*', '*://example.com/*', '*://*.example.com/*'],
       world: 'MAIN',
       runAt: 'document_start',
@@ -66,12 +78,39 @@ describe('registrar: desired scripts', () => {
   });
 
   it('derives the bundle path when the manifest has none', () => {
-    expect(registrar.groupFilePath({ hash: 'zz', file: '', hosts: [], listIds: [] })).toBe(
+    expect(registrar.groupFilePath({ hash: 'zz', file: '', libs: [], hosts: [], listIds: [] })).toBe(
       'rulesets/scriptlet-groups/zz.js',
     );
-    expect(registrar.groupFilePath({ hash: 'zz', file: 'rulesets/x/zz.js', hosts: [], listIds: [] })).toBe(
-      'rulesets/x/zz.js',
-    );
+    expect(
+      registrar.groupFilePath({ hash: 'zz', file: 'rulesets/x/zz.js', libs: [], hosts: [], listIds: [] }),
+    ).toBe('rulesets/x/zz.js');
+  });
+
+  it('keeps lib order, dedupes, and prefixes every path with rulesets/', () => {
+    expect(
+      registrar.groupScriptFiles({
+        hash: 'zz',
+        file: 'scriptlet-groups/zz.js',
+        libs: ['scriptlet-lib/a.js', '/scriptlet-lib/a.js', 'rulesets/scriptlet-lib/b.js'],
+        hosts: [],
+        listIds: [],
+      }),
+    ).toEqual([
+      'rulesets/scriptlet-lib/a.js',
+      'rulesets/scriptlet-lib/b.js',
+      'rulesets/scriptlet-groups/zz.js',
+    ]);
+  });
+
+  it('still works for a group with no libs recorded', () => {
+    expect(
+      registrar.groupScriptFiles({
+        hash: 'zz',
+        file: 'scriptlet-groups/zz.js',
+        hosts: [],
+        listIds: [],
+      } as never),
+    ).toEqual(['rulesets/scriptlet-groups/zz.js']);
   });
 });
 

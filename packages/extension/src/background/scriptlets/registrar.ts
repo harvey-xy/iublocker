@@ -34,10 +34,32 @@ export function hostPatterns(hosts: readonly string[]): string[] {
   return out;
 }
 
-export function groupFilePath(group: GroupMeta): string {
-  const file = group.file && group.file.length > 0 ? group.file : `scriptlet-groups/${group.hash}.js`;
+function bundlePath(file: string): string {
   const clean = file.replace(/^\/+/, '');
   return clean.startsWith('rulesets/') ? clean : `rulesets/${clean}`;
+}
+
+export function groupFilePath(group: GroupMeta): string {
+  return bundlePath(group.file && group.file.length > 0 ? group.file : `scriptlet-groups/${group.hash}.js`);
+}
+
+/**
+ * The `js` array for a group: its `scriptlet-lib/<name>.js` files first (they define
+ * `self.__iub_lib`), then the group's own call list. docs/SCRIPTLETS.md §3.
+ *
+ * Chrome runs a script's `js` files in order, so the libs are guaranteed to be in place
+ * before the group file looks anything up.
+ */
+export function groupScriptFiles(group: GroupMeta): string[] {
+  const libs = Array.isArray(group.libs) ? group.libs : [];
+  const out: string[] = [];
+  for (const lib of libs) {
+    if (typeof lib !== 'string' || lib.length === 0) continue;
+    const path = bundlePath(lib);
+    if (!out.includes(path)) out.push(path);
+  }
+  out.push(groupFilePath(group));
+  return out;
 }
 
 export interface DesiredScript {
@@ -75,7 +97,7 @@ export function buildDesired(
     parts.forEach((part, index) => {
       out.push({
         id: index === 0 ? `${SCRIPT_ID_PREFIX}${group.hash}` : `${SCRIPT_ID_PREFIX}${group.hash}.${index}`,
-        js: [groupFilePath(group)],
+        js: groupScriptFiles(group),
         matches: hostPatterns(part),
         ...(excludeMatches.length ? { excludeMatches } : {}),
         world: 'MAIN',

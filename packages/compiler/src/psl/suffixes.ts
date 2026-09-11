@@ -1,11 +1,14 @@
 /**
- * Public-suffix snapshot used for `$domain=example.*` / `example.*##…` entity expansion.
+ * Public-suffix snapshot used for entity (`example.*`) handling: expansion for network
+ * rules, and `entityKeysFor()` lookups for cosmetic/scriptlet filters.
+ *
+ * This is the project's single snapshot — `src/cosmetic/entities.ts` re-exports it.
  *
  * Hand-curated, ordered by how often the suffix appears in the default filter lists so
  * that `PUBLIC_SUFFIXES.slice(0, ENTITY_EXPANSION_LIMIT)` is a sensible fallback.
  * Regeneration instructions: src/psl/README.md.
  *
- * 1085 entries.
+ * 1102 entries.
  */
 const SNAPSHOT = `
 com net org de uk co io ru fr it es nl br jp cn in au ca us pl info biz tv cc me xyz online site club
@@ -71,6 +74,8 @@ support surf surgery systems tattoo tax taxi team technology tennis theater tick
 today tokyo tools tours town toys trade trading training tube uno vacations ventures vet viajes video
 villas vin vip vision vodka vote voting voyage wang watch webcam website wedding wiki win wine work
 works world wtf yachts yoga yokohama zone
+co.ae co.ma gen.tr ve py play law university hotel shipping logistics green eco music kids bible
+charity
 `;
 
 /** Ordered most-common-first. */

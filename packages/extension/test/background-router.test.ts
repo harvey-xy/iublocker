@@ -65,7 +65,13 @@ const manifest = makeRulesetManifest({
     makeListEntry('annoy', { defaultEnabled: false, group: 'annoyances' }),
   ],
   scriptletGroups: [
-    { hash: 'abc123', file: 'scriptlet-groups/abc123.js', hosts: ['example.com'], listIds: ['easylist'] },
+    {
+      hash: 'abc123',
+      file: 'scriptlet-groups/abc123.js',
+      libs: ['scriptlet-lib/noop.js'],
+      hosts: ['example.com'],
+      listIds: ['easylist'],
+    },
   ],
 });
 

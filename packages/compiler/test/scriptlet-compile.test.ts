@@ -5,6 +5,7 @@ import type { ScriptletCompileOptions } from '../src/scriptlet/compile';
 import {
   compileScriptlets,
   lookupScriptlets,
+  lookupScriptletsDetailed,
   mergeScriptletDB,
   resolverFromRegistry,
 } from '../src/scriptlet/compile';
@@ -21,7 +22,6 @@ const OPTS: ScriptletCompileOptions = {
   listId: 'test',
   trusted: false,
   resolve: fakeResolve,
-  suffixes: ['com', 'net'],
 };
 
 function compile(text: string, opts: Partial<ScriptletCompileOptions> = {}) {
@@ -50,9 +50,14 @@ describe('compileScriptlets — building', () => {
     ]);
   });
 
-  it('expands entities', () => {
+  it('keys entities by the entity key instead of expanding them', () => {
     const { db } = compile('example.*##+js(noop)');
-    expect(Object.keys(db.byHost).sort()).toEqual(['example.com', 'example.net']);
+    expect(db.byHost).toEqual({ 'example.*': [{ name: 'noop', args: [] }] });
+  });
+
+  it('records negated entities as an exception under the entity key', () => {
+    const { db } = compile('example.com,~other.*##+js(noop)');
+    expect(db.exceptions).toEqual({ 'other.*': ['noop'] });
   });
 
   it('stores generic calls under "*"', () => {
@@ -298,5 +303,87 @@ describe('mergeScriptletDB', () => {
     mergeScriptletDB(a, b);
     expect(a.byHost['x.com']).not.toBe(b.byHost['x.com']);
     expect(a.exceptions['x.com']).not.toBe(b.exceptions['x.com']);
+  });
+});
+
+describe('lookupScriptlets — entity keys', () => {
+  const db = compile(`
+example.*##+js(noop)
+example.com##+js(set, a, 1)
+    `).db;
+
+  it('matches an entity key against any public suffix', () => {
+    expect(lookupScriptlets([db], 'example.co.uk')).toEqual([{ name: 'noop', args: [] }]);
+    expect(lookupScriptlets([db], 'example.de')).toEqual([{ name: 'noop', args: [] }]);
+  });
+
+  it('matches an entity key from a subdomain', () => {
+    expect(lookupScriptlets([db], 'www.example.net')).toEqual([{ name: 'noop', args: [] }]);
+  });
+
+  it('unions the entity and concrete calls', () => {
+    expect(
+      lookupScriptlets([db], 'example.com')
+        .map((c) => c.name)
+        .sort(),
+    ).toEqual(['noop', 'set-constant']);
+  });
+
+  it('does not match a different base', () => {
+    expect(lookupScriptlets([db], 'notexample.com')).toEqual([]);
+  });
+
+  it('honours an exception recorded under an entity key', () => {
+    const excepted = compile('example.*##+js(noop)\nexample.*#@#+js(noop)').db;
+    expect(lookupScriptlets([excepted], 'example.com')).toEqual([]);
+  });
+
+  it('a negated entity cancels the call on every suffix', () => {
+    const negated = compile('other.com##+js(noop)\n~other.*##+js(noop)').db;
+    expect(lookupScriptlets([negated], 'other.com')).toEqual([]);
+  });
+});
+
+describe('lookupScriptletsDetailed', () => {
+  const db = compile(`
+example.*##+js(noop)
+example.com##+js(set, a, 1)
+    `).db;
+
+  it('splits concrete from entity-only matches', () => {
+    const found = lookupScriptletsDetailed([db], 'example.com');
+    expect(found.concrete).toEqual([{ name: 'set-constant', args: ['a', '1'] }]);
+    expect(found.entity).toEqual([{ name: 'noop', args: [] }]);
+  });
+
+  it('reports everything as entity when no concrete key matches', () => {
+    const found = lookupScriptletsDetailed([db], 'example.co.uk');
+    expect(found.concrete).toEqual([]);
+    expect(found.entity).toEqual([{ name: 'noop', args: [] }]);
+  });
+
+  it('reports everything as concrete when there is no entity filter', () => {
+    const plain = compile('example.com##+js(noop)').db;
+    expect(lookupScriptletsDetailed([plain], 'example.com')).toEqual({
+      concrete: [{ name: 'noop', args: [] }],
+      entity: [],
+    });
+  });
+
+  it('counts a call reachable both ways as concrete only', () => {
+    const both = compile('example.*##+js(noop)\nexample.com##+js(noop)').db;
+    const found = lookupScriptletsDetailed([both], 'example.com');
+    expect(found.concrete).toEqual([{ name: 'noop', args: [] }]);
+    expect(found.entity).toEqual([]);
+  });
+
+  it('puts the generic "*" bucket in the concrete half', () => {
+    const generic = compile('##+js(noop)').db;
+    expect(lookupScriptletsDetailed([generic], 'example.com').concrete).toEqual([{ name: 'noop', args: [] }]);
+  });
+
+  it('an exception for "*" empties both halves', () => {
+    const off = compile('example.*##+js(noop)\nexample.com#@#+js()').db;
+    expect(lookupScriptletsDetailed([off], 'example.com')).toEqual({ concrete: [], entity: [] });
   });
 });

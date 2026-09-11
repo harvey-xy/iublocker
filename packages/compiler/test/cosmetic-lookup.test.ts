@@ -12,7 +12,7 @@ function lines(text: string): RawLine[] {
 }
 
 function db(text: string, listId = 'test') {
-  return compileCosmetic(lines(text), { listId, trusted: false, suffixes: ['com', 'net'] }).db;
+  return compileCosmetic(lines(text), { listId, trusted: false }).db;
 }
 
 describe('lookupCosmetic — hostname walk', () => {
@@ -185,5 +185,51 @@ describe('lookupCosmetic — multiple databases', () => {
       specifichide: false,
       excluded: [],
     });
+  });
+});
+
+describe('lookupCosmetic — entity keys', () => {
+  const list = db(`
+example.*##.entity
+example.com##.concrete
+sub.example.*##.sub-entity
+    `);
+
+  it('matches an entity key against any public suffix', () => {
+    expect(lookupCosmetic([list], 'example.com').selectors.sort()).toEqual(['.concrete', '.entity']);
+    expect(lookupCosmetic([list], 'example.co.uk').selectors).toEqual(['.entity']);
+    expect(lookupCosmetic([list], 'example.de').selectors).toEqual(['.entity']);
+  });
+
+  it('matches an entity key from a subdomain', () => {
+    expect(lookupCosmetic([list], 'www.example.net').selectors).toEqual(['.entity']);
+  });
+
+  it('matches a multi-label entity key only at the right depth', () => {
+    expect(lookupCosmetic([list], 'sub.example.org').selectors.sort()).toEqual(['.entity', '.sub-entity']);
+    expect(lookupCosmetic([list], 'other.example.org').selectors).toEqual(['.entity']);
+  });
+
+  it('does not match a different base', () => {
+    expect(lookupCosmetic([list], 'notexample.com').selectors).toEqual([]);
+    expect(lookupCosmetic([list], 'example.com.evil.net').selectors).toEqual([]);
+  });
+
+  it('applies an exception recorded under an entity key', () => {
+    const withException = db('example.*##.ad\nsite.com##.ad\n~site.*##.keep\nsite.*#@#.ad');
+    expect(lookupCosmetic([withException], 'site.com').selectors).toEqual([]);
+    expect(lookupCosmetic([withException], 'example.com').selectors).toEqual(['.ad']);
+  });
+
+  it('keeps working for hostnames with no known public suffix', () => {
+    expect(lookupCosmetic([list], 'localhost').selectors).toEqual([]);
+    expect(lookupCosmetic([list], '127.0.0.1').selectors).toEqual([]);
+  });
+
+  it('picks up entity :style() and procedural filters', () => {
+    const styled = db('example.*##.a:style(opacity:0)\nexample.*#?#.b:has-text(Ad)');
+    const found = lookupCosmetic([styled], 'example.co.uk');
+    expect(found.styles).toEqual([['.a', 'opacity:0']]);
+    expect(found.procedural).toHaveLength(1);
   });
 });
