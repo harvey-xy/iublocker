@@ -31,10 +31,10 @@ export function hostPatterns(hosts: readonly string[]): string[] {
   const out: string[] = [];
   for (const host of hosts) {
     if (!host || host.includes('/') || host.includes('*')) continue;
-    out.push(`*://${host}/*`);
     // IP literals and single-label hosts have no subdomains; `*://*.127.0.0.1/*` is an
     // invalid match pattern and would make Chrome reject the whole registration.
     if (!isIpOrSingleLabel(host)) out.push(`*://*.${host}/*`);
+    else out.push(`*://${host}/*`);
   }
   return out;
 }
