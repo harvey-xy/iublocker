@@ -34,11 +34,12 @@ export default defineScriptlet({
         }
       };
       for (const item of dl) runCallbacks(item);
+      const arrayPush = Array.prototype.push;
       const queue: any = {
         push: function (...items: any[]) {
           for (const item of items) {
             try {
-              (dl as any[]).push(item);
+              arrayPush.call(dl, item);
             } catch {
               /* array grew unexpectedly */
             }

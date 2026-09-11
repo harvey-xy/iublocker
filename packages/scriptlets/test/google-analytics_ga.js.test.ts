@@ -17,10 +17,9 @@ describe('google-analytics_ga.js', () => {
       _gaq.push(function () { window.ran = true; });
       var tracker = _gat._getTracker('UA-1');
       tracker._trackPageview();
-      [window.ran, typeof tracker._trackEvent, _gat._getTracker().._getVersion ? 1 : 1];
-    `.replace('.._getVersion ? 1 : 1', '._getVersion() ? 1 : 1'));
-    expect(out[0]).toBe(true);
-    expect(out[1]).toBe('function');
+      [window.ran, typeof tracker._trackEvent, _gat._getTracker()._getVersion()];
+    `);
+    expect(out).toEqual([true, 'function', '5.7.0']);
   });
 
   it('drains a pre-existing _gaq array', () => {

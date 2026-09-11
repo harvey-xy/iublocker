@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { defineScriptlet, redirectResources, registry, registryJSON, resolveScriptlet } from '../src/index';
 
@@ -20,6 +23,12 @@ describe('registry', () => {
         owners.set(name, def.name);
       }
     }
+  });
+
+  it('has a behaviour test for every scriptlet', () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const missing = Object.keys(registry).filter((name) => existsSync(join(here, `${name}.test.ts`)) === false);
+    expect(missing).toEqual([]);
   });
 
   it('marks every trusted-* scriptlet as trusted, and nothing else', () => {
