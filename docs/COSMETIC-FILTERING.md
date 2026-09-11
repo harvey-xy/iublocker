@@ -88,16 +88,23 @@ start
  ├─ generic (complete mode only, unless generichide):
  │    harvest ids + classes from the DOM (initially and on mutations, incremental),
  │    look up byId/byClass, inject matching selectors as <style> in ISOLATED world
- │    (CSSOM via a single <style id="iub-generic"> element; append, never rewrite),
+ │    (a single managed <style id="iub-cosmetic"> element, shared with the
+ │    content-script `selectors`/`styles`; append, never rewrite; re-appended if
+ │    the page removes it),
  │    inject generic.complex once.
  └─ collapse: for blocked images/iframes (DNR blocks the request; the element remains)
       set `display:none` on <img>/<iframe> whose load errored and whose src matched a
       "collapsible" hint (worker gives the list of blocked URLs via getMatchedRules on demand)
 ```
 
-Mutation handling: `MutationObserver({childList, subtree, attributes: ['class','id']})`
-with batching through `requestIdleCallback` (≤ 50 ms budget) falling back to
-`setTimeout(250)`; max one procedural pass per 100 ms.
+Mutation handling: one `MutationObserver({childList, subtree, attributes})` with
+`attributeFilter: ['class','id', …:watch-attr() names]` (unfiltered when a filter uses
+`:watch-attr()` without arguments), batched through `requestIdleCallback({timeout: 250})`
+falling back to `setTimeout(250)`; max one procedural pass per 100 ms. Passes are skipped
+while `document.hidden` and run once on `visibilitychange`.
+
+`:others()` yields the minimal set that hides everything except the matched elements and
+their ancestors: every sibling along the path from the document element down to each match.
 
 Procedural evaluation contract (`ProceduralTask` executor): each task maps a `Set<Element>`
 to a new set. `:has-text` uses `textContent` with regex or literal; `:matches-css` uses
