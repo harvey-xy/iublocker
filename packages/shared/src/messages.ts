@@ -1,3 +1,4 @@
+/// <reference types="chrome" />
 import type { SiteMode } from './modes';
 import type { CosmeticGeneric, ProceduralFilter } from './cosmetic';
 import type { ScriptletCall } from './scriptlets';
