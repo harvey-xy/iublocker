@@ -52,7 +52,7 @@ export function stubFetch(routes: FetchRoutes = {}): FetchStub {
       stub.calls.push(url);
       const key = find(url);
       const statusKey = Object.keys(stub.status).find((k) => url.endsWith(k));
-      const status = statusKey ? stub.status[statusKey] : key ? 200 : 404;
+      const status = (statusKey ? stub.status[statusKey] : key ? 200 : 404) ?? 200;
       const headers = { get: (name: string) => (key ? (stub.headers[key]?.[name.toLowerCase()] ?? null) : null) };
       return {
         ok: status >= 200 && status < 300,

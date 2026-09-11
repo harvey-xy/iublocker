@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CosmeticDB, CosmeticLookup, ScriptletCall, ScriptletDB } from '@iublocker/shared';
 
-const compileUserFilters = vi.fn((text: string) => ({
+const compileUserFilters = vi.fn((text: string, _opts?: unknown) => ({
   dnr: text
     .split('\n')
     .filter((line) => line.startsWith('||'))

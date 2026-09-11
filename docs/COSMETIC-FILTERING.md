@@ -30,6 +30,16 @@ Supported procedural operators (uBO names): `:has-text()`, `:matches-css()`,
 `:has()` and `:not()` with procedural arguments. Unknown operators drop the filter with a
 warning.
 
+The compiler also accepts the AdGuard CSS‑injection separators `#$#`, `#@$#`, `#$?#` and
+`#@$?#`; a `#$#selector { declarations }` body compiles to the same `styles` entry as uBO's
+`:style()`. AdGuard's `#%#//scriptlet(…)` JavaScript syntax is rejected with a warning.
+
+Legacy and vendor spellings are normalised to their canonical form at compile time, so the
+same filter written either way produces the same DB entry (and cancels the same `#@#`
+exception): `:if()`→`:has()`, `:if-not()`→`:not()`, `:-abp-has()`→`:has()`,
+`:contains()`/`:-abp-contains()`→`:has-text()`, `:matches()`→`:is()`,
+`:nth-ancestor()`→`:upward()`.
+
 ## 2. Compiled DB format (`CosmeticDB`, defined in `@iublocker/shared`)
 
 One file per list: `rulesets/cosmetic/<listId>.json`.
@@ -76,6 +86,40 @@ Lookup at runtime for hostname `a.b.example.com`: union of entries for `a.b.exam
 `b.example.com`, `example.com` minus exceptions for the same walk. Specific selectors
 are deduped and joined as `sel1,sel2,…{display:none!important}` in chunks of 1,000
 selectors per `insertCSS` call to avoid oversized rules.
+
+### 2.1 Compiler notes
+
+- **The `"*"` hostname key.** `specific`, `styles` and `procedural` are keyed by exact
+  hostname, but a generic `:style()` or procedural filter (`##.a:style(…)`, `#?#…`,
+  `##…:remove()` with no domain list) has no hostname to key on. Those are stored under
+  `"*"`, and `lookupCosmetic` adds the `"*"` bucket to `styles`/`procedural` for every
+  hostname. Only plain generic selectors go into `generic.byId`/`byClass`/`complex`.
+- **Procedural chains always start with a `css` step.** `#?#:has-text(Ad)` compiles to
+  `[['css','*'], ['has-text','Ad']]` so the runtime executor never has to special‑case an
+  empty starting set. Plain CSS between/after operators becomes further `css` steps
+  (`.a:has-text(x) > .b` → `[['css','.a'],['has-text','x'],['css','> .b']]`).
+- **Selector lists.** A top‑level `,` is fine in a plain selector but drops a procedural
+  filter with a warning (uBO has the same restriction).
+- **`#?#` with a plain selector** degrades to ordinary element hiding rather than creating a
+  one‑task procedural filter.
+- **Generic key extraction** takes the first id *or* class token of the first compound
+  (id wins), and only when the selector has no top‑level `,`, `+` or `~`: `div.bar[x]` →
+  class `bar`, `.b#a` → id `a`, `div > .a` → `complex`.
+- **Exception bookkeeping.** An unqualified `#@#sel` is applied at compile time (the generic
+  selector is simply not emitted) and leaves nothing in `exceptions.selectors`. A qualified
+  `example.com#@#sel` is recorded under that hostname *and* removes the hostname's own
+  `specific`/`styles`/`procedural` entry for `sel`; negations (`~sub.example.com`) are
+  recorded the same way. Exceptions match on the normalised selector for plain/`:style()`
+  filters and on the raw selector text (`ProceduralFilter.raw`) for procedural ones. All of
+  this is order‑independent: exceptions are collected before the DB is built.
+- **`generic.complex` cap.** Above 2,000 entries the compiler keeps the first 2,000 (list
+  order) and emits a warning.
+- **Entity expansion** uses a compact public‑suffix snapshot embedded in
+  `packages/compiler/src/cosmetic/entities.ts` (≈500 suffixes, first 300 used per entity),
+  independent of the network compiler's PSL.
+- **`lookupCosmetic` returns the `elemhide`/`generichide`/`specifichide` flags but does not
+  pre‑filter on them** — the worker and content script gate on the flags together with the
+  site mode.
 
 ## 3. Runtime engine (content script, ISOLATED world, `document_start`, all frames)
 

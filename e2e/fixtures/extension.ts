@@ -135,7 +135,7 @@ export const test = base.extend<ExtensionFixtures, ExtensionWorkerFixtures>({
     await use(page);
   },
 
-  sendRequest: async ({ context, extensionId }, use) => {
+  sendRequest: async ({ context, extensionId, page }, use) => {
     let helper: Page | undefined;
 
     const ensureHelper = async (): Promise<Page> => {
@@ -148,6 +148,9 @@ export const test = base.extend<ExtensionFixtures, ExtensionWorkerFixtures>({
           const ok = await candidate.evaluate(() => typeof (globalThis as any).chrome?.runtime?.sendMessage === 'function');
           if (ok) {
             helper = candidate;
+            // Opening the helper focused it; hand focus back so chrome.tabs.query({active:true})
+            // in the worker keeps describing the page under test.
+            await page.bringToFront().catch(() => undefined);
             return candidate;
           }
         } catch (err) {
@@ -186,22 +189,30 @@ export const test = base.extend<ExtensionFixtures, ExtensionWorkerFixtures>({
   },
 
   popup: async ({ context, extensionId, page, sendRequest }, use) => {
+    const opened: Page[] = [];
+
     const open = async (tabUrl?: string): Promise<Page> => {
-      let tabId: number | undefined;
-      if (tabUrl) {
-        await page.goto(tabUrl, { waitUntil: 'load' });
-        await page.bringToFront();
-        // The popup normally reads the active tab; opened as a tab it is itself active,
-        // so pass the target tab id along for implementations that accept it.
-        const state = await sendRequest<{ tabId?: number }>({ type: 'tab:getState' }).catch(() => ({}) as { tabId?: number });
-        tabId = state?.tabId;
-      }
+      if (tabUrl) await page.goto(tabUrl, { waitUntil: 'load' });
+
+      // A popup opened as a tab would be the active tab itself, so
+      // chrome.tabs.query({active:true}) inside it would describe the popup rather than
+      // the site. Create the tab first, hand focus back to the page under test, and only
+      // then navigate the popup: it loads in the background and sees the right tab.
       const popupPage = await context.newPage();
-      const url = `chrome-extension://${extensionId}/popup.html${tabId !== undefined ? `?tabId=${tabId}` : ''}`;
+      opened.push(popupPage);
+      await page.bringToFront();
+
+      const state = await sendRequest<{ tabId?: number }>({ type: 'tab:getState' }).catch(
+        () => ({}) as { tabId?: number },
+      );
+      const tabId = state?.tabId;
+      const url = `chrome-extension://${extensionId}/popup.html${typeof tabId === 'number' ? `?tabId=${tabId}` : ''}`;
       await popupPage.goto(url);
       return popupPage;
     };
+
     await use(open);
+    for (const p of opened) if (!p.isClosed()) await p.close();
   },
 });
 

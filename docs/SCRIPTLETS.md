@@ -96,7 +96,7 @@ Two paths, both producing `(function(){ try{ (fn)(...args) }catch{} })()` code:
 
 1. **Pre‑registered (list scriptlets).** At install/update/ruleset‑toggle time the
    `ScriptletRegistrar` groups hostnames by their *set of calls*, generates one JS
-   file per group under `dist/scriptlets/groups/<hash>.js` **at build time** (the
+   file per group under `rulesets/scriptlet-groups/<hash>.js` **at build time** (the
    set of groups is known at build time from the shipped lists), and calls
    `scripting.registerContentScripts([{ id: 'sl-<hash>', js: [file], matches:
    ['*://*.host/*', …], world: 'MAIN', runAt: 'document_start', allFrames: true,
@@ -116,11 +116,45 @@ Race note: path 2 can lose to very early inline scripts; that is why lists ship 
 path 1. The delta updater can add new host→call mappings (data) which then use path 2
 until the next release folds them into path 1.
 
+### 3.1 Compiler notes (group computation and bundle emission)
+
+- `computeScriptletGroups(dbs)` groups by the **canonical JSON of the effective call list**
+  — the calls surviving `lookupScriptlets` for that hostname, sorted by name then argument
+  JSON, so the grouping is order‑independent. Only hostnames that appear as a `byHost` key
+  are listed; subdomains inherit through the `*://*.host/*` match pattern. A hostname that
+  has its own calls therefore also carries its parent domains' calls, and both groups match
+  the page — the runtime guard below makes the overlap harmless.
+- `hash` is the first 12 hex digits of a 64‑bit FNV‑1a digest of that canonical JSON
+  (pure TS, no `node:crypto`, so the compiler stays isomorphic); `file` is
+  `scriptlet-groups/<hash>.js`. Groups are returned sorted by hash for reproducible builds.
+- `emitScriptletGroupBundle(group, resolve?)` emits an IIFE that embeds each scriptlet's
+  `fn.toString()` verbatim (trusted, bundled code) and invokes it with `JSON.stringify`‑d
+  arguments, each call in its own `try/catch`. `U+2028`, `U+2029` and `</` are escaped.
+- **Double‑execution guard.** `window.__iub_sl` maps `"<name>#<argsJSON>"` → `1`; a call
+  whose key is already present is skipped. This is what makes overlapping group
+  registrations (and a re‑injection after a soft navigation) safe.
+- The bundle declares a local inert `__name` shim, because `esbuild --keep-names` rewrites
+  nested function expressions to `__name(fn, "fn")` and that helper is not part of
+  `fn.toString()`. The scriptlets build should still avoid `keepNames`.
+- **Generic scriptlets.** `##+js(…)` with no domain list is stored under the `"*"` host key
+  and becomes its own group (the registrar maps it to `<all_urls>`). `#@#+js(name)` with no
+  domain list is a global exception, also stored under `"*"`; `#@#+js()` stores the name
+  `"*"`, meaning "disable every scriptlet on this hostname".
+
 ## 4. Argument validation
 
 Arguments are strings. The compiler rejects calls whose argument count is outside the
 declared schema, and `trusted-*` scriptlets from untrusted lists. In the browser, user
 filters go through the same validation before being stored.
+
+Argument syntax follows uBO: comma separated with surrounding whitespace trimmed, `\,` for
+a literal comma, single/double quoted arguments (quotes stripped, `\'`/`\"`/`\\`
+unescaped), and an argument starting with `/` that closes with `/` plus optional flags is
+kept verbatim as a regex literal (commas inside it do not split). Names are resolved through
+the registry after stripping a trailing `.js`, so aliases are stored canonically and an
+exception written against an alias cancels the call. Unknown names, too few/too many
+arguments, and `trusted-*` from an untrusted list all drop the filter with a reason in
+`report.json`; an exception naming an unknown scriptlet is kept but warned about.
 
 ## 5. Redirect resources (`$redirect=`)
 

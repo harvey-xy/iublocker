@@ -199,8 +199,6 @@ const surrogateAliases: Record<string, string[]> = {
   'addthis_widget.js': ['addthis.com/addthis_widget.js'],
   'ligatus_angular-tag.js': ['ligatus.com/*/angular-tag.js'],
   'popads.js': ['popads.net.js'],
-  'nofab.js': ['fuckadblock.js-3.2.0'],
-  'fuckadblock.js-3.2.0': ['nofab.js'],
   'nobab.js': ['bab-defuser.js', 'prevent-bab.js'],
 };
 
