@@ -7,6 +7,10 @@ others (in this repo: via the PR description).
 
 Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
 
+**Status (2026‑09‑11):** T1–T7 delivered and integrated; unit suite 1,127 tests, e2e 25/25
+on Chromium 141. T8 follow‑ups in progress: per‑ruleset rule IDs, entity keys without
+compile‑time expansion, shared scriptlet library files, list mirrors.
+
 ## T1 — Compiler: network filters → DNR (`packages/compiler/src/{parser,network,dnr,cli}`) 🔴
 
 - Line classifier + network filter parser (all options in `docs/FILTER-SYNTAX.md` §2).
