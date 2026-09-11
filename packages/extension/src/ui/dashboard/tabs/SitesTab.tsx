@@ -6,10 +6,7 @@ import { errorMessage, useRequest } from '../../lib/useRequest';
 import { modeLabel } from '../../lib/mode-options';
 import { t } from '../../lib/i18n';
 
-/**
- * The router has no dedicated `sites:get` request, so the overrides table is read from
- * `debug:dumpState`. See the T6 report: a `sites:get` request would remove this coupling.
- */
+/** Validates the `siteModes` map of a `sites:get` response (defensive against stale storage). */
 export function readSiteModes(
   dump: Record<string, unknown> | null | undefined,
 ): Record<string, SiteMode> | null {
@@ -25,7 +22,7 @@ export function readSiteModes(
 }
 
 export function SitesTab() {
-  const dump = useRequest(() => ({ type: 'debug:dumpState' }) as const, []);
+  const dump = useRequest(() => ({ type: 'sites:get' }) as const, []);
   const [overrides, setOverrides] = useState<Record<string, SiteMode> | null>(null);
   const [draftHost, setDraftHost] = useState('');
   const [draftMode, setDraftMode] = useState<SiteMode>('off');

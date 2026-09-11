@@ -7,7 +7,8 @@ others (in this repo: via the PR description).
 
 Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
 
-## T1 — Compiler: network filters → DNR  (`packages/compiler/src/{parser,network,dnr,cli}`)  🔴
+## T1 — Compiler: network filters → DNR (`packages/compiler/src/{parser,network,dnr,cli}`) 🔴
+
 - Line classifier + network filter parser (all options in `docs/FILTER-SYNTAX.md` §2).
 - Hosts‑file format parser.
 - DNR converter with priority tiers, resource‑type mapping, redirect resource table,
@@ -20,7 +21,8 @@ Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
 - Isomorphic: `compileUserFilters(text): { dnr, cosmetic, scriptlets, warnings }` for the worker.
 - Tests per `docs/TESTING.md`.
 
-## T2 — Compiler: cosmetic + scriptlet filters (`packages/compiler/src/{cosmetic,scriptlet}`)  🟠
+## T2 — Compiler: cosmetic + scriptlet filters (`packages/compiler/src/{cosmetic,scriptlet}`) 🟠
+
 - Cosmetic parser: `##`, `#@#`, `#?#`, `:style()`, `:remove()`, procedural operator chain
   parser, selector validation, entity expansion, generic key extraction (`byId`/`byClass`).
 - `CosmeticDB` builder + merge (`mergeCosmeticDB(a, b)`), hostname lookup helper
@@ -30,7 +32,8 @@ Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
   trusted‑list gating, host‑group computation + bundle emission for pre‑registration.
 - Tests.
 
-## T3 — Scriptlet library (`packages/scriptlets`)  🟠
+## T3 — Scriptlet library (`packages/scriptlets`) 🟠
+
 - `defineScriptlet` helper, registry build (`dist/registry.js` + `registry.json`), the v1
   scriptlet set in `docs/SCRIPTLETS.md` §1.1, argument parsing helpers (regex args,
   `!` negation), native‑patch helpers preserving `toString`.
@@ -38,7 +41,8 @@ Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
   (gpt, ga, gtm, adsbygoogle, …) and the name→file table exported from the package.
 - jsdom tests per scriptlet.
 
-## T4 — Extension: service worker (`packages/extension/src/background`)  🔴
+## T4 — Extension: service worker (`packages/extension/src/background`) 🔴
+
 - Storage layer + migrations, settings defaults, first‑run (regional lists by language).
 - `RulesetManager` (enable/disable, budget check via `getAvailableStaticRuleCount`),
   `DynamicRules` (ID allocation, user/delta ranges), `SiteModes`, session allow rules.
@@ -51,7 +55,8 @@ Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
 - User filters: `compileUserFilters` → dynamic rules + storage.
 - Unit tests with the chrome mock.
 
-## T5 — Extension: content scripts (`packages/extension/src/content`)  🟠
+## T5 — Extension: content scripts (`packages/extension/src/content`) 🟠
+
 - Cosmetic engine per `docs/COSMETIC-FILTERING.md` §3: message round trip, generic
   harvest + lookup, `<style>` management, procedural executor (all operators), mutation
   batching, blocked‑element collapse, frame support.
@@ -59,7 +64,8 @@ Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
   selector generation + broaden/narrow, preview, create → `filters:addUser`.
 - jsdom tests for the procedural executor and selector generator.
 
-## T6 — Extension: UI (`packages/extension/src/ui`, `public/*.html`)  🟢
+## T6 — Extension: UI (`packages/extension/src/ui`, `public/*.html`) 🟢
+
 - Popup: site name, mode selector (4 modes), blocked count, "disable on this site"
   toggle, picker button, open dashboard, update status. Keyboard accessible.
 - Dashboard: Lists tab (groups, toggles, counts, budget meter), My filters (textarea +
@@ -68,7 +74,8 @@ Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
 - i18n: `_locales/en`, `zh_TW`, `zh_CN` with `chrome.i18n`.
 - Preact, no global CSS framework; dark mode via `prefers-color-scheme`.
 
-## T7 — Tooling, CI, E2E (`tools/`, `.github/`, `e2e/`)  🔴
+## T7 — Tooling, CI, E2E (`tools/`, `.github/`, `e2e/`) 🔴
+
 - `tools/fetch-lists.ts` (with `!#include`, retries, checksums), `tools/make-delta.ts`,
   `tools/package.ts`, `tools/cws-upload.ts` (skeleton).
 - Workflows: `ci.yml`, `rulesets-nightly.yml`, `release.yml`.
@@ -76,7 +83,8 @@ Legend: 🔴 blocking for M1, 🟠 M2, 🟢 M3/M4.
   static server, Playwright config using the pre‑installed Chromium, the tests in
   `docs/TESTING.md`.
 
-## T8 — Integration (after T1–T7)  🔴
+## T8 — Integration (after T1–T7) 🔴
+
 - Wire everything, run `pnpm build`, `pnpm test`, `pnpm e2e`; fix cross‑package issues;
   produce the first loadable build; update docs where reality diverged.
 

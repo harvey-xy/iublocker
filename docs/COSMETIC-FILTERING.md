@@ -6,18 +6,18 @@ compiled database format, the runtime engine, and mode behaviour.
 
 ## 1. Filter forms
 
-| Form | Meaning | Where applied |
-|---|---|---|
-| `##.ad` | generic element hiding (all sites) | content script, `complete` mode only |
-| `example.com##.ad` | specific hiding | worker `insertCSS` at `onCommitted`, `optimal`+ |
-| `example.com,~sub.example.com##.ad` | with negations | same |
-| `example.*##.ad` | entity (any public suffix) | expanded via PSL at compile time |
-| `example.com#@#.ad` | exception for a specific selector | removes from specific set; for generic, adds to per‑domain exclusion |
-| `#@#.ad` | generic exception | drops generic selector globally |
-| `example.com#?#.x:has-text(Sponsored)` | procedural | content script, `complete` mode (or `optimal` when the list marks it `!#trusted`? — no: always `complete`) |
-| `example.com##.ad:style(opacity:0.1!important)` | style injection (uBO `:style`) | worker `insertCSS`, `optimal`+ |
-| `example.com##.ad:remove()` | remove element | content script, `optimal`+ |
-| `@@||example.com^$elemhide` / `$generichide` / `$specifichide` | disable all / generic / specific cosmetic on the site | recorded in DB `exceptions` |
+| Form                                            | Meaning                            | Where applied                                                                                              |
+| ----------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `##.ad`                                         | generic element hiding (all sites) | content script, `complete` mode only                                                                       |
+| `example.com##.ad`                              | specific hiding                    | worker `insertCSS` at `onCommitted`, `optimal`+                                                            |
+| `example.com,~sub.example.com##.ad`             | with negations                     | same                                                                                                       |
+| `example.*##.ad`                                | entity (any public suffix)         | expanded via PSL at compile time                                                                           |
+| `example.com#@#.ad`                             | exception for a specific selector  | removes from specific set; for generic, adds to per‑domain exclusion                                       |
+| `#@#.ad`                                        | generic exception                  | drops generic selector globally                                                                            |
+| `example.com#?#.x:has-text(Sponsored)`          | procedural                         | content script, `complete` mode (or `optimal` when the list marks it `!#trusted`? — no: always `complete`) |
+| `example.com##.ad:style(opacity:0.1!important)` | style injection (uBO `:style`)     | worker `insertCSS`, `optimal`+                                                                             |
+| `example.com##.ad:remove()`                     | remove element                     | content script, `complete` (procedural path)                                                               |
+| `@@                                             |                                    | example.com^$elemhide` / `$generichide`/`$specifichide`                                                    | disable all / generic / specific cosmetic on the site | recorded in DB `exceptions` |
 
 Selectors are validated with a permissive CSS selector parser at compile time. Native
 CSS (`:has()`, `:is()`, `:not()`, `:nth-child`) stays native; only uBO procedural
@@ -52,27 +52,27 @@ interface CosmeticDB {
     // Simple selectors indexed by their key token for DOM‑harvest lookup.
     // A "simple" selector is a single compound selector whose first token is an
     // id or class: "#foo", ".bar", ".bar.baz", "div.bar[x]" (key = "bar").
-    byId:    Record<string, string[]>;   // "foo" → ["#foo", "#foo > .x"]
-    byClass: Record<string, string[]>;   // "bar" → [".bar", ".bar.baz"]
+    byId: Record<string, string[]>; // "foo" → ["#foo", "#foo > .x"]
+    byClass: Record<string, string[]>; // "bar" → [".bar", ".bar.baz"]
     // Everything else (attribute selectors, tag‑only, complex): injected in one batch
     // when generic hiding is on. Kept small by the compiler (warn if > 2,000).
     complex: string[];
     // Global generic exceptions already applied; per‑domain exceptions below.
   };
-  specific: Record<string, string[]>;     // hostname → plain selectors (joined into CSS)
-  styles:   Record<string, [selector: string, style: string][]>; // :style()
+  specific: Record<string, string[]>; // hostname → plain selectors (joined into CSS)
+  styles: Record<string, [selector: string, style: string][]>; // :style()
   procedural: Record<string, ProceduralFilter[]>; // hostname → compiled procedural chains
   exceptions: {
-    selectors: Record<string, string[]>;  // hostname → selectors excluded (#@#)
-    elemhide: string[];                   // hostnames with $elemhide
-    generichide: string[];                // hostnames with $generichide
-    specifichide: string[];               // hostnames with $specifichide
+    selectors: Record<string, string[]>; // hostname → selectors excluded (#@#)
+    elemhide: string[]; // hostnames with $elemhide
+    generichide: string[]; // hostnames with $generichide
+    specifichide: string[]; // hostnames with $specifichide
   };
 }
 
 interface ProceduralFilter {
   raw: string;
-  tasks: ProceduralTask[];   // [["has-text", "Sponsored"], ["upward", 2], ["remove"]]
+  tasks: ProceduralTask[]; // [["has-text", "Sponsored"], ["upward", 2], ["remove"]]
 }
 ```
 
@@ -102,12 +102,12 @@ selectors per `insertCSS` call to avoid oversized rules.
   filter with a warning (uBO has the same restriction).
 - **`#?#` with a plain selector** degrades to ordinary element hiding rather than creating a
   one‑task procedural filter.
-- **Generic key extraction** takes the first id *or* class token of the first compound
+- **Generic key extraction** takes the first id _or_ class token of the first compound
   (id wins), and only when the selector has no top‑level `,`, `+` or `~`: `div.bar[x]` →
   class `bar`, `.b#a` → id `a`, `div > .a` → `complex`.
 - **Exception bookkeeping.** An unqualified `#@#sel` is applied at compile time (the generic
   selector is simply not emitted) and leaves nothing in `exceptions.selectors`. A qualified
-  `example.com#@#sel` is recorded under that hostname *and* removes the hostname's own
+  `example.com#@#sel` is recorded under that hostname _and_ removes the hostname's own
   `specific`/`styles`/`procedural` entry for `sel`; negations (`~sub.example.com`) are
   recorded the same way. Exceptions match on the normalised selector for plain/`:style()`
   filters and on the raw selector text (`ProceduralFilter.raw`) for procedural ones. All of
@@ -163,12 +163,12 @@ for specific filters so the page cannot override them.
 
 ## 4. Mode behaviour
 
-| Mode | specific/`:style` (worker) | procedural + `:remove` | generic |
-|---|---|---|---|
-| off | ✗ | ✗ | ✗ |
-| basic | ✗ | ✗ | ✗ |
-| optimal | ✓ | ✓ (specific only) | ✗ |
-| complete | ✓ | ✓ | ✓ |
+| Mode     | specific/`:style` (worker) | procedural + `:remove` | generic |
+| -------- | -------------------------- | ---------------------- | ------- |
+| off      | ✗                          | ✗                      | ✗       |
+| basic    | ✗                          | ✗                      | ✗       |
+| optimal  | ✓                          | ✗                      | ✗       |
+| complete | ✓                          | ✓ (specific + generic) | ✓       |
 
 ## 5. User filters and the picker
 

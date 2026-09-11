@@ -9,7 +9,7 @@ import type {
   DNRResourceType,
   DNRRule,
 } from '@iublocker/shared';
-import { PRIORITY } from '@iublocker/shared';
+import { DNR_RESOURCE_TYPES, PRIORITY } from '@iublocker/shared';
 import { resolveScriptlet } from '@iublocker/scriptlets';
 import type { NetworkFilter } from '../parser/network-filter';
 import { expandDomains } from '../psl';
@@ -29,22 +29,28 @@ export interface ConvertedRule {
 
 export interface PriorityTiers {
   block: number;
+  redirect: number;
   allow: number;
   important: number;
+  importantRedirect: number;
   documentAllow: number;
 }
 
 export const STATIC_TIERS: PriorityTiers = {
   block: PRIORITY.BLOCK,
+  redirect: PRIORITY.REDIRECT,
   allow: PRIORITY.ALLOW,
   important: PRIORITY.IMPORTANT,
+  importantRedirect: PRIORITY.IMPORTANT_REDIRECT,
   documentAllow: PRIORITY.DOCUMENT_ALLOW,
 };
 
 export const USER_TIERS: PriorityTiers = {
   block: PRIORITY.USER_BLOCK,
+  redirect: PRIORITY.USER_REDIRECT,
   allow: PRIORITY.USER_ALLOW,
   important: PRIORITY.USER_IMPORTANT,
+  importantRedirect: PRIORITY.USER_IMPORTANT_REDIRECT,
   documentAllow: PRIORITY.USER_ALLOW,
 };
 
@@ -131,7 +137,12 @@ function resolveRedirect(name: string, table: Record<string, string>): string | 
   return null;
 }
 
-function buildResourceTypes(f: NetworkFilter, condition: DNRCondition, forceDocument: boolean): void {
+function buildResourceTypes(
+  f: NetworkFilter,
+  condition: DNRCondition,
+  forceDocument: boolean,
+  allTypesByDefault = false,
+): void {
   if (forceDocument) {
     condition.resourceTypes = DOCUMENT_TYPES.slice();
     return;
@@ -144,6 +155,12 @@ function buildResourceTypes(f: NetworkFilter, condition: DNRCondition, forceDocu
     const excluded = f.excludedResourceTypes.slice();
     if (!f.hasDocument && !excluded.includes('main_frame')) excluded.unshift('main_frame');
     condition.excludedResourceTypes = excluded;
+    return;
+  }
+  // `$removeparam` applies to navigations too (uBO/AdGuard semantics). A DNR rule with no
+  // `resourceTypes` never matches `main_frame`, so every type must be listed explicitly.
+  if (allTypesByDefault) {
+    condition.resourceTypes = DNR_RESOURCE_TYPES.slice();
     return;
   }
   // ABP default: everything except the top-level document (docs/FILTER-SYNTAX.md §3).
@@ -251,7 +268,7 @@ export function convertFilter(f: NetworkFilter, ctx: ConvertContext): ConvertRes
     const file = resolveRedirect(f.redirect, ctx.redirectResources);
     if (file === null) return { ok: false, reason: `unknown $redirect resource "${f.redirect}"`, warnings };
     action = { type: 'redirect', redirect: { extensionPath: toExtensionPath(file) } };
-    priority = f.important ? ctx.tiers.important : ctx.tiers.block;
+    priority = f.important ? ctx.tiers.importantRedirect : ctx.tiers.redirect;
     category = 'redirect';
   } else if (f.removeParams !== undefined) {
     action = {
@@ -301,7 +318,7 @@ export function convertFilter(f: NetworkFilter, ctx: ConvertContext): ConvertRes
   const patternResult = applyPattern(f, condition);
   if (!patternResult.ok) return { ok: false, reason: patternResult.reason, warnings };
   applyDomains(f, condition, ctx);
-  buildResourceTypes(f, condition, forceDocumentTypes);
+  buildResourceTypes(f, condition, forceDocumentTypes, f.removeParams !== undefined);
 
   if (condition.requestDomains !== undefined && condition.requestDomains.length === 0)
     return { ok: false, reason: 'no request domains left after expansion', warnings };

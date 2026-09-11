@@ -1,16 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": [
-      "chrome",
-      "node"
-    ],
+    "types": ["chrome", "node"],
     "jsx": "react-jsx",
     "jsxImportSource": "preact"
   },
-  "include": [
-    "src",
-    "scripts",
-    "test"
-  ]
+  "include": ["src", "scripts", "test"]
 }

@@ -6,14 +6,14 @@ import { click, mockRouter, mount, setValue, text, unmount } from './ui-harness'
 const dump = { siteModes: { 'example.com': 'off', 'news.example.org': 'complete', bogus: 42 } };
 
 describe('Dashboard — Sites tab', () => {
-  it('reads only valid site modes out of debug:dumpState', () => {
+  it('reads only valid site modes out of sites:get', () => {
     expect(readSiteModes(dump)).toEqual({ 'example.com': 'off', 'news.example.org': 'complete' });
     expect(readSiteModes({})).toBeNull();
     expect(readSiteModes(null)).toBeNull();
   });
 
   it('lists the overrides sorted by hostname', async () => {
-    mockRouter({ 'debug:dumpState': () => dump });
+    mockRouter({ 'sites:get': () => dump });
     const el = await mount(h(SitesTab, {}));
     const hosts = [...el.querySelectorAll('tbody td.mono')].map((n) => n.textContent);
     expect(hosts).toEqual(['example.com', 'news.example.org']);
@@ -23,7 +23,7 @@ describe('Dashboard — Sites tab', () => {
 
   it('changes a mode through site:setMode', async () => {
     const router = mockRouter({
-      'debug:dumpState': () => dump,
+      'sites:get': () => dump,
       'site:setMode': () => ({ effectiveMode: 'basic' }),
     });
     const el = await mount(h(SitesTab, {}));
@@ -38,7 +38,7 @@ describe('Dashboard — Sites tab', () => {
 
   it('removes an override with mode: null', async () => {
     const router = mockRouter({
-      'debug:dumpState': () => dump,
+      'sites:get': () => dump,
       'site:setMode': () => ({ effectiveMode: 'optimal' }),
     });
     const el = await mount(h(SitesTab, {}));
@@ -54,7 +54,7 @@ describe('Dashboard — Sites tab', () => {
 
   it('rejects an invalid hostname before sending anything', async () => {
     const router = mockRouter({
-      'debug:dumpState': () => dump,
+      'sites:get': () => dump,
       'site:setMode': () => ({ effectiveMode: 'off' }),
     });
     const el = await mount(h(SitesTab, {}));
@@ -67,7 +67,7 @@ describe('Dashboard — Sites tab', () => {
 
   it('adds a normalised hostname with the chosen mode', async () => {
     const router = mockRouter({
-      'debug:dumpState': () => dump,
+      'sites:get': () => dump,
       'site:setMode': () => ({ effectiveMode: 'basic' }),
     });
     const el = await mount(h(SitesTab, {}));
@@ -89,7 +89,7 @@ describe('Dashboard — Sites tab', () => {
 
   it('refuses a duplicate override', async () => {
     const router = mockRouter({
-      'debug:dumpState': () => dump,
+      'sites:get': () => dump,
       'site:setMode': () => ({ effectiveMode: 'off' }),
     });
     const el = await mount(h(SitesTab, {}));

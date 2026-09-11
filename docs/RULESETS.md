@@ -5,28 +5,187 @@
 ```json
 {
   "lists": [
-    { "id": "easylist",      "title": "EasyList",       "urls": ["https://easylist.to/easylist/easylist.txt"], "group": "ads",      "defaultEnabled": true,  "trusted": false, "license": "CC BY-SA 3.0", "expires": "4 days" },
-    { "id": "easyprivacy",   "title": "EasyPrivacy",    "urls": ["https://easylist.to/easylist/easyprivacy.txt"], "group": "privacy", "defaultEnabled": true },
-    { "id": "ubo-filters",   "title": "uBlock filters", "urls": ["https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt", ".../badware.txt", ".../privacy.txt", ".../quick-fixes.txt", ".../unbreak.txt"], "group": "ads", "defaultEnabled": true, "trusted": true },
-    { "id": "peter-lowe",    "title": "Peter Lowe's Ad and tracking server list", "urls": ["https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext"], "format": "hosts", "group": "privacy", "defaultEnabled": true },
-    { "id": "malware-urlhaus", "title": "Online Malicious URL Blocklist", "urls": ["https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-online.txt"], "group": "malware", "defaultEnabled": true },
-    { "id": "easylist-cookie", "title": "EasyList Cookie", "urls": ["https://secure.fanboy.co.nz/fanboy-cookiemonster.txt"], "group": "annoyances", "defaultEnabled": false },
-    { "id": "ubo-annoyances", "title": "uBlock annoyances", "urls": ["https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances.txt"], "group": "annoyances", "defaultEnabled": false, "trusted": true },
-    { "id": "fanboy-annoyance", "title": "Fanboy's Annoyance", "urls": ["https://secure.fanboy.co.nz/fanboy-annoyance.txt"], "group": "annoyances", "defaultEnabled": false },
-    { "id": "adguard-mobile", "title": "AdGuard Mobile Ads", "urls": ["https://filters.adtidy.org/extension/ublock/filters/11.txt"], "group": "ads", "defaultEnabled": false },
-    { "id": "easylist-zh",   "title": "EasyList China", "urls": ["https://easylist-downloads.adblockplus.org/easylistchina.txt"], "group": "regional", "lang": ["zh"], "defaultEnabled": false },
-    { "id": "cjx-annoyance", "title": "CJX's Annoyance List", "urls": ["https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt"], "group": "regional", "lang": ["zh"], "defaultEnabled": false },
-    { "id": "easylist-jp",   "title": "EasyList Japan (ABP Japanese)", "urls": ["https://raw.githubusercontent.com/k2jp/abp-japanese-filters/master/abpjf.txt"], "group": "regional", "lang": ["ja"], "defaultEnabled": false },
-    { "id": "easylist-kr",   "title": "List-KR", "urls": ["https://raw.githubusercontent.com/List-KR/List-KR/master/filter-uBlockOrigin.txt"], "group": "regional", "lang": ["ko"], "defaultEnabled": false },
-    { "id": "easylist-de",   "title": "EasyList Germany", "urls": ["https://easylist.to/easylistgermany/easylistgermany.txt"], "group": "regional", "lang": ["de"], "defaultEnabled": false },
-    { "id": "easylist-fr",   "title": "Liste FR", "urls": ["https://easylist-downloads.adblockplus.org/liste_fr.txt"], "group": "regional", "lang": ["fr"], "defaultEnabled": false },
-    { "id": "easylist-es",   "title": "EasyList Spanish", "urls": ["https://easylist-downloads.adblockplus.org/easylistspanish.txt"], "group": "regional", "lang": ["es"], "defaultEnabled": false },
-    { "id": "easylist-it",   "title": "EasyList Italy", "urls": ["https://easylist-downloads.adblockplus.org/easylistitaly.txt"], "group": "regional", "lang": ["it"], "defaultEnabled": false },
-    { "id": "ruadlist",      "title": "RU AdList", "urls": ["https://easylist-downloads.adblockplus.org/advblock.txt"], "group": "regional", "lang": ["ru"], "defaultEnabled": false },
-    { "id": "easylist-pt",   "title": "EasyList Portuguese", "urls": ["https://easylist-downloads.adblockplus.org/easylistportuguese.txt"], "group": "regional", "lang": ["pt"], "defaultEnabled": false },
-    { "id": "easylist-nl",   "title": "EasyList Dutch", "urls": ["https://easylist-downloads.adblockplus.org/easylistdutch.txt"], "group": "regional", "lang": ["nl"], "defaultEnabled": false },
-    { "id": "easylist-pl",   "title": "EasyList Polish", "urls": ["https://easylist-downloads.adblockplus.org/easylistpolish.txt"], "group": "regional", "lang": ["pl"], "defaultEnabled": false },
-    { "id": "abpvn",         "title": "ABPVN (Vietnamese)", "urls": ["https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn.txt"], "group": "regional", "lang": ["vi"], "defaultEnabled": false }
+    {
+      "id": "easylist",
+      "title": "EasyList",
+      "urls": ["https://easylist.to/easylist/easylist.txt"],
+      "group": "ads",
+      "defaultEnabled": true,
+      "trusted": false,
+      "license": "CC BY-SA 3.0",
+      "expires": "4 days"
+    },
+    {
+      "id": "easyprivacy",
+      "title": "EasyPrivacy",
+      "urls": ["https://easylist.to/easylist/easyprivacy.txt"],
+      "group": "privacy",
+      "defaultEnabled": true
+    },
+    {
+      "id": "ubo-filters",
+      "title": "uBlock filters",
+      "urls": [
+        "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+        ".../badware.txt",
+        ".../privacy.txt",
+        ".../quick-fixes.txt",
+        ".../unbreak.txt"
+      ],
+      "group": "ads",
+      "defaultEnabled": true,
+      "trusted": true
+    },
+    {
+      "id": "peter-lowe",
+      "title": "Peter Lowe's Ad and tracking server list",
+      "urls": [
+        "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext"
+      ],
+      "format": "hosts",
+      "group": "privacy",
+      "defaultEnabled": true
+    },
+    {
+      "id": "malware-urlhaus",
+      "title": "Online Malicious URL Blocklist",
+      "urls": ["https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-online.txt"],
+      "group": "malware",
+      "defaultEnabled": true
+    },
+    {
+      "id": "easylist-cookie",
+      "title": "EasyList Cookie",
+      "urls": ["https://secure.fanboy.co.nz/fanboy-cookiemonster.txt"],
+      "group": "annoyances",
+      "defaultEnabled": false
+    },
+    {
+      "id": "ubo-annoyances",
+      "title": "uBlock annoyances",
+      "urls": ["https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances.txt"],
+      "group": "annoyances",
+      "defaultEnabled": false,
+      "trusted": true
+    },
+    {
+      "id": "fanboy-annoyance",
+      "title": "Fanboy's Annoyance",
+      "urls": ["https://secure.fanboy.co.nz/fanboy-annoyance.txt"],
+      "group": "annoyances",
+      "defaultEnabled": false
+    },
+    {
+      "id": "adguard-mobile",
+      "title": "AdGuard Mobile Ads",
+      "urls": ["https://filters.adtidy.org/extension/ublock/filters/11.txt"],
+      "group": "ads",
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-zh",
+      "title": "EasyList China",
+      "urls": ["https://easylist-downloads.adblockplus.org/easylistchina.txt"],
+      "group": "regional",
+      "lang": ["zh"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "cjx-annoyance",
+      "title": "CJX's Annoyance List",
+      "urls": ["https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt"],
+      "group": "regional",
+      "lang": ["zh"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-jp",
+      "title": "EasyList Japan (ABP Japanese)",
+      "urls": ["https://raw.githubusercontent.com/k2jp/abp-japanese-filters/master/abpjf.txt"],
+      "group": "regional",
+      "lang": ["ja"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-kr",
+      "title": "List-KR",
+      "urls": ["https://raw.githubusercontent.com/List-KR/List-KR/master/filter-uBlockOrigin.txt"],
+      "group": "regional",
+      "lang": ["ko"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-de",
+      "title": "EasyList Germany",
+      "urls": ["https://easylist.to/easylistgermany/easylistgermany.txt"],
+      "group": "regional",
+      "lang": ["de"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-fr",
+      "title": "Liste FR",
+      "urls": ["https://easylist-downloads.adblockplus.org/liste_fr.txt"],
+      "group": "regional",
+      "lang": ["fr"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-es",
+      "title": "EasyList Spanish",
+      "urls": ["https://easylist-downloads.adblockplus.org/easylistspanish.txt"],
+      "group": "regional",
+      "lang": ["es"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-it",
+      "title": "EasyList Italy",
+      "urls": ["https://easylist-downloads.adblockplus.org/easylistitaly.txt"],
+      "group": "regional",
+      "lang": ["it"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "ruadlist",
+      "title": "RU AdList",
+      "urls": ["https://easylist-downloads.adblockplus.org/advblock.txt"],
+      "group": "regional",
+      "lang": ["ru"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-pt",
+      "title": "EasyList Portuguese",
+      "urls": ["https://easylist-downloads.adblockplus.org/easylistportuguese.txt"],
+      "group": "regional",
+      "lang": ["pt"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-nl",
+      "title": "EasyList Dutch",
+      "urls": ["https://easylist-downloads.adblockplus.org/easylistdutch.txt"],
+      "group": "regional",
+      "lang": ["nl"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "easylist-pl",
+      "title": "EasyList Polish",
+      "urls": ["https://easylist-downloads.adblockplus.org/easylistpolish.txt"],
+      "group": "regional",
+      "lang": ["pl"],
+      "defaultEnabled": false
+    },
+    {
+      "id": "abpvn",
+      "title": "ABPVN (Vietnamese)",
+      "urls": ["https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn.txt"],
+      "group": "regional",
+      "lang": ["vi"],
+      "defaultEnabled": false
+    }
   ]
 }
 ```
@@ -48,13 +207,27 @@ report.json                   per‑list RulesetReport (counts, dropped filters 
 
 ```ts
 interface RulesetManifest {
-  version: string;               // "2026.09.11.1" — date of list snapshot + build number
-  builtAt: string;               // ISO
+  version: string; // "2026.09.11.1" — date of list snapshot + build number
+  builtAt: string; // ISO
   lists: Array<{
-    id: string; title: string; group: ListGroup; lang?: string[]; defaultEnabled: boolean; trusted: boolean;
-    homepage?: string; license?: string;
+    id: string;
+    title: string;
+    group: ListGroup;
+    lang?: string[];
+    defaultEnabled: boolean;
+    trusted: boolean;
+    homepage?: string;
+    license?: string;
     sources: Array<{ url: string; sha256: string; fetchedAt: string }>;
-    counts: { dnr: number; regex: number; cosmeticGeneric: number; cosmeticSpecific: number; procedural: number; scriptlets: number; dropped: number };
+    counts: {
+      dnr: number;
+      regex: number;
+      cosmeticGeneric: number;
+      cosmeticSpecific: number;
+      procedural: number;
+      scriptlets: number;
+      dropped: number;
+    };
     files: { dnr: string; cosmetic: string; scriptlets: string };
   }>;
   budget: { staticRulesTotal: number; staticRulesDefaultEnabled: number; regexTotal: number };

@@ -16,7 +16,7 @@ function router() {
       updater: { lastCheck: 0, lastSuccess: 0 },
     }),
     'filters:getUser': () => ({ text: '', warnings: [], counts: { dnr: 0, cosmetic: 0, scriptlets: 0 } }),
-    'debug:dumpState': () => ({ siteModes: {} }),
+    'sites:get': () => ({ siteModes: {}, defaultMode: 'optimal' }),
   });
 }
 

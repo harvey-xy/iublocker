@@ -45,14 +45,18 @@ describe('priority tiers', () => {
   it('match the frozen constants', () => {
     expect(STATIC_TIERS).toEqual({
       block: PRIORITY.BLOCK,
+      redirect: PRIORITY.REDIRECT,
       allow: PRIORITY.ALLOW,
       important: PRIORITY.IMPORTANT,
+      importantRedirect: PRIORITY.IMPORTANT_REDIRECT,
       documentAllow: PRIORITY.DOCUMENT_ALLOW,
     });
     expect(USER_TIERS).toEqual({
       block: PRIORITY.USER_BLOCK,
+      redirect: PRIORITY.USER_REDIRECT,
       allow: PRIORITY.USER_ALLOW,
       important: PRIORITY.USER_IMPORTANT,
+      importantRedirect: PRIORITY.USER_IMPORTANT_REDIRECT,
       documentAllow: PRIORITY.USER_ALLOW,
     });
   });

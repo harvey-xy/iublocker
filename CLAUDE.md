@@ -9,6 +9,7 @@ Commands: `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm buil
 `$PLAYWRIGHT_BROWSERS_PATH`; never run `playwright install`.
 
 Rules:
+
 - TypeScript strict; `verbatimModuleSyntax` (use `import type`).
 - `packages/compiler/src` (except `cli/`) and `packages/shared` must not import Node built-ins.
 - The service worker is restarted often: no correctness-critical module state without hydration.

@@ -6,3 +6,5 @@ artifacts
 pnpm-lock.yaml
 CHANGELOG.md
 LICENSE
+packages/extension/public/resources
+tools/filterlists.json

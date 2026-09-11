@@ -61,6 +61,36 @@ export async function waitForServiceWorker(context: BrowserContext, timeout = 30
   return await context.waitForEvent('serviceworker', { timeout });
 }
 
+/**
+ * Playwright hands out the worker target before Chrome has installed its `chrome.*`
+ * bindings, and the extension registers its scriptlet content scripts asynchronously on
+ * install. Wait for both so tests do not race the worker's own start-up.
+ */
+export async function waitForWorkerReady(sw: Worker, timeout = 15_000): Promise<void> {
+  const deadline = Date.now() + timeout;
+  const poll = async (probe: () => Promise<boolean>): Promise<boolean> => {
+    while (Date.now() < deadline) {
+      try {
+        if (await probe()) return true;
+      } catch {
+        /* worker not ready yet */
+      }
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    return false;
+  };
+  const hasRuntime = await poll(() =>
+    sw.evaluate(() => typeof (globalThis as any).chrome?.runtime?.getManifest === 'function'),
+  );
+  if (!hasRuntime) throw new Error('extension service worker never exposed chrome.runtime');
+  await poll(() =>
+    sw.evaluate(async () => {
+      const scripts = await (globalThis as any).chrome.scripting.getRegisteredContentScripts();
+      return Array.isArray(scripts) && scripts.length > 0;
+    }),
+  );
+}
+
 /** `chrome-extension://<id>/…` → `<id>` */
 export function extensionIdFromUrl(url: string): string {
   const match = /^chrome-extension:\/\/([a-p]{32})\//.exec(url);
@@ -119,6 +149,7 @@ export const test = base.extend<ExtensionFixtures, ExtensionWorkerFixtures>({
 
   sw: async ({ context }, use) => {
     const sw = await waitForServiceWorker(context);
+    await waitForWorkerReady(sw);
     await use(sw);
   },
 
@@ -132,7 +163,8 @@ export const test = base.extend<ExtensionFixtures, ExtensionWorkerFixtures>({
     await use(extensionIdFromUrl(sw.url()));
   },
 
-  page: async ({ context }, use) => {
+  page: async ({ context, sw }, use) => {
+    void sw; // readiness: the worker fixture waits for chrome.runtime + registered scripts
     const page = context.pages()[0] ?? (await context.newPage());
     await use(page);
   },

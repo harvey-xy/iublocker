@@ -17,11 +17,19 @@ const REGISTER_BATCH = 20;
 
 type GroupMeta = Omit<ScriptletGroup, 'calls'>;
 
+function isIpOrSingleLabel(host: string): boolean {
+  if (host.startsWith('[') || !host.includes('.')) return true;
+  return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host);
+}
+
 export function hostPatterns(hosts: readonly string[]): string[] {
   const out: string[] = [];
   for (const host of hosts) {
     if (!host || host.includes('/') || host.includes('*')) continue;
-    out.push(`*://${host}/*`, `*://*.${host}/*`);
+    out.push(`*://${host}/*`);
+    // IP literals and single-label hosts have no subdomains; `*://*.127.0.0.1/*` is an
+    // invalid match pattern and would make Chrome reject the whole registration.
+    if (!isIpOrSingleLabel(host)) out.push(`*://*.${host}/*`);
   }
   return out;
 }

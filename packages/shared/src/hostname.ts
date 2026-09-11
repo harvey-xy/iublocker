@@ -16,7 +16,11 @@ export function hostnameWalk(hostname: string): string[] {
 /** True if `hostname` equals `domain` or is a subdomain of it. */
 export function hostnameMatchesDomain(hostname: string, domain: string): boolean {
   if (hostname === domain) return true;
-  return hostname.length > domain.length && hostname.endsWith(domain) && hostname[hostname.length - domain.length - 1] === '.';
+  return (
+    hostname.length > domain.length &&
+    hostname.endsWith(domain) &&
+    hostname[hostname.length - domain.length - 1] === '.'
+  );
 }
 
 export function hostnameFromUrl(url: string): string {
@@ -27,7 +31,8 @@ export function hostnameFromUrl(url: string): string {
   }
 }
 
-const HOSTNAME_RE = /^(?=.{1,253}$)(?:[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?\.)*[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?$/i;
+const HOSTNAME_RE =
+  /^(?=.{1,253}$)(?:[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?\.)*[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?$/i;
 
 export function isValidHostname(h: string): boolean {
   return HOSTNAME_RE.test(h);

@@ -5,7 +5,7 @@ before any page script runs, to neutralise anti‑adblock code, fake ad slots, s
 tracking APIs, and so on. Filter syntax: `example.com##+js(name, arg1, arg2, …)`.
 
 MV3 forbids remote code, so **every scriptlet body ships inside the extension**. Filter
-lists only carry the scriptlet *name* and *arguments* (data).
+lists only carry the scriptlet _name_ and _arguments_ (data).
 
 ## 1. Library (`packages/scriptlets`)
 
@@ -21,11 +21,14 @@ export default defineScriptlet({
   // The function is serialised with Function.prototype.toString and injected as
   // `(fn)(args)`. It MUST NOT close over module scope: no imports used inside,
   // helpers are inlined or passed through the `$` helper bag.
-  fn: function (property: string, value: string) { /* … */ },
+  fn: function (property: string, value: string) {
+    /* … */
+  },
 });
 ```
 
 Rules for `fn`:
+
 - No references to anything outside the function body except globals of the page.
 - No `chrome.*` API usage (MAIN world has none).
 - Wrap everything in `try {} catch {}`; never throw into the page.
@@ -35,37 +38,37 @@ Rules for `fn`:
 
 ### 1.1 Initial set (v1, ordered by frequency in the default lists)
 
-| Name | Aliases | Purpose |
-|---|---|---|
-| `abort-on-property-read` | `aopr` | throw when a property is read |
-| `abort-on-property-write` | `aopw` | throw when a property is written |
-| `abort-current-script` | `acs`, `abort-current-inline-script` | abort the currently executing inline script matching a needle |
-| `abort-on-stack-trace` | `aost` | abort when property accessed from a matching stack |
-| `set-constant` | `set` | define a constant global property |
-| `set-local-storage-item`, `set-session-storage-item` | | set storage items |
-| `set-cookie`, `set-cookie-reload` | | set cookies |
-| `remove-cookie` | `cookie-remover` | remove cookies |
-| `no-setTimeout-if` | `nostif`, `setTimeout-defuser` | defuse matching setTimeout calls |
-| `no-setInterval-if` | `nosiif` | defuse matching setInterval calls |
-| `no-fetch-if` | `prevent-fetch` | block/mimic fetch calls |
-| `no-xhr-if` | `prevent-xhr` | block/mimic XHR calls |
-| `prevent-addEventListener` | `aeld`, `addEventListener-defuser` | defuse listeners |
-| `prevent-window-open` | `nowoif`, `window.open-defuser` | neuter popups |
-| `prevent-requestAnimationFrame` | `norafif` | defuse rAF callbacks |
-| `json-prune` | | remove properties from parsed JSON |
-| `json-prune-fetch-response`, `json-prune-xhr-response` | | prune network JSON |
-| `remove-attr` | `ra` | remove element attributes (with optional selector, `stay`) |
-| `remove-class` | `rc` | remove classes |
-| `set-attr` | | set attributes |
-| `remove-node-text` | `rmnt` | remove text nodes matching |
-| `replace-node-text` | `rpnt` | replace text nodes |
-| `nano-setTimeout-booster`, `nano-setInterval-booster` | `nano-stb`, `nano-sib` | speed up timers |
-| `adjust-setTimeout`, `adjust-setInterval` | | adjust delays |
-| `disable-newtab-links` | | |
-| `noeval-if` | `noeval` | block matching eval |
-| `no-window-open-if` | | alias of prevent-window-open |
-| `trusted-*` (`trusted-set-cookie`, `trusted-replace-fetch-response`, `trusted-set-constant`…) | | only from lists flagged `trusted: true` in `filterlists.json` or user filters |
-| `googletagservices_gpt.js`, `google-analytics_ga.js`, … | | **surrogates**: implemented as redirect resources (§5), also invocable as scriptlets |
+| Name                                                                                          | Aliases                              | Purpose                                                                              |
+| --------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
+| `abort-on-property-read`                                                                      | `aopr`                               | throw when a property is read                                                        |
+| `abort-on-property-write`                                                                     | `aopw`                               | throw when a property is written                                                     |
+| `abort-current-script`                                                                        | `acs`, `abort-current-inline-script` | abort the currently executing inline script matching a needle                        |
+| `abort-on-stack-trace`                                                                        | `aost`                               | abort when property accessed from a matching stack                                   |
+| `set-constant`                                                                                | `set`                                | define a constant global property                                                    |
+| `set-local-storage-item`, `set-session-storage-item`                                          |                                      | set storage items                                                                    |
+| `set-cookie`, `set-cookie-reload`                                                             |                                      | set cookies                                                                          |
+| `remove-cookie`                                                                               | `cookie-remover`                     | remove cookies                                                                       |
+| `no-setTimeout-if`                                                                            | `nostif`, `setTimeout-defuser`       | defuse matching setTimeout calls                                                     |
+| `no-setInterval-if`                                                                           | `nosiif`                             | defuse matching setInterval calls                                                    |
+| `no-fetch-if`                                                                                 | `prevent-fetch`                      | block/mimic fetch calls                                                              |
+| `no-xhr-if`                                                                                   | `prevent-xhr`                        | block/mimic XHR calls                                                                |
+| `prevent-addEventListener`                                                                    | `aeld`, `addEventListener-defuser`   | defuse listeners                                                                     |
+| `prevent-window-open`                                                                         | `nowoif`, `window.open-defuser`      | neuter popups                                                                        |
+| `prevent-requestAnimationFrame`                                                               | `norafif`                            | defuse rAF callbacks                                                                 |
+| `json-prune`                                                                                  |                                      | remove properties from parsed JSON                                                   |
+| `json-prune-fetch-response`, `json-prune-xhr-response`                                        |                                      | prune network JSON                                                                   |
+| `remove-attr`                                                                                 | `ra`                                 | remove element attributes (with optional selector, `stay`)                           |
+| `remove-class`                                                                                | `rc`                                 | remove classes                                                                       |
+| `set-attr`                                                                                    |                                      | set attributes                                                                       |
+| `remove-node-text`                                                                            | `rmnt`                               | remove text nodes matching                                                           |
+| `replace-node-text`                                                                           | `rpnt`                               | replace text nodes                                                                   |
+| `nano-setTimeout-booster`, `nano-setInterval-booster`                                         | `nano-stb`, `nano-sib`               | speed up timers                                                                      |
+| `adjust-setTimeout`, `adjust-setInterval`                                                     |                                      | adjust delays                                                                        |
+| `disable-newtab-links`                                                                        |                                      |                                                                                      |
+| `noeval-if`                                                                                   | `noeval`                             | block matching eval                                                                  |
+| `no-window-open-if`                                                                           |                                      | alias of prevent-window-open                                                         |
+| `trusted-*` (`trusted-set-cookie`, `trusted-replace-fetch-response`, `trusted-set-constant`…) |                                      | only from lists flagged `trusted: true` in `filterlists.json` or user filters        |
+| `googletagservices_gpt.js`, `google-analytics_ga.js`, …                                       |                                      | **surrogates**: implemented as redirect resources (§5), also invocable as scriptlets |
 
 All parameters follow uBO argument semantics (e.g. `/regex/` arguments, `!` negation
 for `no-setTimeout-if`). Reference behaviour: uBO's `assets/resources/scriptlets.js`;
@@ -84,10 +87,13 @@ The list compiler emits per list `rulesets/scriptlets/<listId>.json`:
 interface ScriptletDB {
   version: 1;
   listId: string;
-  byHost: Record<string, ScriptletCall[]>;   // hostname → [{name, args}]
-  exceptions: Record<string, string[]>;      // hostname → names excluded via #@#+js
+  byHost: Record<string, ScriptletCall[]>; // hostname → [{name, args}]
+  exceptions: Record<string, string[]>; // hostname → names excluded via #@#+js
 }
-interface ScriptletCall { name: string; args: string[]; }
+interface ScriptletCall {
+  name: string;
+  args: string[];
+}
 ```
 
 ## 3. Injection strategy
@@ -95,17 +101,17 @@ interface ScriptletCall { name: string; args: string[]; }
 Two paths, both producing `(function(){ try{ (fn)(...args) }catch{} })()` code:
 
 1. **Pre‑registered (list scriptlets).** At install/update/ruleset‑toggle time the
-   `ScriptletRegistrar` groups hostnames by their *set of calls*, generates one JS
+   `ScriptletRegistrar` groups hostnames by their _set of calls_, generates one JS
    file per group under `rulesets/scriptlet-groups/<hash>.js` **at build time** (the
    set of groups is known at build time from the shipped lists), and calls
    `scripting.registerContentScripts([{ id: 'sl-<hash>', js: [file], matches:
-   ['*://*.host/*', …], world: 'MAIN', runAt: 'document_start', allFrames: true,
-   persistAcrossSessions: true }])` for every group whose list is enabled. Hosts in
+['*://*.host/*', …], world: 'MAIN', runAt: 'document_start', allFrames: true,
+persistAcrossSessions: true }])` for every group whose list is enabled. Hosts in
    `off`/`basic` mode are excluded via `excludeMatches`. Chrome caps the total size of
    registered scripts; the build fails if the sum exceeds 8 MB.
 2. **Dynamic (user scriptlets, delta‑added scriptlets).** At `webNavigation.onCommitted`
    the worker calls `scripting.executeScript({ target:{tabId, frameIds:[frameId]},
-   world: 'MAIN', injectImmediately: true, func: runner, args: [calls] })` where
+world: 'MAIN', injectImmediately: true, func: runner, args: [calls] })` where
    `runner` looks up function sources from the bundled registry (imported into the
    worker) and evaluates them with `new Function`? — **No.** `new Function` is remote‑code
    adjacent and blocked by extension CSP. Instead the worker passes `func: registry[name].fn`

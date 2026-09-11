@@ -38,7 +38,8 @@ export const DNR_RESOURCE_TYPES: readonly DNRResourceType[] = [
   'other',
 ];
 
-export type DNRRequestMethod = 'connect' | 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put' | 'other';
+export type DNRRequestMethod =
+  'connect' | 'delete' | 'get' | 'head' | 'options' | 'patch' | 'post' | 'put' | 'other';
 
 export type DNRDomainType = 'firstParty' | 'thirdParty';
 
@@ -80,7 +81,8 @@ export interface DNRRedirect {
   transform?: DNRURLTransform;
 }
 
-export type DNRActionType = 'block' | 'redirect' | 'allow' | 'upgradeScheme' | 'modifyHeaders' | 'allowAllRequests';
+export type DNRActionType =
+  'block' | 'redirect' | 'allow' | 'upgradeScheme' | 'modifyHeaders' | 'allowAllRequests';
 
 export interface DNRAction {
   type: DNRActionType;
@@ -118,12 +120,17 @@ export interface DNRRule {
 /** Fixed priority tiers. docs/FILTER-SYNTAX.md §4 */
 export const PRIORITY = {
   BLOCK: 1,
+  /** $redirect must outrank plain block: DNR resolves block > redirect at equal priority. */
+  REDIRECT: 2,
   ALLOW: 2,
   IMPORTANT: 3,
-  DOCUMENT_ALLOW: 4,
+  IMPORTANT_REDIRECT: 4,
+  DOCUMENT_ALLOW: 5,
   USER_BLOCK: 10,
+  USER_REDIRECT: 11,
   USER_ALLOW: 11,
   USER_IMPORTANT: 12,
+  USER_IMPORTANT_REDIRECT: 13,
   TEMPORARY: 1000,
   SITE_OFF: 1_000_000,
 } as const;

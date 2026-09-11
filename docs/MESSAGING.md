@@ -6,20 +6,26 @@ and are the contract between the background, content scripts, and UI. **Do not a
 ad‑hoc message shapes; extend the union.**
 
 ```ts
-type Request = { type: 'cosmetic:get'; hostname: string; topHostname: string; frameId: number }
-             | { type: 'scriptlets:getDynamic'; hostname: string }
-             | { type: 'tab:getState'; tabId?: number }          // popup
-             | { type: 'site:setMode'; hostname: string; mode: SiteMode | null }
-             | { type: 'settings:get' } | { type: 'settings:set'; patch: Partial<Settings> }
-             | { type: 'lists:get' } | { type: 'lists:setEnabled'; listId: string; enabled: boolean }
-             | { type: 'lists:update' }                            // trigger delta update now
-             | { type: 'filters:getUser' } | { type: 'filters:setUser'; text: string }
-             | { type: 'filters:addUser'; lines: string[] }        // picker / popup
-             | { type: 'picker:start'; tabId: number }
-             | { type: 'stats:get'; tabId?: number } | { type: 'stats:reset' }
-             | { type: 'logger:get'; tabId: number }
-             | { type: 'blocked:getForTab' }                      // content script: URLs blocked in this frame (for collapse)
-             | { type: 'debug:dumpState' };
+type Request =
+  | { type: 'cosmetic:get'; hostname: string; topHostname: string; frameId: number }
+  | { type: 'scriptlets:getDynamic'; hostname: string }
+  | { type: 'tab:getState'; tabId?: number } // popup
+  | { type: 'site:setMode'; hostname: string; mode: SiteMode | null }
+  | { type: 'sites:get' } // all per-site overrides + default
+  | { type: 'settings:get' }
+  | { type: 'settings:set'; patch: Partial<Settings> }
+  | { type: 'lists:get' }
+  | { type: 'lists:setEnabled'; listId: string; enabled: boolean }
+  | { type: 'lists:update' } // trigger delta update now
+  | { type: 'filters:getUser' }
+  | { type: 'filters:setUser'; text: string }
+  | { type: 'filters:addUser'; lines: string[] } // picker / popup
+  | { type: 'picker:start'; tabId: number }
+  | { type: 'stats:get'; tabId?: number }
+  | { type: 'stats:reset' }
+  | { type: 'logger:get'; tabId: number }
+  | { type: 'blocked:getForTab' } // content script: URLs blocked in this frame (for collapse)
+  | { type: 'debug:dumpState' };
 ```
 
 Every request has exactly one response type (`Response<T>`), all defined next to the
@@ -27,6 +33,7 @@ request. Errors are returned as `{ ok: false, error: string }`; never thrown acr
 boundary. The router is `handle(msg, sender): Promise<ResponseFor<msg>>`.
 
 Conventions:
+
 - Content scripts must include `sender.frameId`‑dependent data only via the router's
   `sender` argument, never trust a client‑supplied `tabId`.
 - UI pages may pass `tabId` (obtained from `chrome.tabs.query`).

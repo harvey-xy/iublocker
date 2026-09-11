@@ -6,28 +6,28 @@ single `schemaVersion` and migrated in `background/storage/migrations.ts`.
 
 ## `chrome.storage.local`
 
-| Key | Type | Notes |
-|---|---|---|
-| `schemaVersion` | `number` | current: 1 |
-| `settings` | `Settings` | see below |
-| `siteModes` | `Record<hostname, SiteMode>` | per‑site overrides; absence = default |
-| `lists` | `Record<listId, { enabled: boolean }>` | list toggles; defaults from `RulesetManifest.defaultEnabled` |
-| `userFiltersText` | `string` | raw text as typed in the dashboard |
-| `userCompiled` | `{ dnr: DNRRule[]; cosmetic: CosmeticDB; scriptlets: ScriptletDB; warnings: string[] }` | compiled form, rebuilt on save |
-| `delta` | `{ base: string; version: string; appliedAt: number; cosmetic: CosmeticDB; scriptlets: ScriptletDB; disabled: Record<listId, number[]> }` | last applied differential update (dnr adds live in dynamic rules; the delta's *removals* are folded into the stored DBs' `exceptions` sets) |
-| `updater` | `{ lastCheck: number; lastSuccess: number; lastError?: string; etag?: string }` | |
-| `stats` | `{ since: number; blockedTotal: number; perDay: Record<'yyyy-mm-dd', number> }` | |
-| `pickerDrafts` | `Record<hostname, string[]>` | unsaved picker candidates |
+| Key               | Type                                                                                                                                      | Notes                                                                                                                                       |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schemaVersion`   | `number`                                                                                                                                  | current: 1                                                                                                                                  |
+| `settings`        | `Settings`                                                                                                                                | see below                                                                                                                                   |
+| `siteModes`       | `Record<hostname, SiteMode>`                                                                                                              | per‑site overrides; absence = default                                                                                                       |
+| `lists`           | `Record<listId, { enabled: boolean }>`                                                                                                    | list toggles; defaults from `RulesetManifest.defaultEnabled`                                                                                |
+| `userFiltersText` | `string`                                                                                                                                  | raw text as typed in the dashboard                                                                                                          |
+| `userCompiled`    | `{ dnr: DNRRule[]; cosmetic: CosmeticDB; scriptlets: ScriptletDB; warnings: string[] }`                                                   | compiled form, rebuilt on save                                                                                                              |
+| `delta`           | `{ base: string; version: string; appliedAt: number; cosmetic: CosmeticDB; scriptlets: ScriptletDB; disabled: Record<listId, number[]> }` | last applied differential update (dnr adds live in dynamic rules; the delta's _removals_ are folded into the stored DBs' `exceptions` sets) |
+| `updater`         | `{ lastCheck: number; lastSuccess: number; lastError?: string; etag?: string }`                                                           |                                                                                                                                             |
+| `stats`           | `{ since: number; blockedTotal: number; perDay: Record<'yyyy-mm-dd', number> }`                                                           |                                                                                                                                             |
+| `pickerDrafts`    | `Record<hostname, string[]>`                                                                                                              | unsaved picker candidates                                                                                                                   |
 
 ```ts
 interface Settings {
-  defaultMode: SiteMode;             // 'optimal'
-  showBadgeCount: boolean;           // true
-  autoUpdate: boolean;               // true
-  updateIntervalHours: number;       // 6
+  defaultMode: SiteMode; // 'optimal'
+  showBadgeCount: boolean; // true
+  autoUpdate: boolean; // true
+  updateIntervalHours: number; // 6
   updateChannel: 'stable' | 'nightly';
-  collapseBlockedElements: boolean;  // true
-  cloudDeltaBaseUrl: string;         // default from build config; user‑overridable for self‑hosting
+  collapseBlockedElements: boolean; // true
+  cloudDeltaBaseUrl: string; // default from build config; user‑overridable for self‑hosting
   theme: 'auto' | 'light' | 'dark';
   advanced: { logMatchedRules: boolean; allowTrustedUserScriptlets: boolean };
 }
@@ -35,10 +35,10 @@ interface Settings {
 
 ## `chrome.storage.session`
 
-| Key | Type |
-|---|---|
-| `tab:<tabId>` | `{ hostname: string; blocked: number; lastUrl: string; matched?: MatchedRuleSummary[] }` |
-| `pickerActive:<tabId>` | `true` |
+| Key                    | Type                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| `tab:<tabId>`          | `{ hostname: string; blocked: number; lastUrl: string; matched?: MatchedRuleSummary[] }` |
+| `pickerActive:<tabId>` | `true`                                                                                   |
 
 ## Access layer
 

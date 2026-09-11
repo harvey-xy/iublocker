@@ -27,20 +27,20 @@ MV3‑native content blocker that keeps the parts of uBlock Origin that matter
 (filter‑list compatibility, cosmetic filtering, scriptlets, per‑site control) and
 adds what MV3 makes possible:
 
-| Capability | uBlock Origin (MV2) | uBO Lite | **iuBlocker** |
-|---|---|---|---|
-| Runs on current Chrome | ❌ | ✅ | ✅ |
-| Network blocking (EasyList, EasyPrivacy, uBO filters, …) | ✅ | ✅ | ✅ `declarativeNetRequest`, 330k static‑rule budget used efficiently |
-| Filter list updates without an extension update | ✅ | ❌ | ✅ **Differential updates** via dynamic rules + `updateStaticRules` |
-| Specific cosmetic filtering (`example.com##.ad`) | ✅ | ✅ | ✅ Injected from the service worker at `onCommitted` (no content‑script round trip) |
-| Generic cosmetic filtering | ✅ | partial | ✅ DOM‑harvested id/class lookup + batched CSS |
-| Procedural cosmetic filters (`:has-text()`, `:matches-css()`, …) | ✅ | partial | ✅ |
-| Scriptlets (`##+js(...)`) | ✅ | ✅ | ✅ MAIN‑world, `document_start`, pre‑registered per domain |
-| `$redirect`, `$removeparam`, `$csp`, `$removeheader`, `$header` | ✅ | partial | ✅ mapped to DNR redirect / transform / modifyHeaders / responseHeaders |
-| Custom user filters | ✅ | ❌ | ✅ compiled in‑browser to dynamic rules + cosmetic DB |
-| Element picker | ✅ | ❌ | ✅ |
-| Per‑site blocking modes | ✅ (dynamic filtering) | ✅ (4 modes) | ✅ 4 modes + global default + one‑click disable |
-| Telemetry / remote code | none | none | **none** — all code is bundled, lists are data |
+| Capability                                                       | uBlock Origin (MV2)    | uBO Lite     | **iuBlocker**                                                                       |
+| ---------------------------------------------------------------- | ---------------------- | ------------ | ----------------------------------------------------------------------------------- |
+| Runs on current Chrome                                           | ❌                     | ✅           | ✅                                                                                  |
+| Network blocking (EasyList, EasyPrivacy, uBO filters, …)         | ✅                     | ✅           | ✅ `declarativeNetRequest`, 330k static‑rule budget used efficiently                |
+| Filter list updates without an extension update                  | ✅                     | ❌           | ✅ **Differential updates** via dynamic rules + `updateStaticRules`                 |
+| Specific cosmetic filtering (`example.com##.ad`)                 | ✅                     | ✅           | ✅ Injected from the service worker at `onCommitted` (no content‑script round trip) |
+| Generic cosmetic filtering                                       | ✅                     | partial      | ✅ DOM‑harvested id/class lookup + batched CSS                                      |
+| Procedural cosmetic filters (`:has-text()`, `:matches-css()`, …) | ✅                     | partial      | ✅                                                                                  |
+| Scriptlets (`##+js(...)`)                                        | ✅                     | ✅           | ✅ MAIN‑world, `document_start`, pre‑registered per domain                          |
+| `$redirect`, `$removeparam`, `$csp`, `$removeheader`, `$header`  | ✅                     | partial      | ✅ mapped to DNR redirect / transform / modifyHeaders / responseHeaders             |
+| Custom user filters                                              | ✅                     | ❌           | ✅ compiled in‑browser to dynamic rules + cosmetic DB                               |
+| Element picker                                                   | ✅                     | ❌           | ✅                                                                                  |
+| Per‑site blocking modes                                          | ✅ (dynamic filtering) | ✅ (4 modes) | ✅ 4 modes + global default + one‑click disable                                     |
+| Telemetry / remote code                                          | none                   | none         | **none** — all code is bundled, lists are data                                      |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how this works under MV3's constraints.
 
@@ -80,19 +80,19 @@ docs/           Design docs (start with ARCHITECTURE.md)
 
 ## Documentation
 
-| Doc | What it covers |
-|---|---|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, MV3 constraints, request lifecycle, modes |
-| [docs/FILTER-SYNTAX.md](docs/FILTER-SYNTAX.md) | Supported ABP/uBO syntax and the exact DNR mapping |
+| Doc                                                      | What it covers                                                |
+| -------------------------------------------------------- | ------------------------------------------------------------- |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)             | System design, MV3 constraints, request lifecycle, modes      |
+| [docs/FILTER-SYNTAX.md](docs/FILTER-SYNTAX.md)           | Supported ABP/uBO syntax and the exact DNR mapping            |
 | [docs/COSMETIC-FILTERING.md](docs/COSMETIC-FILTERING.md) | Element hiding, generic hiding, procedural filters, DB format |
-| [docs/SCRIPTLETS.md](docs/SCRIPTLETS.md) | Scriptlet library, injection strategy, adding a scriptlet |
-| [docs/MESSAGING.md](docs/MESSAGING.md) | Runtime message protocol between contexts |
-| [docs/STORAGE.md](docs/STORAGE.md) | Storage schema and migrations |
-| [docs/RULESETS.md](docs/RULESETS.md) | Ruleset packaging, budgets, differential updates |
-| [docs/BUILD-AND-RELEASE.md](docs/BUILD-AND-RELEASE.md) | Build pipeline, CI, release process |
-| [docs/TESTING.md](docs/TESTING.md) | Unit, integration, and e2e testing strategy |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Milestones |
-| [docs/TASKS.md](docs/TASKS.md) | Work breakdown used to parallelise implementation |
+| [docs/SCRIPTLETS.md](docs/SCRIPTLETS.md)                 | Scriptlet library, injection strategy, adding a scriptlet     |
+| [docs/MESSAGING.md](docs/MESSAGING.md)                   | Runtime message protocol between contexts                     |
+| [docs/STORAGE.md](docs/STORAGE.md)                       | Storage schema and migrations                                 |
+| [docs/RULESETS.md](docs/RULESETS.md)                     | Ruleset packaging, budgets, differential updates              |
+| [docs/BUILD-AND-RELEASE.md](docs/BUILD-AND-RELEASE.md)   | Build pipeline, CI, release process                           |
+| [docs/TESTING.md](docs/TESTING.md)                       | Unit, integration, and e2e testing strategy                   |
+| [docs/ROADMAP.md](docs/ROADMAP.md)                       | Milestones                                                    |
+| [docs/TASKS.md](docs/TASKS.md)                           | Work breakdown used to parallelise implementation             |
 
 ## Contributing
 

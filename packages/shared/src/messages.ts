@@ -11,6 +11,7 @@ export type Request =
   | { type: 'scriptlets:getDynamic'; hostname: string }
   | { type: 'tab:getState'; tabId?: number }
   | { type: 'site:setMode'; hostname: string; mode: SiteMode | null }
+  | { type: 'sites:get' }
   | { type: 'settings:get' }
   | { type: 'settings:set'; patch: Partial<Settings> }
   | { type: 'lists:get' }
@@ -74,6 +75,7 @@ export type ResponseMap = {
   'scriptlets:getDynamic': { calls: ScriptletCall[] };
   'tab:getState': TabState;
   'site:setMode': { effectiveMode: SiteMode };
+  'sites:get': { siteModes: Record<string, SiteMode>; defaultMode: SiteMode };
   'settings:get': Settings;
   'settings:set': Settings;
   'lists:get': ListsGetResponse;

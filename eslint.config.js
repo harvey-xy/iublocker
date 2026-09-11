@@ -4,7 +4,19 @@ import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/rulesets/**', '.cache/**', 'artifacts/**', '**/*.d.ts', 'e2e/test-results/**', 'e2e/playwright-report/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/rulesets/**',
+      '.cache/**',
+      'artifacts/**',
+      '**/*.d.ts',
+      'e2e/test-results/**',
+      'e2e/playwright-report/**',
+      'packages/extension/public/resources/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -24,8 +36,8 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   {
-    files: ["**/test/**", "**/*.test.ts", "e2e/**"],
-    rules: { "@typescript-eslint/no-explicit-any": "off" },
+    files: ['**/test/**', '**/*.test.ts', 'e2e/**'],
+    rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
   prettier,
 );

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DNRRule } from '@iublocker/shared';
-import { ID_RANGE, PRIORITY } from '@iublocker/shared';
+import { DNR_RESOURCE_TYPES, ID_RANGE, PRIORITY } from '@iublocker/shared';
 import type { RawLine } from '../src/types';
 import { classifyLines } from '../src/parser/classify';
 import { collectBadfilterKeys, compileNetwork } from '../src/network';
@@ -89,7 +89,7 @@ describe('docs/FILTER-SYNTAX.md §7 validation examples', () => {
   it('||example.com/ads.js$redirect=noop.js', () => {
     expect(onlyRule('||example.com/ads.js$redirect=noop.js')).toEqual({
       id: 1,
-      priority: PRIORITY.BLOCK,
+      priority: PRIORITY.REDIRECT,
       action: { type: 'redirect', redirect: { extensionPath: '/resources/noop.js' } },
       condition: { urlFilter: '||example.com/ads.js', excludedResourceTypes: ['main_frame'] },
     });
@@ -103,7 +103,7 @@ describe('docs/FILTER-SYNTAX.md §7 validation examples', () => {
         type: 'redirect',
         redirect: { transform: { queryTransform: { removeParams: ['utm_source'] } } },
       },
-      condition: { excludedResourceTypes: ['main_frame'] },
+      condition: { resourceTypes: [...DNR_RESOURCE_TYPES] },
     });
   });
 

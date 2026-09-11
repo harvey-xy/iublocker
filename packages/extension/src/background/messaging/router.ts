@@ -73,13 +73,21 @@ function requireFrame(sender: chrome.runtime.MessageSender, type: string): Frame
 }
 
 /** Tab id for a UI request: explicit for extension pages, sender-derived otherwise. */
-function resolveTabId(
+async function resolveTabId(
   sender: chrome.runtime.MessageSender,
   requested: number | undefined,
   type: string,
-): number {
+): Promise<number> {
   if (isExtensionPage(sender)) {
     if (typeof requested === 'number' && requested >= 0) return requested;
+    // Extension pages without an explicit tabId (the popup, or a dashboard tab) mean
+    // "the tab the user is looking at": the active tab of the last focused window.
+    try {
+      const [active] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      if (typeof active?.id === 'number' && active.id >= 0) return active.id;
+    } catch {
+      /* fall through */
+    }
     const own = sender.tab?.id;
     if (typeof own === 'number' && own >= 0) return own;
     throw new Error(`${type} needs a tabId`);
@@ -179,7 +187,9 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
       const suppressSpecific = injected || lookup.specifichide;
       return {
         mode,
-        procedural: lookup.procedural,
+        // Procedural filters need JS evaluation on the page and are the main breakage
+        // source after generic hiding, so they are reserved for `complete` (docs §4).
+        procedural: mode === 'complete' ? lookup.procedural : [],
         selectors: suppressSpecific ? [] : lookup.selectors,
         styles: suppressSpecific ? [] : lookup.styles,
         generic: mode === 'complete' && !lookup.generichide ? await cosmeticIndex.genericTables() : null,
@@ -199,7 +209,7 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
     }
 
     case 'tab:getState': {
-      const tabId = resolveTabId(sender, msg.tabId, msg.type);
+      const tabId = await resolveTabId(sender, msg.tabId, msg.type);
       return buildTabState(tabId);
     }
 
@@ -214,6 +224,11 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
       }
       broadcast({ type: 'event:siteModeChanged', hostname: msg.hostname, mode: msg.mode });
       return { effectiveMode };
+    }
+
+    case 'sites:get': {
+      const [siteModesMap, settings] = await Promise.all([siteModes.getSiteModes(), getSettings()]);
+      return { siteModes: siteModesMap, defaultMode: settings.defaultMode };
     }
 
     case 'settings:get':
@@ -266,7 +281,7 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
 
     case 'picker:start': {
       requireExtensionPage(sender, msg.type);
-      const tabId = resolveTabId(sender, msg.tabId, msg.type);
+      const tabId = await resolveTabId(sender, msg.tabId, msg.type);
       return { started: await picker.startPicker(tabId) };
     }
 
@@ -286,7 +301,7 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
 
     case 'logger:get': {
       requireExtensionPage(sender, msg.type);
-      const tabId = resolveTabId(sender, msg.tabId, msg.type);
+      const tabId = await resolveTabId(sender, msg.tabId, msg.type);
       return { matched: await stats.getMatchedForTab(tabId) };
     }
 

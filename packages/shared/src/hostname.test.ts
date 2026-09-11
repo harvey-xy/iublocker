@@ -3,7 +3,12 @@ import { hostnameWalk, hostnameMatchesDomain, isValidHostname } from './hostname
 
 describe('hostname helpers', () => {
   it('walks suffixes', () => {
-    expect(hostnameWalk('a.b.example.com')).toEqual(['a.b.example.com', 'b.example.com', 'example.com', 'com']);
+    expect(hostnameWalk('a.b.example.com')).toEqual([
+      'a.b.example.com',
+      'b.example.com',
+      'example.com',
+      'com',
+    ]);
   });
   it('matches domains', () => {
     expect(hostnameMatchesDomain('a.example.com', 'example.com')).toBe(true);

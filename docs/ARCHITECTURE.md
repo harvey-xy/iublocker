@@ -22,7 +22,7 @@ one of them and say which in the PR.
 **Non‑goals**
 
 - Reimplementing uBO's dynamic filtering matrix ("my rules" per request‑type grid).
-  Per‑site *modes* cover the practical cases.
+  Per‑site _modes_ cover the practical cases.
 - Firefox / Safari support in v1 (the compiler output is browser‑neutral; a WebExtension
   port is a later milestone).
 - HTML filtering (`##^`) and `$replace`: MV3 has no response‑body access.
@@ -31,20 +31,20 @@ one of them and say which in the PR.
 
 MV3 dictates the architecture. The relevant facts, with the Chrome version they landed in:
 
-| Constraint | Value | Consequence |
-|---|---|---|
-| No blocking `webRequest` | — | All network blocking is declarative (`declarativeNetRequest`, "DNR"). |
-| Static rulesets | ≤ 100 declared, ≤ 50 enabled (Chrome 120) | Each filter list = one ruleset; users toggle lists by enabling rulesets. |
-| Global static rule budget | 330,000 rules across enabled rulesets (Chrome 121), 30,000 guaranteed | Compiler must dedupe aggressively and report budget usage. |
-| Regex rules | ≤ 1,000 per ruleset, RE2 syntax, ≤ 2 KB compiled memory | Regex filters are a scarce resource; the compiler ranks and drops. |
-| Dynamic rules | ≤ 30,000 (Chrome 121); ≤ 5,000 may be "unsafe" (redirect/modifyHeaders…) | Used for user filters, per‑site overrides and differential list updates. |
-| Session rules | ≤ 5,000 | Used for transient state (site temporarily disabled, picker preview). |
-| `updateStaticRules` | disable ≤ 5,000 rule IDs per ruleset (Chrome 111) | Differential updates can retract shipped rules that broke a site. |
-| `responseHeaders` condition | Chrome 128 | `$header=` filters; block by `Content-Type`. |
-| Content scripts in `MAIN` world at `document_start` | `scripting.registerContentScripts` (Chrome 111) | Scriptlets run before page scripts, but must be pre‑registered per host pattern. |
-| Service worker lifetime | ~30 s idle, killed under memory pressure | All state must be in `chrome.storage`; every event handler must be re‑entrant. |
-| No remote code (CWS policy) | — | Scriptlet *code* is bundled; list updates are pure data (rules, selectors, scriptlet *names + args*). |
-| `insertCSS` from the worker | `origin: 'USER'` | Element hiding CSS beats page `!important` rules and needs no content script. |
+| Constraint                                          | Value                                                                    | Consequence                                                                                           |
+| --------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| No blocking `webRequest`                            | —                                                                        | All network blocking is declarative (`declarativeNetRequest`, "DNR").                                 |
+| Static rulesets                                     | ≤ 100 declared, ≤ 50 enabled (Chrome 120)                                | Each filter list = one ruleset; users toggle lists by enabling rulesets.                              |
+| Global static rule budget                           | 330,000 rules across enabled rulesets (Chrome 121), 30,000 guaranteed    | Compiler must dedupe aggressively and report budget usage.                                            |
+| Regex rules                                         | ≤ 1,000 per ruleset, RE2 syntax, ≤ 2 KB compiled memory                  | Regex filters are a scarce resource; the compiler ranks and drops.                                    |
+| Dynamic rules                                       | ≤ 30,000 (Chrome 121); ≤ 5,000 may be "unsafe" (redirect/modifyHeaders…) | Used for user filters, per‑site overrides and differential list updates.                              |
+| Session rules                                       | ≤ 5,000                                                                  | Used for transient state (site temporarily disabled, picker preview).                                 |
+| `updateStaticRules`                                 | disable ≤ 5,000 rule IDs per ruleset (Chrome 111)                        | Differential updates can retract shipped rules that broke a site.                                     |
+| `responseHeaders` condition                         | Chrome 128                                                               | `$header=` filters; block by `Content-Type`.                                                          |
+| Content scripts in `MAIN` world at `document_start` | `scripting.registerContentScripts` (Chrome 111)                          | Scriptlets run before page scripts, but must be pre‑registered per host pattern.                      |
+| Service worker lifetime                             | ~30 s idle, killed under memory pressure                                 | All state must be in `chrome.storage`; every event handler must be re‑entrant.                        |
+| No remote code (CWS policy)                         | —                                                                        | Scriptlet _code_ is bundled; list updates are pure data (rules, selectors, scriptlet _names + args_). |
+| `insertCSS` from the worker                         | `origin: 'USER'`                                                         | Element hiding CSS beats page `!important` rules and needs no content script.                         |
 
 ## 3. Components
 
@@ -87,12 +87,12 @@ MV3 dictates the architecture. The relevant facts, with the Chrome version they 
 
 ### 3.1 Packages
 
-| Package | Runs in | Depends on |
-|---|---|---|
-| `@iublocker/shared` | everywhere | nothing |
-| `@iublocker/compiler` | Node (build) **and** the service worker (user filters) | shared |
-| `@iublocker/scriptlets` | MAIN world | nothing (self‑contained functions) |
-| `@iublocker/extension` | Chrome | shared, compiler (browser build), scriptlets |
+| Package                 | Runs in                                                | Depends on                                   |
+| ----------------------- | ------------------------------------------------------ | -------------------------------------------- |
+| `@iublocker/shared`     | everywhere                                             | nothing                                      |
+| `@iublocker/compiler`   | Node (build) **and** the service worker (user filters) | shared                                       |
+| `@iublocker/scriptlets` | MAIN world                                             | nothing (self‑contained functions)           |
+| `@iublocker/extension`  | Chrome                                                 | shared, compiler (browser build), scriptlets |
 
 The compiler must therefore be isomorphic: no Node built‑ins in `src/` except in the
 `cli/` sub‑directory.
@@ -123,12 +123,12 @@ The compiler must therefore be isomorphic: no Node built‑ins in `src/` except 
 
 ## 5. Site modes
 
-| Mode | Network (DNR) | Specific cosmetic + scriptlets | Generic + procedural cosmetic |
-|---|---|---|---|
-| `off` | session `allowAllRequests` rule for the site | ✗ | ✗ |
-| `basic` | ✓ | ✗ | ✗ |
-| `optimal` (default) | ✓ | ✓ | ✗ |
-| `complete` | ✓ | ✓ | ✓ |
+| Mode                | Network (DNR)                                | Specific cosmetic + scriptlets | Generic + procedural cosmetic |
+| ------------------- | -------------------------------------------- | ------------------------------ | ----------------------------- |
+| `off`               | session `allowAllRequests` rule for the site | ✗                              | ✗                             |
+| `basic`             | ✓                                            | ✗                              | ✗                             |
+| `optimal` (default) | ✓                                            | ✓                              | ✗                             |
+| `complete`          | ✓                                            | ✓                              | ✓                             |
 
 Resolution order: exact hostname → parent domains → global default. Stored in
 `settings.siteModes` (`docs/STORAGE.md`). `off` is implemented as a session rule
@@ -210,12 +210,12 @@ we want blocking to work regardless of site access grants. No `webRequest`
 
 ## 11. Decision log
 
-| # | Decision | Why |
-|---|---|---|
-| D1 | One list = one static ruleset | Users can toggle lists; keeps under 50 enabled. |
-| D2 | Insert specific cosmetic CSS from the worker at `onCommitted` | Avoids the content‑script→worker round trip that causes flashes of unblocked content. |
-| D3 | Generic hiding only in `complete` mode | Same trade‑off as uBOL: generic rules are the main breakage source. |
-| D4 | Pre‑register scriptlet bundles with `registerContentScripts` | Only way to guarantee MAIN‑world execution before page scripts. |
-| D5 | Differential updates via dynamic rules + `updateStaticRules` | Only MV3‑compatible way to update lists without a release. |
-| D6 | Vanilla TS + Preact for UI, esbuild for bundling | Small, fast, no framework churn. |
-| D7 | GPL‑3.0‑or‑later | Compatible with filter‑list ecosystem norms and uBO‑derived ideas. |
+| #   | Decision                                                      | Why                                                                                   |
+| --- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| D1  | One list = one static ruleset                                 | Users can toggle lists; keeps under 50 enabled.                                       |
+| D2  | Insert specific cosmetic CSS from the worker at `onCommitted` | Avoids the content‑script→worker round trip that causes flashes of unblocked content. |
+| D3  | Generic hiding only in `complete` mode                        | Same trade‑off as uBOL: generic rules are the main breakage source.                   |
+| D4  | Pre‑register scriptlet bundles with `registerContentScripts`  | Only way to guarantee MAIN‑world execution before page scripts.                       |
+| D5  | Differential updates via dynamic rules + `updateStaticRules`  | Only MV3‑compatible way to update lists without a release.                            |
+| D6  | Vanilla TS + Preact for UI, esbuild for bundling              | Small, fast, no framework churn.                                                      |
+| D7  | GPL‑3.0‑or‑later                                              | Compatible with filter‑list ecosystem norms and uBO‑derived ideas.                    |
