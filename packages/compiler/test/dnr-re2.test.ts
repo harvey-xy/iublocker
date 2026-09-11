@@ -154,8 +154,10 @@ describe("estimateProgramSize — Chrome's 2 KB regex budget", () => {
     expect(isRe2Supported(`a{${budget + 1}}`)).toBe(false);
     // `^` costs one instruction instead of the two-instruction unanchored `.*?` loop…
     expect(isRe2Supported(`^a{${budget + 1}}`)).toBe(true);
-    // …and a literal prefix after `^` is lifted out of the program entirely.
-    expect(estimateProgramSize('^https:\\/\\/a')).toBe(estimateProgramSize('a'));
+    // …and a literal prefix after `^` is lifted out of the program entirely, so it is
+    // free — but only up to the last character a quantifier could claim.
+    expect(estimateProgramSize('^https:\\/\\/[a-z]')).toBe(estimateProgramSize('[a-z]'));
+    expect(estimateProgramSize('^https?:\\/\\/[a-z]')).toBe(estimateProgramSize('s?:\\/\\/[a-z]'));
   });
 
   it('rejects a repetition count RE2 will not even parse', () => {

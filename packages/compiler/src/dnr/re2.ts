@@ -266,7 +266,7 @@ export function estimateProgramSize(source: string): number {
       starts.push(end);
       end += charAt(body, end) === '\\' ? 2 : 1;
     }
-    if (starts.length > 0 && '?*+{'.indexOf(charAt(body, end)) !== -1) {
+    if (starts.length > 0 && end < body.length && '?*+{'.indexOf(charAt(body, end)) !== -1) {
       end = starts[starts.length - 1] as number;
       starts.pop();
     }

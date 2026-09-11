@@ -74,7 +74,11 @@ shared fixture. What it asserts:
   the enabled lists;
 - per ruleset: enabling it alone must cost exactly `counts.dnr` rules. This is the check
   that catches rules Chrome silently skips — it found 11 over-budget regexes in the live
-  lists (see `MAX_REGEX_PROGRAM_SIZE` in `packages/compiler/src/dnr/re2.ts`);
+  lists (see `MAX_REGEX_PROGRAM_SIZE` in `packages/compiler/src/dnr/re2.ts`). The estimator
+  that predicts those skips is calibrated against a real browser by
+  `packages/compiler/test/tools/re2-oracle.mjs`, whose verdicts are checked into
+  `packages/compiler/test/fixtures/re2-corpus.json` and asserted by `test/dnr-re2.test.ts`;
+  re-run the oracle after a lists refresh if new regex filters appear;
 - no service-worker console error mentioning `Rule with id`, `rule_resources` or `Invalid`;
 - `testMatchOutcome` blocks well-known ad/tracker requests (adsbygoogle, gtm.js, gpt.js,
   analytics.js, ad_status.js) with a `block`/`redirect` rule that really exists in the
