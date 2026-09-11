@@ -33,7 +33,9 @@ export async function runMigrations(): Promise<MigrationResult> {
   const stored = typeof data.schemaVersion === 'number' ? data.schemaVersion : 0;
   const applied: number[] = [];
   if (stored > CURRENT_SCHEMA_VERSION) {
-    log.warn(`storage schemaVersion ${stored} is newer than ${CURRENT_SCHEMA_VERSION}; leaving data untouched`);
+    log.warn(
+      `storage schemaVersion ${stored} is newer than ${CURRENT_SCHEMA_VERSION}; leaving data untouched`,
+    );
     return { from: stored, to: stored, applied };
   }
   for (let v = stored; v < CURRENT_SCHEMA_VERSION; v++) {

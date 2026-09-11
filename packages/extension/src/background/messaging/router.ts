@@ -73,7 +73,11 @@ function requireFrame(sender: chrome.runtime.MessageSender, type: string): Frame
 }
 
 /** Tab id for a UI request: explicit for extension pages, sender-derived otherwise. */
-function resolveTabId(sender: chrome.runtime.MessageSender, requested: number | undefined, type: string): number {
+function resolveTabId(
+  sender: chrome.runtime.MessageSender,
+  requested: number | undefined,
+  type: string,
+): number {
   if (isExtensionPage(sender)) {
     if (typeof requested === 'number' && requested >= 0) return requested;
     const own = sender.tab?.id;
@@ -154,7 +158,8 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
     case 'cosmetic:get': {
       const frame = requireFrame(sender, msg.type);
       const hostname = hostnameFromUrl(frame.url) || msg.hostname;
-      const topHostname = (await injector.resolveTopHostname(frame.tabId, frame.frameId, frame.url)) || hostname;
+      const topHostname =
+        (await injector.resolveTopHostname(frame.tabId, frame.frameId, frame.url)) || hostname;
       const mode = await siteModes.resolveMode(topHostname);
       const empty = {
         mode,
@@ -186,7 +191,8 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
     case 'scriptlets:getDynamic': {
       const frame = requireFrame(sender, msg.type);
       const hostname = hostnameFromUrl(frame.url) || msg.hostname;
-      const topHostname = (await injector.resolveTopHostname(frame.tabId, frame.frameId, frame.url)) || hostname;
+      const topHostname =
+        (await injector.resolveTopHostname(frame.tabId, frame.frameId, frame.url)) || hostname;
       const mode = await siteModes.resolveMode(topHostname);
       if (!hostname || !modeAtLeast(mode, 'optimal')) return { calls: [] };
       return { calls: await scriptletIndex.lookupDynamic(hostname) };
@@ -346,7 +352,9 @@ export function onMessage(
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: unknown) => void,
 ): boolean {
-  const isEvent = typeof (message as { type?: string })?.type === 'string' && (message as { type: string }).type.startsWith('event:');
+  const isEvent =
+    typeof (message as { type?: string })?.type === 'string' &&
+    (message as { type: string }).type.startsWith('event:');
   if (isEvent) return false;
   handle(message as Request, sender).then(sendResponse, (err: unknown) => {
     sendResponse({ ok: false, error: errorMessage(err) });

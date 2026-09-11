@@ -44,8 +44,22 @@ function mergeSettings(stored: unknown): Settings {
 
 let cache: LocalStorageSchema | null = null;
 let hydration: Promise<LocalStorageSchema> | null = null;
+/**
+ * Keys this module is writing right now. `storage.onChanged` also fires for our own
+ * writes; those are already reflected in the cache, so they are swallowed once.
+ */
+const selfWrites = new Map<StoreKey, number>();
 
-type ChangeListener<K extends StoreKey> = (value: LocalStorageSchema[K], previous: LocalStorageSchema[K]) => void;
+function markSelfWrite(key: StoreKey, delta: number): void {
+  const next = (selfWrites.get(key) ?? 0) + delta;
+  if (next > 0) selfWrites.set(key, next);
+  else selfWrites.delete(key);
+}
+
+type ChangeListener<K extends StoreKey> = (
+  value: LocalStorageSchema[K],
+  previous: LocalStorageSchema[K],
+) => void;
 const listeners = new Map<StoreKey, Set<ChangeListener<StoreKey>>>();
 
 async function hydrate(): Promise<LocalStorageSchema> {
@@ -95,9 +109,16 @@ export async function set(patch: Partial<LocalStorageSchema>): Promise<void> {
     previous[key] = data[key];
     changed[key] = value;
   }
-  if (Object.keys(changed).length === 0) return;
-  // Persist first: a failed write must not leave the cache ahead of storage.
-  await chrome.storage.local.set(changed);
+  const keys = Object.keys(changed) as StoreKey[];
+  if (keys.length === 0) return;
+  for (const key of keys) markSelfWrite(key, 1);
+  try {
+    // Persist first: a failed write must not leave the cache ahead of storage.
+    await chrome.storage.local.set(changed);
+  } catch (err) {
+    for (const key of keys) markSelfWrite(key, -1);
+    throw err;
+  }
   for (const key of Object.keys(changed) as StoreKey[]) {
     (data as unknown as Record<string, unknown>)[key] = changed[key];
   }
@@ -117,7 +138,11 @@ export async function update<K extends StoreKey>(
   return next;
 }
 
-function notify<K extends StoreKey>(key: K, value: LocalStorageSchema[K], previous: LocalStorageSchema[K]): void {
+function notify<K extends StoreKey>(
+  key: K,
+  value: LocalStorageSchema[K],
+  previous: LocalStorageSchema[K],
+): void {
   const set_ = listeners.get(key);
   if (!set_) return;
   for (const cb of [...set_]) {
@@ -151,6 +176,10 @@ export function handleStorageChanged(
   for (const [key, change] of Object.entries(changes)) {
     if (!(key in cache)) continue;
     const k = key as StoreKey;
+    if ((selfWrites.get(k) ?? 0) > 0) {
+      markSelfWrite(k, -1);
+      continue;
+    }
     const previous = cache[k];
     const value = change.newValue === undefined ? defaults()[k] : change.newValue;
     if (value === previous) continue;
@@ -213,4 +242,5 @@ export function __resetForTests(): void {
   cache = null;
   hydration = null;
   listeners.clear();
+  selfWrites.clear();
 }

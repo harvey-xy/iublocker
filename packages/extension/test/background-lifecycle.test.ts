@@ -36,7 +36,9 @@ const manifest = makeRulesetManifest({
     makeListEntry('easylist-de', { defaultEnabled: false, group: 'regional', lang: ['de'] }),
     makeListEntry('easylist-zh', { defaultEnabled: false, group: 'regional', lang: ['zh'] }),
   ],
-  scriptletGroups: [{ hash: 'aaa', file: 'scriptlet-groups/aaa.js', hosts: ['example.com'], listIds: ['easylist'] }],
+  scriptletGroups: [
+    { hash: 'aaa', file: 'scriptlet-groups/aaa.js', hosts: ['example.com'], listIds: ['easylist'] },
+  ],
 });
 
 let chromeMock: ReturnType<typeof resetBackground>;
@@ -134,14 +136,19 @@ describe('lifecycle: onInstalled', () => {
     });
     await lifecycle.onInstalled({ reason: 'update' } as chrome.runtime.InstalledDetails);
     expect((await store.get('delta'))?.version).toBe('current');
-    expect(chromeMock._state.calls.updateStaticRules[0]).toMatchObject({ rulesetId: 'easylist', disableRuleIds: [7] });
+    expect(chromeMock._state.calls.updateStaticRules[0]).toMatchObject({
+      rulesetId: 'easylist',
+      disableRuleIds: [7],
+    });
   });
 
   it('never throws', async () => {
     chromeMock.declarativeNetRequest.updateEnabledRulesets = async () => {
       throw new Error('boom');
     };
-    await expect(lifecycle.onInstalled({ reason: 'install' } as chrome.runtime.InstalledDetails)).resolves.toBeUndefined();
+    await expect(
+      lifecycle.onInstalled({ reason: 'install' } as chrome.runtime.InstalledDetails),
+    ).resolves.toBeUndefined();
   });
 });
 

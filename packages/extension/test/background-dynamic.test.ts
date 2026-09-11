@@ -62,7 +62,10 @@ describe('dynamic rules: ranges', () => {
     ]);
 
     // Rewriting the user range replaces only user rules.
-    const result = await dynamic.rewriteRange(dynamic.RANGES.user, [block(0, 'user2.com'), block(0, 'user3.com')]);
+    const result = await dynamic.rewriteRange(dynamic.RANGES.user, [
+      block(0, 'user2.com'),
+      block(0, 'user3.com'),
+    ]);
     expect(result).toMatchObject({ added: 2, removed: 1, dropped: 0 });
     const delta = await dynamic.getRulesInRange(dynamic.RANGES.delta);
     expect(delta).toHaveLength(2);

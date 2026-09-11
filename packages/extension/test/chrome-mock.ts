@@ -149,14 +149,20 @@ export function installChromeMock(options: InstallOptions = {}) {
         for (const id of o.disableRulesetIds ?? []) enabledRulesets.delete(id);
         for (const id of o.enableRulesetIds ?? []) enabledRulesets.add(id);
       },
-      updateStaticRules: async (o: { rulesetId: string; disableRuleIds?: number[]; enableRuleIds?: number[] }) => {
+      updateStaticRules: async (o: {
+        rulesetId: string;
+        disableRuleIds?: number[];
+        enableRuleIds?: number[];
+      }) => {
         calls.updateStaticRules.push(o);
         const set = disabledStaticRules.get(o.rulesetId) ?? new Set<number>();
         for (const id of o.disableRuleIds ?? []) set.add(id);
         for (const id of o.enableRuleIds ?? []) set.delete(id);
         disabledStaticRules.set(o.rulesetId, set);
       },
-      getDisabledRuleIds: async (o: { rulesetId: string }) => [...(disabledStaticRules.get(o.rulesetId) ?? [])],
+      getDisabledRuleIds: async (o: { rulesetId: string }) => [
+        ...(disabledStaticRules.get(o.rulesetId) ?? []),
+      ],
       getAvailableStaticRuleCount: async () => options.availableStaticRuleCount ?? 330000,
       getMatchedRules: async (filter?: any) => {
         calls.getMatchedRules.push(filter ?? null);

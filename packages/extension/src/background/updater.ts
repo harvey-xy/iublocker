@@ -165,13 +165,17 @@ async function applyDelta(file: DeltaFile): Promise<void> {
 
     const cosmeticAdd = (file.cosmetic?.add as CosmeticDB | undefined) ?? emptyCosmetic('delta');
     const scriptletAdd =
-      (file.scriptlets?.add as ScriptletDB | undefined) ?? ({ version: 1, listId: 'delta', byHost: {}, exceptions: {} } as ScriptletDB);
+      (file.scriptlets?.add as ScriptletDB | undefined) ??
+      ({ version: 1, listId: 'delta', byHost: {}, exceptions: {} } as ScriptletDB);
 
     const applied: AppliedDelta = {
       base: file.base,
       version: file.version,
       appliedAt: Date.now(),
-      cosmetic: foldCosmeticRemovals({ ...cosmeticAdd, listId: 'delta' }, file.cosmetic?.removeSpecific ?? {}),
+      cosmetic: foldCosmeticRemovals(
+        { ...cosmeticAdd, listId: 'delta' },
+        file.cosmetic?.removeSpecific ?? {},
+      ),
       scriptlets: foldScriptletRemovals({ ...scriptletAdd, listId: 'delta' }, file.scriptlets?.remove ?? {}),
       disabled,
     };
@@ -225,13 +229,17 @@ async function doUpdate(force: boolean): Promise<UpdateResult> {
     const manifest = await manager.getManifest();
     if (json.base !== manifest.version) {
       log.warn(`discarding delta for base ${json.base}; shipped rulesets are ${manifest.version}`);
-      await store.set({ updater: { ...state, lastCheck: now, lastError: `delta base ${json.base} ≠ ${manifest.version}` } });
+      await store.set({
+        updater: { ...state, lastCheck: now, lastError: `delta base ${json.base} ≠ ${manifest.version}` },
+      });
       return { ok: false, skipped: 'base-mismatch', error: 'delta base mismatch' };
     }
 
     const current = await store.get('delta');
     if (!force && current && current.version === json.version) {
-      await store.set({ updater: { ...state, lastCheck: now, lastSuccess: now, etag, lastError: undefined } });
+      await store.set({
+        updater: { ...state, lastCheck: now, lastSuccess: now, etag, lastError: undefined },
+      });
       return { ok: true, version: json.version, skipped: 'unchanged' };
     }
 

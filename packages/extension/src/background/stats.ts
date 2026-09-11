@@ -109,7 +109,10 @@ async function doRefresh(tabId: number, now: number): Promise<number> {
  * Refresh the badge for a tab. Throttled to one `getMatchedRules` call per second per
  * tab unless `force` is set (popup open).
  */
-export async function refreshBadge(tabId: number, options: { force?: boolean; now?: number } = {}): Promise<number> {
+export async function refreshBadge(
+  tabId: number,
+  options: { force?: boolean; now?: number } = {},
+): Promise<number> {
   if (tabId < 0) return 0;
   const now = options.now ?? Date.now();
   const counter = counterFor(tabId);

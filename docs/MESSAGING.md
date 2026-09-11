@@ -35,6 +35,13 @@ Conventions:
   to all extension pages (events are a separate union `Event`).
 - The worker may be asleep; senders must tolerate `runtime.lastError` "receiving end does
   not exist" by retrying once after 100 ms.
+- State-changing requests (`settings:set`, `lists:*`, `filters:setUser`, `picker:start`,
+  `stats:reset`, `site:setMode`, `logger:get`, `debug:dumpState`) are answered only for
+  extension pages (`sender.url` under `chrome-extension://<id>/`). `filters:addUser` is the
+  one exception: the picker content script may send it, and its lines are sanitised first.
+- `blocked:getForTab` can only report URLs where `declarativeNetRequest.onRuleMatchedDebug`
+  is available (unpacked installs); in a packed build it returns an empty list and the
+  content script falls back to its own load-error heuristics.
 
 `SiteMode` = `'off' | 'basic' | 'optimal' | 'complete'`.
 

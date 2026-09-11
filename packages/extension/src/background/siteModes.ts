@@ -22,13 +22,13 @@ import * as store from './storage/store';
 
 /** Max domains per session rule; keeps single rules cheap to evaluate. */
 const DOMAINS_PER_RULE = 5_000;
-const MAX_SITE_RULES = Math.min(
-  ID_RANGE.SITE.end - ID_RANGE.SITE.start + 1,
-  DNR_LIMITS.MAX_SESSION_RULES,
-);
+const MAX_SITE_RULES = Math.min(ID_RANGE.SITE.end - ID_RANGE.SITE.start + 1, DNR_LIMITS.MAX_SESSION_RULES);
 
 export function normaliseHostname(hostname: string): string {
-  return hostname.trim().toLowerCase().replace(/^\.+|\.+$/g, '');
+  return hostname
+    .trim()
+    .toLowerCase()
+    .replace(/^\.+|\.+$/g, '');
 }
 
 export async function getSiteModes(): Promise<Record<string, SiteMode>> {

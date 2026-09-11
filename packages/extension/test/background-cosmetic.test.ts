@@ -43,7 +43,13 @@ vi.mock('@iublocker/compiler', () => ({
 
 import * as cosmeticIndex from '../src/background/cosmetic/index';
 import * as store from '../src/background/storage/store';
-import { makeCosmeticDB, makeListEntry, makeRulesetManifest, resetBackground, stubFetch } from './background-utils';
+import {
+  makeCosmeticDB,
+  makeListEntry,
+  makeRulesetManifest,
+  resetBackground,
+  stubFetch,
+} from './background-utils';
 
 const manifest = makeRulesetManifest({
   lists: [
@@ -59,7 +65,12 @@ function routes() {
       specific: { 'example.com': ['.ad', '.banner'], 'other.com': ['.x'] },
       styles: { 'example.com': [['.promo', 'opacity:0.1!important']] },
       generic: { byId: { ad: ['#ad'] }, byClass: { banner: ['.banner'] }, complex: ['[data-ad]'] },
-      exceptions: { selectors: { 'shop.example.com': ['.banner'] }, elemhide: ['noads.com'], generichide: [], specifichide: [] },
+      exceptions: {
+        selectors: { 'shop.example.com': ['.banner'] },
+        elemhide: ['noads.com'],
+        generichide: [],
+        specifichide: [],
+      },
     }),
     'rulesets/cosmetic/annoy.json': makeCosmeticDB('annoy', {
       specific: { 'example.com': ['.cookie-wall'] },

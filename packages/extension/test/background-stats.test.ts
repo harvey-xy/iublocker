@@ -4,7 +4,11 @@ import * as store from '../src/background/storage/store';
 import { resetBackground } from './background-utils';
 
 const matched = (n: number, timeStamp = Date.now()) =>
-  Array.from({ length: n }, (_, i) => ({ rule: { ruleId: i + 1, rulesetId: 'easylist' }, tabId: 7, timeStamp }));
+  Array.from({ length: n }, (_, i) => ({
+    rule: { ruleId: i + 1, rulesetId: 'easylist' },
+    tabId: 7,
+    timeStamp,
+  }));
 
 describe('stats: badge throttling', () => {
   let chromeMock: ReturnType<typeof resetBackground>;
@@ -38,7 +42,10 @@ describe('stats: badge throttling', () => {
   });
 
   it('shares one in-flight call between concurrent callers', async () => {
-    const [a, b] = await Promise.all([stats.refreshBadge(7, { force: true }), stats.refreshBadge(7, { force: true })]);
+    const [a, b] = await Promise.all([
+      stats.refreshBadge(7, { force: true }),
+      stats.refreshBadge(7, { force: true }),
+    ]);
     expect(a).toBe(b);
     expect(chromeMock._state.calls.getMatchedRules).toHaveLength(1);
   });
@@ -99,7 +106,14 @@ describe('stats: badge and totals', () => {
   it('collects blocked URLs from onRuleMatchedDebug', () => {
     stats.noteMatchedRule({
       rule: { ruleId: 1, rulesetId: 'easylist' },
-      request: { requestId: '1', url: 'https://ads.example/a.js', tabId: 7, frameId: 0, method: 'get', type: 'script' },
+      request: {
+        requestId: '1',
+        url: 'https://ads.example/a.js',
+        tabId: 7,
+        frameId: 0,
+        method: 'get',
+        type: 'script',
+      },
     } as unknown as chrome.declarativeNetRequest.MatchedRuleInfoDebug);
     expect(stats.getBlockedUrls(7)).toEqual(['https://ads.example/a.js']);
     expect(stats.getBlockedUrls(8)).toEqual([]);

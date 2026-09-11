@@ -20,7 +20,12 @@ const compileUserFilters = vi.fn((text: string, _opts?: unknown) => ({
     procedural: {},
     exceptions: { selectors: {}, elemhide: [], generichide: [], specifichide: [] },
   },
-  scriptlets: { version: 1 as const, listId: 'user', byHost: { 'example.com': [{ name: 'set-constant', args: ['a', '1'] }] }, exceptions: {} },
+  scriptlets: {
+    version: 1 as const,
+    listId: 'user',
+    byHost: { 'example.com': [{ name: 'set-constant', args: ['a', '1'] }] },
+    exceptions: {},
+  },
   warnings: ['line 3: unsupported option "popup"'],
 }));
 
@@ -59,7 +64,9 @@ const manifest = makeRulesetManifest({
     makeListEntry('easylist', { defaultEnabled: true }),
     makeListEntry('annoy', { defaultEnabled: false, group: 'annoyances' }),
   ],
-  scriptletGroups: [{ hash: 'abc123', file: 'scriptlet-groups/abc123.js', hosts: ['example.com'], listIds: ['easylist'] }],
+  scriptletGroups: [
+    { hash: 'abc123', file: 'scriptlet-groups/abc123.js', hosts: ['example.com'], listIds: ['easylist'] },
+  ],
 });
 
 let chromeMock: ReturnType<typeof resetBackground>;
@@ -85,7 +92,12 @@ describe('router: content-script requests', () => {
   beforeEach(setup);
 
   it('cosmetic:get answers with the frame hostname resolved from the sender', async () => {
-    const data = await ok(handle({ type: 'cosmetic:get', hostname: 'evil.test', topHostname: 'evil.test', frameId: 99 }, tabSender()));
+    const data = await ok(
+      handle(
+        { type: 'cosmetic:get', hostname: 'evil.test', topHostname: 'evil.test', frameId: 99 },
+        tabSender(),
+      ),
+    );
     expect(data.mode).toBe('optimal');
     expect(data.selectors).toEqual(['.ad']);
     expect(data.generic).toBeNull();
@@ -93,18 +105,31 @@ describe('router: content-script requests', () => {
 
   it('cosmetic:get returns generic tables in complete mode only', async () => {
     await store.set({ siteModes: { 'example.com': 'complete' } });
-    const data = await ok(handle({ type: 'cosmetic:get', hostname: 'example.com', topHostname: 'example.com', frameId: 0 }, tabSender()));
+    const data = await ok(
+      handle(
+        { type: 'cosmetic:get', hostname: 'example.com', topHostname: 'example.com', frameId: 0 },
+        tabSender(),
+      ),
+    );
     expect(data.generic).not.toBeNull();
   });
 
   it('cosmetic:get returns nothing below optimal', async () => {
     await store.set({ siteModes: { 'example.com': 'basic' } });
-    const data = await ok(handle({ type: 'cosmetic:get', hostname: 'example.com', topHostname: 'example.com', frameId: 0 }, tabSender()));
+    const data = await ok(
+      handle(
+        { type: 'cosmetic:get', hostname: 'example.com', topHostname: 'example.com', frameId: 0 },
+        tabSender(),
+      ),
+    );
     expect(data).toMatchObject({ mode: 'basic', selectors: [], procedural: [], generic: null });
   });
 
   it('cosmetic:get rejects extension-page senders', async () => {
-    const res = await handle({ type: 'cosmetic:get', hostname: 'example.com', topHostname: 'example.com', frameId: 0 }, pageSender());
+    const res = await handle(
+      { type: 'cosmetic:get', hostname: 'example.com', topHostname: 'example.com', frameId: 0 },
+      pageSender(),
+    );
     expect(res).toMatchObject({ ok: false });
     expect(res.ok === false && res.error).toMatch(/content scripts/);
   });
@@ -148,7 +173,9 @@ describe('router: UI requests', () => {
   });
 
   it('site:setMode writes the mode and the session rule', async () => {
-    const data = await ok(handle({ type: 'site:setMode', hostname: 'example.com', mode: 'off' }, pageSender()));
+    const data = await ok(
+      handle({ type: 'site:setMode', hostname: 'example.com', mode: 'off' }, pageSender()),
+    );
     expect(data.effectiveMode).toBe('off');
     expect(chromeMock._state.sessionRules).toHaveLength(1);
     expect(await store.get('siteModes')).toEqual({ 'example.com': 'off' });
@@ -164,7 +191,10 @@ describe('router: UI requests', () => {
     expect(before.defaultMode).toBe('optimal');
     const after = await ok(
       handle(
-        { type: 'settings:set', patch: { updateIntervalHours: 999, theme: 'dark', cloudDeltaBaseUrl: 'http://insecure.example' } },
+        {
+          type: 'settings:set',
+          patch: { updateIntervalHours: 999, theme: 'dark', cloudDeltaBaseUrl: 'http://insecure.example' },
+        },
         pageSender(),
       ),
     );
@@ -204,7 +234,9 @@ describe('router: UI requests', () => {
   });
 
   it('filters:setUser compiles, writes dynamic rules and returns warnings', async () => {
-    const data = await ok(handle({ type: 'filters:setUser', text: '||ads.example.com^\n||track.example^' }, pageSender()));
+    const data = await ok(
+      handle({ type: 'filters:setUser', text: '||ads.example.com^\n||track.example^' }, pageSender()),
+    );
     expect(data.counts.dnr).toBe(2);
     expect(data.warnings).toHaveLength(1);
     expect(chromeMock._state.dynamicRules).toHaveLength(2);
@@ -215,7 +247,9 @@ describe('router: UI requests', () => {
 
   it('filters:addUser appends and accepts picker senders', async () => {
     await ok(handle({ type: 'filters:setUser', text: '||a.example^' }, pageSender()));
-    const data = await ok(handle({ type: 'filters:addUser', lines: ['example.com##.x', '', '||a.example^'] }, tabSender()));
+    const data = await ok(
+      handle({ type: 'filters:addUser', lines: ['example.com##.x', '', '||a.example^'] }, tabSender()),
+    );
     expect(data.text.split('\n')).toEqual(['||a.example^', 'example.com##.x']);
     const res = await handle({ type: 'filters:addUser', lines: [] }, tabSender());
     expect(res.ok).toBe(false);
@@ -246,20 +280,28 @@ describe('router: UI requests', () => {
   });
 
   it('logger:get returns matched rules for a tab', async () => {
-    chromeMock._state.setMatchedRules([{ rule: { ruleId: 5, rulesetId: 'easylist' }, tabId: 7, timeStamp: 1 }]);
+    chromeMock._state.setMatchedRules([
+      { rule: { ruleId: 5, rulesetId: 'easylist' }, tabId: 7, timeStamp: 1 },
+    ]);
     const data = await ok(handle({ type: 'logger:get', tabId: 7 }, pageSender()));
     expect(data.matched).toEqual([{ ruleId: 5, rulesetId: 'easylist', time: 1 }]);
   });
 
   it('debug:dumpState dumps storage and rule counts', async () => {
     const data = await ok(handle({ type: 'debug:dumpState' }, pageSender()));
-    expect(data).toMatchObject({ rulesetVersion: manifest.version, enabledLists: ['easylist'], userRules: 0 });
+    expect(data).toMatchObject({
+      rulesetVersion: manifest.version,
+      enabledLists: ['easylist'],
+      userRules: 0,
+    });
   });
 
   it('refuses unknown message shapes and foreign senders', async () => {
     const bad = await handle({ type: 'nope' } as never, pageSender());
     expect(bad).toMatchObject({ ok: false });
-    const foreign = await handle({ type: 'settings:get' }, { id: 'other-extension' } as chrome.runtime.MessageSender);
+    const foreign = await handle({ type: 'settings:get' }, {
+      id: 'other-extension',
+    } as chrome.runtime.MessageSender);
     expect(foreign).toMatchObject({ ok: false, error: 'unknown sender' });
   });
 });

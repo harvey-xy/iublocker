@@ -14,7 +14,7 @@ single `schemaVersion` and migrated in `background/storage/migrations.ts`.
 | `lists` | `Record<listId, { enabled: boolean }>` | list toggles; defaults from `RulesetManifest.defaultEnabled` |
 | `userFiltersText` | `string` | raw text as typed in the dashboard |
 | `userCompiled` | `{ dnr: DNRRule[]; cosmetic: CosmeticDB; scriptlets: ScriptletDB; warnings: string[] }` | compiled form, rebuilt on save |
-| `delta` | `{ base: string; version: string; appliedAt: number; cosmetic: CosmeticDB; scriptlets: ScriptletDB; disabled: Record<listId, number[]> }` | last applied differential update (dnr adds live in dynamic rules) |
+| `delta` | `{ base: string; version: string; appliedAt: number; cosmetic: CosmeticDB; scriptlets: ScriptletDB; disabled: Record<listId, number[]> }` | last applied differential update (dnr adds live in dynamic rules; the delta's *removals* are folded into the stored DBs' `exceptions` sets) |
 | `updater` | `{ lastCheck: number; lastSuccess: number; lastError?: string; etag?: string }` | |
 | `stats` | `{ since: number; blockedTotal: number; perDay: Record<'yyyy-mm-dd', number> }` | |
 | `pickerDrafts` | `Record<hostname, string[]>` | unsaved picker candidates |

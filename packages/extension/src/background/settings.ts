@@ -35,7 +35,8 @@ function sanitiseUrl(value: unknown, fallback: string): string {
 /** Validate + clamp a patch against the current settings. Unknown keys are dropped. */
 export function sanitiseSettings(current: Settings, patch: Partial<Settings>): Settings {
   const next: Settings = { ...current, advanced: { ...current.advanced } };
-  if (patch.defaultMode !== undefined && SITE_MODES.includes(patch.defaultMode)) next.defaultMode = patch.defaultMode;
+  if (patch.defaultMode !== undefined && SITE_MODES.includes(patch.defaultMode))
+    next.defaultMode = patch.defaultMode;
   if (patch.showBadgeCount !== undefined) next.showBadgeCount = Boolean(patch.showBadgeCount);
   if (patch.autoUpdate !== undefined) next.autoUpdate = Boolean(patch.autoUpdate);
   if (patch.updateIntervalHours !== undefined) {
@@ -46,14 +47,17 @@ export function sanitiseSettings(current: Settings, patch: Partial<Settings>): S
       MAX_UPDATE_INTERVAL_HOURS,
     );
   }
-  if (patch.updateChannel === 'stable' || patch.updateChannel === 'nightly') next.updateChannel = patch.updateChannel;
-  if (patch.collapseBlockedElements !== undefined) next.collapseBlockedElements = Boolean(patch.collapseBlockedElements);
+  if (patch.updateChannel === 'stable' || patch.updateChannel === 'nightly')
+    next.updateChannel = patch.updateChannel;
+  if (patch.collapseBlockedElements !== undefined)
+    next.collapseBlockedElements = Boolean(patch.collapseBlockedElements);
   if (patch.cloudDeltaBaseUrl !== undefined) {
     next.cloudDeltaBaseUrl = sanitiseUrl(patch.cloudDeltaBaseUrl, DEFAULT_SETTINGS.cloudDeltaBaseUrl);
   }
   if (patch.theme === 'auto' || patch.theme === 'light' || patch.theme === 'dark') next.theme = patch.theme;
   if (patch.advanced) {
-    if (patch.advanced.logMatchedRules !== undefined) next.advanced.logMatchedRules = Boolean(patch.advanced.logMatchedRules);
+    if (patch.advanced.logMatchedRules !== undefined)
+      next.advanced.logMatchedRules = Boolean(patch.advanced.logMatchedRules);
     if (patch.advanced.allowTrustedUserScriptlets !== undefined) {
       next.advanced.allowTrustedUserScriptlets = Boolean(patch.advanced.allowTrustedUserScriptlets);
     }

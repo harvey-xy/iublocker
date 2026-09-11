@@ -95,6 +95,8 @@ export interface ExtensionWorkerFixtures {
 
 export const test = base.extend<ExtensionFixtures, ExtensionWorkerFixtures>({
   server: [
+    // Playwright requires the destructuring pattern even when there are no dependencies.
+    // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
       const server = await startServer();
       await use(server);

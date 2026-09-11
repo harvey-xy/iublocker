@@ -25,10 +25,13 @@ export function inject(win: PageWindow, def: ScriptletDefinition, ...args: (stri
   fn.apply(win, args);
 }
 
-/** Let jsdom's timers, microtasks and MutationObserver callbacks run. */
-export function tick(win: PageWindow, ms = 5): Promise<void> {
+/**
+ * Let jsdom's timers, microtasks and MutationObserver callbacks run. Deliberately uses
+ * Node's timer rather than the page's: a scriptlet under test may have defused that one.
+ */
+export function tick(_win: PageWindow, ms = 5): Promise<void> {
   return new Promise((resolve) => {
-    win.setTimeout(resolve, ms);
+    setTimeout(resolve, ms);
   });
 }
 

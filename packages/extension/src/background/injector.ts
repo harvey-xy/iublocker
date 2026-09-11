@@ -28,7 +28,8 @@ export interface CommittedDetails {
 const injectedFrames = new Set<string>();
 const INJECTED_MAX = 2_000;
 
-const frameKey = (tabId: number, frameId: number, hostname: string): string => `${tabId}:${frameId}:${hostname}`;
+const frameKey = (tabId: number, frameId: number, hostname: string): string =>
+  `${tabId}:${frameId}:${hostname}`;
 
 export function wasInjected(tabId: number, frameId: number, hostname: string): boolean {
   return injectedFrames.has(frameKey(tabId, frameId, hostname));

@@ -53,7 +53,9 @@ export function stubFetch(routes: FetchRoutes = {}): FetchStub {
       const key = find(url);
       const statusKey = Object.keys(stub.status).find((k) => url.endsWith(k));
       const status = (statusKey ? stub.status[statusKey] : key ? 200 : 404) ?? 200;
-      const headers = { get: (name: string) => (key ? (stub.headers[key]?.[name.toLowerCase()] ?? null) : null) };
+      const headers = {
+        get: (name: string) => (key ? (stub.headers[key]?.[name.toLowerCase()] ?? null) : null),
+      };
       return {
         ok: status >= 200 && status < 300,
         status,
@@ -86,7 +88,10 @@ export function makeScriptletDB(listId: string, patch: Partial<ScriptletDB> = {}
   return { version: 1, listId, byHost: {}, exceptions: {}, ...patch };
 }
 
-export function makeListEntry(id: string, patch: Record<string, unknown> = {}): RulesetManifest['lists'][number] {
+export function makeListEntry(
+  id: string,
+  patch: Record<string, unknown> = {},
+): RulesetManifest['lists'][number] {
   return {
     id,
     title: id,
@@ -94,7 +99,15 @@ export function makeListEntry(id: string, patch: Record<string, unknown> = {}): 
     defaultEnabled: true,
     trusted: false,
     sources: [],
-    counts: { dnr: 10, regex: 0, cosmeticGeneric: 0, cosmeticSpecific: 0, procedural: 0, scriptlets: 0, dropped: 0 },
+    counts: {
+      dnr: 10,
+      regex: 0,
+      cosmeticGeneric: 0,
+      cosmeticSpecific: 0,
+      procedural: 0,
+      scriptlets: 0,
+      dropped: 0,
+    },
     files: { dnr: `dnr/${id}.json`, cosmetic: `cosmetic/${id}.json`, scriptlets: `scriptlets/${id}.json` },
     ...patch,
   } as RulesetManifest['lists'][number];
@@ -121,4 +134,9 @@ export const tabSender = (
   url = 'https://example.com/page',
   frameId = 0,
 ): chrome.runtime.MessageSender =>
-  ({ id: 'test-extension-id', url, frameId, tab: { id: tabId, url } }) as unknown as chrome.runtime.MessageSender;
+  ({
+    id: 'test-extension-id',
+    url,
+    frameId,
+    tab: { id: tabId, url },
+  }) as unknown as chrome.runtime.MessageSender;

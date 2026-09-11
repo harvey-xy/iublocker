@@ -24,14 +24,24 @@
 
 1. Clean `dist/`.
 2. esbuild entry points: `src/background/index.ts` (ESM, service worker),
-   `src/content/cosmetic.ts`, `src/content/picker.ts`, `src/ui/popup/index.tsx`,
-   `src/ui/dashboard/index.tsx`, `src/ui/logger/index.tsx`. Target `chrome128`, minify in
-   release, sourcemaps in dev.
+   `src/content/cosmetic.ts`, `src/content/picker.ts` (IIFE), `src/ui/popup/index.tsx`,
+   `src/ui/dashboard/index.tsx`, `src/ui/logger/index.tsx` (IIFE, `jsx: automatic`,
+   `jsxImportSource: preact`). Target `chrome128`, minify in release, sourcemaps in dev.
+   An entry point whose source file does not exist yet is **skipped with a warning** so the
+   package always builds while workstreams land in parallel.
 3. Copy `public/` (HTML pages, `resources/` redirect files, icons, `_locales/`).
-4. Copy `rulesets/` output of the compiler (fail if missing unless `--skip-rulesets`).
-5. Generate `manifest.json` from `src/manifest.ts` + ruleset manifest (rule_resources,
-   web_accessible_resources, version from root `package.json`).
-6. Write `dist/build-info.json` (git sha, list snapshot version).
+4. Copy `packages/extension/rulesets/` (compiler output). Missing output is a warning and
+   the build continues with an empty ruleset list — pass `--strict` to fail instead, or
+   `--skip-rulesets` to skip the step entirely.
+5. Generate `manifest.json` from `src/manifest.ts` + ruleset manifest (rule_resources
+   `{id, enabled: defaultEnabled, path: "rulesets/dnr/<id>.json"}`, web_accessible_resources,
+   version from root `package.json`). Content-script entries whose bundle was skipped are
+   dropped so Chrome can always load `dist/`. With `IUB_E2E=1` (or `--e2e`) the `e2e-test`
+   ruleset is declared and enabled.
+6. Write `dist/build-info.json` (git sha, list snapshot version, entries built/skipped).
+
+Flags: `--watch`, `--minify`, `--strict`, `--skip-rulesets`, `--e2e`, `--out <dir>`
+(build somewhere other than `dist/`; used by the build's own smoke test).
 
 ## CI (`.github/workflows/ci.yml`)
 

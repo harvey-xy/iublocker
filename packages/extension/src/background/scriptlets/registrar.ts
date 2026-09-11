@@ -106,7 +106,11 @@ export interface ReconcileResult {
  */
 export async function reconcile(): Promise<ReconcileResult> {
   const result: ReconcileResult = { registered: 0, updated: 0, removed: 0, failed: 0 };
-  const [manifest, enabled, below] = await Promise.all([getManifest(), enabledListIds(), hostsBelowOptimal()]);
+  const [manifest, enabled, below] = await Promise.all([
+    getManifest(),
+    enabledListIds(),
+    hostsBelowOptimal(),
+  ]);
   const desired = below.defaultBelowOptimal
     ? []
     : buildDesired(manifest.scriptletGroups ?? [], new Set(enabled), below.hosts);

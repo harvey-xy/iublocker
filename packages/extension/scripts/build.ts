@@ -121,7 +121,11 @@ async function readJson<T>(file: string): Promise<T | null> {
 
 function gitSha(): string {
   try {
-    return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return execFileSync('git', ['rev-parse', 'HEAD'], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
   } catch {
     return 'unknown';
   }
@@ -300,7 +304,8 @@ export async function runBuild(options: BuildOptions = {}): Promise<BuildResult>
 }
 
 const invokedDirectly =
-  process.argv[1] !== undefined && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+  process.argv[1] !== undefined &&
+  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
 
 if (invokedDirectly) {
   runBuild(parseArgs(process.argv.slice(2))).catch((err: unknown) => {

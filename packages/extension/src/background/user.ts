@@ -63,10 +63,9 @@ export async function addUserFilters(lines: readonly string[]): Promise<UserFilt
       .map((line) => line.trim())
       .filter((line) => line.length > 0),
   );
-  const additions = lines
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0 && !existing.has(line));
+  const additions = lines.map((line) => line.trim()).filter((line) => line.length > 0 && !existing.has(line));
   if (additions.length === 0) return getUserFilters();
-  const next = text.length === 0 ? additions.join('\n') : `${text.replace(/\n+$/, '')}\n${additions.join('\n')}`;
+  const next =
+    text.length === 0 ? additions.join('\n') : `${text.replace(/\n+$/, '')}\n${additions.join('\n')}`;
   return setUserFilters(next);
 }

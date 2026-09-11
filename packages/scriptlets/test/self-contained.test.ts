@@ -5,13 +5,17 @@ import { registry } from '../src/index';
 
 /**
  * Every `fn` is serialised and injected into a page that knows nothing about this
- * package, so it must not reference a single identifier from module scope. The check
- * runs each scriptlet inside an isolated jsdom realm whose global object is a Proxy
- * that records reads of names the page does not have — a `try {} catch {}` inside the
- * scriptlet cannot hide those, unlike a thrown ReferenceError.
+ * package, so it must not reference a single identifier from module scope.
+ *
+ * The check builds each scriptlet inside an isolated jsdom realm whose scope chain is a
+ * `with` over a Proxy: the `has` trap claims every name, so *all* free identifiers are
+ * resolved through the `get` trap, which records the ones the page does not actually
+ * have. Recording (rather than throwing) is what makes this work — the scriptlets wrap
+ * themselves in `try {} catch {}`, which would swallow a ReferenceError.
  */
 describe('scriptlet bodies are self-contained', () => {
-  const moduleScope = ['defineScriptlet', 'serializeScriptletFn', 'registry', 'redirectResources', 'definitions'];
+  const moduleScope = ['defineScriptlet', 'serializeScriptletFn', 'registry', 'redirectResources'];
+  const runnerLocals = ['__iubSandbox__', '__iubArgs__'];
 
   for (const def of Object.values(registry)) {
     it(`${def.name} reads no unknown globals`, () => {
@@ -19,15 +23,14 @@ describe('scriptlet bodies are self-contained', () => {
       for (const name of moduleScope) {
         expect(source).not.toMatch(new RegExp(`\\b${name}\\b`));
       }
-      const dom = new JSDOM('<!doctype html><html><body><div id="a" class="b" data-x="1"></div></body></html>', {
-        url: 'https://example.com/page',
-        runScripts: 'outside-only',
-        pretendToBeVisual: true,
-      });
+      const dom = new JSDOM(
+        '<!doctype html><html><body><div id="a" class="b" data-x="1">text</div></body></html>',
+        { url: 'https://example.com/page', runScripts: 'outside-only', pretendToBeVisual: true },
+      );
       const win = dom.window as any;
       const unknown = new Set<string>();
       const sandbox = new Proxy(win, {
-        has: () => true,
+        has: (_target: any, key: string | symbol) => runnerLocals.includes(key as string) === false,
         get(target: any, key: string | symbol) {
           if (typeof key === 'string' && key in target === false) {
             unknown.add(key);
@@ -37,16 +40,26 @@ describe('scriptlet bodies are self-contained', () => {
         },
       });
       const runner = win.eval(
-        '(function (sandbox, src, args) { with (sandbox) { return eval(src).apply(sandbox, args); } })',
+        `(function (__iubSandbox__, __iubArgs__) {
+          with (__iubSandbox__) {
+            return (${source}).apply(__iubSandbox__, __iubArgs__);
+          }
+        })`,
       );
       try {
-        runner(sandbox, `(${source})`, []);
-        runner(sandbox, `(${source})`, def.args.map(() => 'x'));
-        runner(sandbox, `(${source})`, def.args.map(() => '/x/'));
+        runner(sandbox, []);
+        runner(
+          sandbox,
+          def.args.map(() => 'x'),
+        );
+        runner(
+          sandbox,
+          def.args.map(() => '/x/'),
+        );
       } finally {
         dom.window.close();
       }
-      expect([...unknown]).toEqual([]);
+      expect([...unknown].sort()).toEqual([]);
     });
   }
 });

@@ -35,7 +35,14 @@ vi.mock('@iublocker/scriptlets', () => {
 
 import * as injector from '../src/background/injector';
 import * as store from '../src/background/storage/store';
-import { makeCosmeticDB, makeListEntry, makeRulesetManifest, makeScriptletDB, resetBackground, stubFetch } from './background-utils';
+import {
+  makeCosmeticDB,
+  makeListEntry,
+  makeRulesetManifest,
+  makeScriptletDB,
+  resetBackground,
+  stubFetch,
+} from './background-utils';
 
 const manifest = makeRulesetManifest({ lists: [makeListEntry('easylist')] });
 
@@ -113,7 +120,9 @@ describe('injector: onCommitted', () => {
     await store.set({ siteModes: {} });
     await injector.handleCommitted({ tabId: 7, frameId: 0, url: 'https://example.com/page' });
     await injector.handleCommitted({ tabId: 7, frameId: 3, url: 'https://frame.test/ad' });
-    const frameCall = chromeMock._state.calls.insertCSS.find((c: { target: { frameIds: number[] } }) => c.target.frameIds[0] === 3);
+    const frameCall = chromeMock._state.calls.insertCSS.find(
+      (c: { target: { frameIds: number[] } }) => c.target.frameIds[0] === 3,
+    );
     expect(frameCall.css).toContain('.frame-ad');
   });
 
@@ -127,7 +136,9 @@ describe('injector: onCommitted', () => {
       userCompiled: {
         dnr: [],
         cosmetic: makeCosmeticDB('user'),
-        scriptlets: makeScriptletDB('user', { byHost: { 'example.com': [{ name: 'set-constant', args: ['a', '1'] }] } }),
+        scriptlets: makeScriptletDB('user', {
+          byHost: { 'example.com': [{ name: 'set-constant', args: ['a', '1'] }] },
+        }),
         warnings: [],
       },
     });
@@ -153,7 +164,9 @@ describe('injector: onCommitted', () => {
     chromeMock.scripting.insertCSS = async () => {
       throw new Error('frame gone');
     };
-    expect(() => injector.onCommitted({ tabId: 7, frameId: 0, url: 'https://example.com/page' })).not.toThrow();
+    expect(() =>
+      injector.onCommitted({ tabId: 7, frameId: 0, url: 'https://example.com/page' }),
+    ).not.toThrow();
     await vi.waitFor(() => expect(injector.wasInjected(7, 0, 'example.com')).toBe(false));
   });
 });

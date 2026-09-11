@@ -109,3 +109,16 @@ The extension's `Updater` (alarm every `updateIntervalHours`) fetches
 with `storage.delta.version`, and applies atomically: `updateDynamicRules({removeRuleIds:
 <delta range>, addRules})`, `updateStaticRules` per list, then storage. Failure leaves
 the previous delta intact.
+
+Runtime rules the `Updater` enforces (workstream T4):
+
+- A delta whose `base` differs from the shipped `rulesets/manifest.json` version is
+  discarded, both when it is fetched and when a new extension version is installed.
+- `dnr.add` rules that redirect to a remote `url` are rejected; list data may only
+  redirect to bundled `extensionPath` resources.
+- `cosmetic.removeSpecific` / `scriptlets.remove` are folded into the stored
+  `AppliedDelta`'s `exceptions` sets (the stored shape is additive, and the hostname
+  lookup already subtracts exceptions).
+- `settings.updateChannel: 'nightly'` currently only bypasses the HTTP cache/ETag; both
+  channels use the same URL.
+- A failed apply rolls the delta ID range back to the rules it held before.

@@ -21,12 +21,20 @@ import * as store from '../src/background/storage/store';
 import { makeListEntry, makeRulesetManifest, resetBackground, stubFetch } from './background-utils';
 
 const groups = [
-  { hash: 'aaa', file: 'scriptlet-groups/aaa.js', hosts: ['example.com', 'b.example.org'], listIds: ['easylist'] },
+  {
+    hash: 'aaa',
+    file: 'scriptlet-groups/aaa.js',
+    hosts: ['example.com', 'b.example.org'],
+    listIds: ['easylist'],
+  },
   { hash: 'bbb', file: 'scriptlet-groups/bbb.js', hosts: ['annoy.test'], listIds: ['annoy'] },
 ];
 
 const manifest = makeRulesetManifest({
-  lists: [makeListEntry('easylist', { defaultEnabled: true }), makeListEntry('annoy', { defaultEnabled: false })],
+  lists: [
+    makeListEntry('easylist', { defaultEnabled: true }),
+    makeListEntry('annoy', { defaultEnabled: false }),
+  ],
   scriptletGroups: groups,
 });
 
@@ -58,8 +66,12 @@ describe('registrar: desired scripts', () => {
   });
 
   it('derives the bundle path when the manifest has none', () => {
-    expect(registrar.groupFilePath({ hash: 'zz', file: '', hosts: [], listIds: [] })).toBe('rulesets/scriptlet-groups/zz.js');
-    expect(registrar.groupFilePath({ hash: 'zz', file: 'rulesets/x/zz.js', hosts: [], listIds: [] })).toBe('rulesets/x/zz.js');
+    expect(registrar.groupFilePath({ hash: 'zz', file: '', hosts: [], listIds: [] })).toBe(
+      'rulesets/scriptlet-groups/zz.js',
+    );
+    expect(registrar.groupFilePath({ hash: 'zz', file: 'rulesets/x/zz.js', hosts: [], listIds: [] })).toBe(
+      'rulesets/x/zz.js',
+    );
   });
 });
 

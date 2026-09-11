@@ -50,7 +50,9 @@ function makeDelta(patch: Partial<DeltaFile> = {}): DeltaFile {
       removeSpecific: { 'example.com': ['.stale-ad'] },
     },
     scriptlets: {
-      add: makeScriptletDB('delta', { byHost: { 'example.com': [{ name: 'set-constant', args: ['x', '1'] }] } }),
+      add: makeScriptletDB('delta', {
+        byHost: { 'example.com': [{ name: 'set-constant', args: ['x', '1'] }] },
+      }),
       remove: { 'other.com': [{ name: 'noop', args: [] }] },
     },
     ...patch,
@@ -96,13 +98,17 @@ describe('updater: validation', () => {
     expect(updater.deltaUrl(DEFAULT_SETTINGS.cloudDeltaBaseUrl, '1.2.3')).toBe(
       `${DEFAULT_SETTINGS.cloudDeltaBaseUrl}/delta/1.2.3.json`,
     );
-    expect(updater.deltaUrl('https://example.com/base/', '1.0.0')).toBe('https://example.com/base/delta/1.0.0.json');
+    expect(updater.deltaUrl('https://example.com/base/', '1.0.0')).toBe(
+      'https://example.com/base/delta/1.0.0.json',
+    );
   });
 
   it('folds removals into exception sets', () => {
     const db = updater.foldCosmeticRemovals(makeCosmeticDB('delta'), { 'a.com': ['.x'] });
     expect(db.exceptions.selectors).toEqual({ 'a.com': ['.x'] });
-    const sdb = updater.foldScriptletRemovals(makeScriptletDB('delta'), { 'a.com': [{ name: 'aopr', args: [] }] });
+    const sdb = updater.foldScriptletRemovals(makeScriptletDB('delta'), {
+      'a.com': [{ name: 'aopr', args: [] }],
+    });
     expect(sdb.exceptions).toEqual({ 'a.com': ['aopr'] });
   });
 });
@@ -125,7 +131,11 @@ describe('updater: apply', () => {
     });
 
     const stored = await store.get('delta');
-    expect(stored).toMatchObject({ base: manifest.version, version: '2026.09.12.1', disabled: { easylist: [12, 34] } });
+    expect(stored).toMatchObject({
+      base: manifest.version,
+      version: '2026.09.12.1',
+      disabled: { easylist: [12, 34] },
+    });
     expect(stored?.cosmetic.specific['example.com']).toEqual(['.fresh-ad']);
     expect(stored?.cosmetic.exceptions.selectors['example.com']).toEqual(['.stale-ad']);
     expect(stored?.scriptlets.exceptions['other.com']).toEqual(['noop']);
@@ -169,7 +179,11 @@ describe('updater: apply', () => {
       [DELTA_PATH]: makeDelta({
         dnr: {
           add: [
-            { id: 0, action: { type: 'redirect', redirect: { url: 'https://evil.example/x' } }, condition: { urlFilter: 'a' } },
+            {
+              id: 0,
+              action: { type: 'redirect', redirect: { url: 'https://evil.example/x' } },
+              condition: { urlFilter: 'a' },
+            },
             { id: 0, action: { type: 'block' }, condition: { urlFilter: 'b' } },
           ],
           disable: {},
