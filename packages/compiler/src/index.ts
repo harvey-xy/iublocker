@@ -15,8 +15,7 @@
  *   mergeScriptletDB(target: ScriptletDB, source: ScriptletDB): ScriptletDB
  *   lookupScriptlets(dbs: ScriptletDB[], hostname: string): ScriptletCall[]
  *   lookupScriptletsDetailed(dbs, hostname): { concrete: ScriptletCall[]; entity: ScriptletCall[] }
- *   computeScriptletGroups(dbs: { listId: string; db: ScriptletDB }[]): ScriptletGroup[]
- *   capScriptletGroups(groups): { groups: ScriptletGroup[]; dynamicHosts: string[] }
+ *   computeScriptletGroups(dbs: { listId: string; db: ScriptletDB }[]): ScriptletGroupBuild[]
  *   collectScriptletLibs(groups): string[]                    // scriptlet-lib/<name>.js paths
  *   emitScriptletLib(name): string | null                     // one shared function body
  *   emitScriptletGroupBundle(group): string                   // JS source for registerContentScripts

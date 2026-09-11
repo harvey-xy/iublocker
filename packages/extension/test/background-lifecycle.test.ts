@@ -38,8 +38,9 @@ const manifest = makeRulesetManifest({
   ],
   scriptletGroups: [
     {
+      name: 'noop',
       hash: 'aaa',
-      file: 'scriptlet-groups/aaa.js',
+      file: 'scriptlet-groups/noop.js',
       libs: ['scriptlet-lib/noop.js'],
       hosts: ['example.com'],
       listIds: ['easylist'],
@@ -96,7 +97,7 @@ describe('lifecycle: onInstalled', () => {
 
   it('registers the scriptlet groups and the update alarm', async () => {
     await lifecycle.onInstalled({ reason: 'install' } as chrome.runtime.InstalledDetails);
-    expect((await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id)).toEqual(['sl-aaa']);
+    expect((await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id)).toEqual(['sl-noop-0']);
     expect(chromeMock._state.alarms.has('iub-update')).toBe(true);
   });
 
@@ -165,7 +166,7 @@ describe('lifecycle: onStartup', () => {
     await store.set({ siteModes: { 'off.test': 'off' } });
     await lifecycle.onStartup();
     expect(chromeMock._state.sessionRules[0].condition.requestDomains).toEqual(['off.test']);
-    expect((await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id)).toEqual(['sl-aaa']);
+    expect((await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id)).toEqual(['sl-noop-0']);
     expect(chromeMock._state.alarms.has('iub-update')).toBe(true);
   });
 

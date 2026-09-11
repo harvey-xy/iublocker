@@ -50,24 +50,38 @@ export function emptyScriptletDB(listId: string): ScriptletDB {
 }
 
 /**
- * One pre-registered MAIN-world bundle. docs/SCRIPTLETS.md §3.
+ * One pre-registered MAIN-world bundle: **one per scriptlet name**. docs/SCRIPTLETS.md §3.
  *
- * A group is registered as `js: [...libs, file]`: the libs define the scriptlet functions
- * once each on `self.__iub_lib`, and `file` only carries this group's `run(key, name,
- * args)` calls. Function sources are therefore shared across every group that uses them
- * instead of being duplicated into each bundle.
+ * A group is registered as `js: [...libs, file]`: `libs` holds the single
+ * `scriptlet-lib/<name>.js` that defines the function on `self.__iub_lib`, and `file` is a
+ * hostname → arguments table for that one scriptlet. The table is walked at runtime
+ * against `location.hostname`, so one registration covers every host that calls the
+ * scriptlet instead of one registration per distinct call list.
  *
- * `hosts` are always concrete hostnames (or `"*"`): `registerContentScripts` needs literal
- * match patterns, so scriptlets that only match through an entity key (`example.*`) are
- * served by the worker's dynamic path instead.
+ * `hosts` are the concrete hostnames the registrar turns into match patterns (`*://h/*`
+ * plus `*://*.h/*`), minus the ones a parent domain's pattern already covers. The single
+ * entry `"*"` means "every URL": the scriptlet has a generic `##+js(...)` call. Scriptlets
+ * that match a page only through an entity key (`example.*`) have no literal match pattern
+ * and are served by the worker's dynamic path instead.
  */
 export interface ScriptletGroup {
+  /** Canonical scriptlet name — also the group's identity and file name. */
+  name: string;
+  /** Content digest of the emitted table; changes whenever the group file changes. */
   hash: string;
-  /** `scriptlet-groups/<hash>.js` — the call list. */
+  /** `scriptlet-groups/<name>.js` — the hostname → arguments table. */
   file: string;
-  /** `scriptlet-lib/<name>.js` files this group needs, in first-use order. */
+  /** `scriptlet-lib/<name>.js`, the one file that defines this scriptlet. */
   libs: string[];
   hosts: string[];
   listIds: string[];
-  calls: ScriptletCall[];
+  /**
+   * Parallel to `hosts`: a bit set per host, bit `i` meaning "`listIds[i]` is why this host
+   * is here". The registrar drops a host whose every contributing list is disabled, so
+   * turning a list off really does stop its scriptlets. Absent when the build could not
+   * encode it (more than 31 lists), which means "register every host".
+   */
+  hostLists?: number[];
+  /** Every distinct call in the group (build-time only; not shipped in the manifest). */
+  calls?: ScriptletCall[];
 }

@@ -1,0 +1,1650 @@
+[
+  {
+    "regex": "^https:\\/\\/[a-z]{3,}\\.com\\/$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{8,12}\\.com\\/en\\/(?:[a-z]{2,5}\\/){0,2}[a-z]{2,}\\?(?:[a-z]+=(?:\\d+|[a-z]+)&)*?id=[12]\\d{6}",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(a|c)\\.[0-9a-f]{56}\\.com$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^(a|c)\\.[0-9a-f]{56}\\.com$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "m\\.3wwd\\.com\\/(public|static)\\/\\d+\\.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/js\\/[djpf]{2}(ad)?.*a\\d{2}\\.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/uploads\\/\\d{4}\\/\\d{2}\\/(?!85466|banner)[_0-9a-zA-Z]+\\.(?:gif|jpg)$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/slade[0-9]?\\.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "jx.3aym.cn\\/[0-9]{1,6}.gif",
+    "chromeAccepts": true
+  },
+  {
+    "regex": ":\\/\\/[A-Za-z0-9]+.ru\\/[A-Za-z0-9]{20,25}.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/m\\.anysex\\.com\\/[a-zA-Z]{1,4}\\/[a-zA-Z]+\\.php$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "m.realgfporn.com\\/[a-z]{1,13}[0-9]{1,13}[a-z]{1,13}.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/.*\\/[a-z0-9A-Z_]{2,15}\\.(php|jx|jsx|1ph|jsf|jz|jsm|j$)",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/.*\\/.*(sw[0-9a-z._-]|\\.notify\\.).*",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]{8,}\\.com\\/.*",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]{8,}\\.xyz\\/.*",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/([a-z0-9]{8,10}\\.)?[a-z0-9]{5,14}\\.(com|bid|online|top|club)\\/([a-z0-9]{2}\\/){3}[a-f0-9]{32}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]{8,}.[0-9a-z]{8,}\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z0-9]+\\.cloudfront\\.net\\/\\?[a-z]{5}\\=\\d{6}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "imagenespublicidad",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "popup-maker",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/(www\\.)?([a-z0-9]{3,16}\\.)?[a-z0-9]{5,32}\\.([a-z]{2,8})\\/([a-z0-9]{2,4}\\/){3}[a-f0-9]{32}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/(www\\.)?([a-z0-9]{5,32}\\.)([a-z]{2,8})\\/[0-9a-f]{32}\\/invoke\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/.*\\/.*sw[0-9._].*",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/theme\\/js\\/[a-z0-9]{5,}\\.js\\?v=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/[a-z0-9]+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "pa.dajiahao*.top",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/\\w{8}\\/\\w{10}\\.",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/\\w{17}\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.[a-z]+[\\:\\/]",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "(https?:\\/\\/)\\w{30,}\\.me\\/\\w{30,}\\.",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "(https?:\\/\\/)104\\.154\\..{100,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "(https?:\\/\\/)104\\.197\\..{100,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "(https?:\\/\\/)104\\.198\\..{100,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "(https?:\\/\\/)130\\.211\\..{100,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "(https?:\\/\\/)142\\.91\\.159\\..{100,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "(https?:\\/\\/)213\\.32\\.115\\..{100,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "(https?:\\/\\/)216\\.21\\..{100,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "(https?:\\/\\/)217\\.182\\.11\\..{100,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "(https?:\\/\\/)51\\.195\\.31\\..{100,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/s3\\.*\\.amazonaws\\.com\\/[a-f0-9]{45,}\\/[a-f,0-9]{8,10}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/.*\\.(club|bid|biz|xyz|site|pro|info|online|icu|monster|buzz|website|biz|re|casa|top|one|space|network|live|systems|ml|world|life|co)\\/.*",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]{5,}\\.com\\/.*",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/[0-9a-f]{32}\\/invoke\\.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/www\\.[0-9a-z]{8,}\\.com\\/[0-9a-z]{1,4}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.gsmarena\\.com\\/[0-9]+\\.[a-z]+\\?s?Search=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/cdn\\.jsdelivr\\.net\\/npm\\/[-a-z_]{4,22}@latest\\/dist\\/script\\.min\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/fdts\\.ebay-kleinanzeigen\\.de\\/[a-z0-9]{13,18}\\.js\\?",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/pov\\.spectrum\\.net\\/[a-zA-Z0-9]{14,}\\.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/tjmaxx\\.tjx\\.com\\/libraries\\/[a-z0-9]{20,}",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/tmx\\.(td|tdbank)\\.com\\/[a-z0-9]{14,18}\\.js.*",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/www\\.ebay-kleinanzeigen\\.de\\/[a-z0-9]{8}\\-[0-9a-f]{4}\\-",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/www\\.kroger\\.com\\/content\\/{20,}",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/[a-z]{1,3}\\?zoneId\\=\\d{7}\\-\\d{7}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-f]{10}\\.[0-9a-f]{10}\\.com\\/.*\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?://([^.]+\\.)+[a-z]+\\.(?:biz|ru|space)/[a-z][/?][-a-z0-9_?&=]{5,45}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{6,}\\.(?:com?|info|pro|xyz)\\/[a-d][-.\\/A-Z_a-z][DHWXm][-.\\/A-Z_a-z][59FVZ][-.\\/A-Z_a-z][6swyz][-.\\/A-Z_a-z][-\\/0-9A-Z_a-z][-.\\/A-Z_a-z][-\\/0-9A-Z_a-z]+(?:$|\\?)",
+    "chromeAccepts": true
+  },
+  {
+    "regex": ":\\/\\/20\\d\\d\\d\\d\\d\\d\\..*\\.html",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^(?!.*(24liveblog.com|24liveplus.com|acint.net|addthis.com|addthisedge.com|akamai.net|akamaiedge.net|alloha.tv|ampproject.org|anycomment.io|apester.com|api-ssl.bitly.com|api.corr.life|api.here.com|api.sypexgeo.net|app.hoversignal.com|appsmail.ru|bam.nr-data.net|blogger.com|bootstrapcdn.com|cackle.me|cdn.ampproject.org|cdn.iframe.ly|cdn.rawgit.com|cdnstats.ru|cdnvideo.ru|chartbeat.com|chatango.com|chatbro.com|chimpstatic.com|cloudflare.com|cloudflare.net|cloudfront.net|cloudfunctions.net|code.createjs.com|columbus.te.ua|cultserv.ru|disqus.com|disquscdn.com|dmca.com|documentcloud.org|each.im|ebacdn.com|edgecastcdn.net|edgecdn.ru|ellinagraypel.com|embed.ex.co|embed.widgetpack.com|eurosolidarity.org|facebook.com|facebook.net|fastly.net|fastlylb.net|fbcdn.net|fbvkcdn.com|feonet.net|fluidplayer.com|fontawesome.com|fonts.w.tools|freecurrencyrates.com|fwcdn1.com|fwdcdn.com|gcdn.co|getsitecontrol.com|gismeteo.ru|github.io|gitlab.io|google-analytics.com|google.com|googleadservices.com|googleapis.com|googleoptimize.com|googletagmanager.com|googletagservices.com|gravatar.com|gravitec.media|gravitec.net|gstatic.com|hcaptcha.com|hupso.com|hwcdn.net|hypercomments.com|ibytedtos.com|imgsmail.ru|imgur.com|informers.ukr.net|instagram.com|intensedebate.com|intercom.io|intercomcdn.com|intravideo.net|issuu.com|ivideon.com|jivosite.com|jquery.com|js-agent.newrelic.com|jsdelivr.net|jsonip.com|jwpcdn.com|jwplatform.com|keycaptcha.com|kin-x.com|kinogram.best|kinohod.ru|kinoplayer.co|kinotreiler.com|kitbit.net|kodik-add.com|kodikapi.com|libria.fun|licdn.com|likebtn.com|linkedin.com|lp4.io|mail.ru|mailchimp.com|mapbox.com|media-imdb.com|media.reformal.ru|mediator.media|meteobar.com|mirtesen.ru|netdna-cdn.com|ngenix.net|nuipogoda.ru|odnaknopka.ru|odnoklassniki.ru|ok.ru|oneall.com|onesignal.com|onthe.io|parastorage.com|phnx.click|piktochart.com|pinterest.com|pixars.org|platformcraft.ru|playbuzz.com|player|player.panda.video|pljs.ru|plrjs.com|pluso.ru|plyr.io|polldaddy.com|polyfill.io|pv.pjtsu.com|quiz.ink|readymag.com|recaptcha.net|reddit.com|relap.io|ren.tv|renteres.ru|rumer.club|s5o.ru|securedtouch.com|selcdn.net|sendpulse.com|sentry-cdn.com|shareaholic.com|shareaholic.net|sharethis.com|shrink.pe|sinoptik.ua|source.mmi.bemobile.ua|sporcle.com|sportradar.com|sportrecs.com|squarespace.com|stackpathcdn.com|static.addtoany.com|statically.io|stellaraho.com|streamvid.club|telegram.im|telegram.org|tenews.org.ua|tenews.te.ua|tiktok.com|tilda.ws|tildaapi.one|tildacdn.com|tildacdn.one|tns-counter.ru|tolstoycomments.com|traq.li|trbcdn.net|trbna.com|ttrace.ru|ttwstatic.com|tumblr.com|tvget.ru|tvsok.ru|twimg.com|twitter.com|typekit.net|uanews.org.ua|unpkg.com|uptolike.com|userapi.com|usocial.pro|uweb.ru|verstka.org|vicomi.com|vidazoo.com|videocdn.tv|videoplayers.club|viglink.com|viqeo.tv|vk.com|vk.ru|vkontakte.ru|vuukle.com|webflow.com|weblium.com|weblium.site|website-files.com|widget.speechki.org|widget.vp.ru|widgets.getpocket.com|world-weather.ru|wp.com|yabber.cloud|yandex.ru|yandex.st|yastatic.net|yohoho.cc|yohoho.online|yoomoney.ru|yourwebsite.life|youtube-nocookie.com|youtube.com|ytimg.com|zencdn.net)).*$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?://[^\\s]+(\\/eu_widget|\\/news_widget\\/|\\/widget\\/)",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?://[a-z0-9]+\\.in\\.net/+[-a-z0-9_?&=]{25,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?://www\\.stratege\\.ru\\/misc\\/[a-z0-9]{25,}",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "nb.by\\/img\\/ban\\d\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "wp-content/plugins/my-popup",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "smart-facebook-page-like-overlay-pro",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "wp-content/plugins/socialer",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "upload/banners",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "a-detector",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "(?:com|net)\\/[a-z-]{3,10}\\.html$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "(?:com|net)\\/[0-9a-f]{12}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]\\.pussyspace\\.(?:com|net)\\/(?:yip?|xvs)\\/videos\\/20\\d{4}\\/\\d{2}\\/\\d{9}\\/(?:original|thumbs_\\d{2})\\/\\d{0,2}(?:\\(m=e[0-9A-Za-z]{5,7}(?:aaaa)?\\)\\(mh=[-_0-9A-Za-z]{16}\\))?\\d{0,2}\\.jpg$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]\\.pussyspace\\.(?:com|net)\\/(?:yip?|xvs)\\/videos\\/thumbs169l\\/[0-9a-f]{2}\\/[0-9a-f]{2}\\/[0-9a-f]{2}\\/[0-9a-f]{32}(?:-\\d)?\\/[0-9a-f]{32}\\.\\d{1,2}\\.jpg$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]\\.pussyspace\\.(?:com|net)\\/(?:yip?|xvs)\\/videos\\/thumbs_5\\/\\d{1,2}(?:\\(m=e[0-9A-Za-z]{5,7}aaaa\\)\\(mh=[-_0-9A-Za-z]{16}\\))?\\.jpg$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]\\.pussyspace\\.(?:com|net)\\/[a-z]?jz\\/(?:[0-9a-f]\\/){3,5}[0-9a-f]{42}-?(?:\\d{2,3}|(?:(?:\\d{3,4}-){3}h264)?\\.(?:mp4-\\d{1,2}|flv-\\d))\\.jpg$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]\\.pussyspace\\.(?:com|net)\\/sb\\/t\\/\\d{6,8}\\/\\d\\/\\d\\/w:300\\/t\\d{1,2}-enh\\/(?:[0-9a-z]+-)*[0-9a-z]+\\.jpg$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/st\\.pussyspace\\.(?:com|net)\\/upload\\/cat\\.image\\/[_3a-z]{2,16}\\.jpg$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/st\\.pussyspace\\.(?:com|net)\\/upload\\/poster_img_url\\/par\\/c3Rhci9[%0-9A-Za-z]{16,32}&size_width\\/par\\/160\\/l\\.jpg$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/[0-9a-z]{5,9}\\.js(\\?[a-z]{3})?$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/uploads\\/2025/\\d{2}\\/[0-9a-z]{6,12}\\.jpg$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.com\\/[_0-9a-zA-Z]+\\.jpg$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/(?:www\\.|[0-9a-z]{7,10}\\.)?[-0-9a-z]{5,}\\.(?:com|org)\\/\\/?(?:[0-9a-z]{2}\\/){2,3}[0-9a-f]{32}\\.js",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[-a-z]{8,}\\.com\\/[f-j][-0-9A-Z_a-z]{2,}\\/[0-9A-Za-z][-\\/0-9A-Z_a-z]{115,132}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[-0-9a-z]{5,}\\.com\\/\\d{1,2}\\/[0-9a-f]{32}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/[0-9a-z]{2}\\/[0-9a-f]{32}\\.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/[0-9a-f]{32}\\.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.\\d{1,2}\\.[0-9a-f]{32}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/t\\/[0-9]{3}\\/[0-9]{3}\\/a[0-9]{4,9}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.cloudfront\\.net\\/\\?[a-z]{3,5}=\\d{6,7}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-f]{10}\\.[0-9a-f]{10}\\.com\\/[0-9a-f]{32}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-f]{10}\\.[0-9a-f]{10}\\.com\\/[0-9a-f]{32}\\/\\d{6}\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.club\\/[%0-9a-zA-Z]{170,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.fun\\/[%0-9a-zA-Z]{170,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.hair\\/[%0-9a-zA-Z]{170,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.info\\/[%0-9a-zA-Z]{170,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.work\\/[%0-9a-zA-Z]{170,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.xyz\\/[%0-9a-zA-Z]{170,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.com?\\/(?=[0-9a-zA-Z]*%)(?=[%a-zA-Z]*\\d)(?=[%0-9a-z]*[A-Z])[%0-9a-zA-Z]{170,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-f]{50,}\\.s3\\.amazonaws\\.com\\/[0-9a-f]{10}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/s3\\.us-east-1\\.amazonaws\\.com\\/[0-9a-f]{50,}\\/[0-9a-f]{10}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.top(\\/(?:\\d{1,5}|0NaN|articles?|browse|index|movie|news|pages?|static|view|web|wiki)){1,4}(?:\\.html|\\/)$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.top\\/(?!api|available|team)[a-z]{4,}\\.json$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.top\\/[-a-z]{4,}\\.css\\?aHR0c[\\/0-9a-zA-Z]{33,}=?=?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.top\\/[a-z]{4,}\\.png\\?aHR0c[\\/0-9a-zA-Z]{33,}=?=?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.xyz(\\/(?:\\d{1,5}|0NaN|articles?|browse|index|movie|news|pages?|static|view|web|wiki)){1,4}(?:\\.html|\\/)$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.xyz\\/(?!api|available|team)[a-z]{4,}\\.json$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.xyz\\/[-a-z]{4,}\\.css\\?aHR0c[\\/0-9a-zA-Z]{33,}=?=?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.xyz\\/[a-z]{4,}\\.png\\?aHR0c[\\/0-9a-zA-Z]{33,}=?=?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{6,}\\.(?:com?|info|pro|xyz)\\/[a-d][-.\\/A-Z_a-z][DHWXm][-.\\/A-Z_a-z][59FVZ][-.\\/A-Z_a-z][6swyz][-.\\/A-Z_a-z][-\\/0-9A-Z_a-z][-.\\/A-Z_a-z][-\\/0-9A-Z_a-z]{22,162}(?:$|\\?)",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/[a-d][-.\\/A-Z_a-z][DHWXm][-.\\/A-Z_a-z][59FVZ][-.\\/A-Z_a-z][6swyz][-.\\/A-Z_a-z][-\\/0-9A-Z_a-z][-.\\/A-Z_a-z][-\\/0-9A-Z_a-z]+",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/(?:[a-z]{2}|[a-z]{7})?\\.?[0-9a-z]{5,16}\\.[a-z]{3,7}\\/[a-z](?=[a-z]{0,25}[0-9A-Z])[0-9a-zA-Z]{3,26}\\/\\d{3,6}(?:[?&][_a-z0-9]+=[-0-9a-zA-Z]+)*$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\.goplay\\.su\\/[a-z][0-9A-Za-z]{10,}\\/\\d{3,6}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/(?:[a-z]{2}\\.)?[a-z]{7,14}\\.com\\/[a-z](?=[a-z]*[0-9A-Z])[0-9A-Za-z]{10,16}\\/[A-Za-z]{4,5}(?:\\?|$)",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/(?:[a-z]{2}\\.)?[a-z]{7,14}\\.shop\\/[a-z](?=[a-z]*[0-9A-Z])[0-9A-Za-z]{10,16}\\/[A-Za-z]{4,5}(?:[&?]param_\\d=\\d+)*$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/(?:[0-9a-z]+\\.){1,2}cfd\\/[a-z](?=[a-z]*[0-9A-Z])[0-9A-Za-z]{10,27}\\/(?:\\d{6}|[A-Za-z]{5})$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/(?:[0-9a-z]+\\.){1,2}rest\\/[a-z](?=[a-z]*[0-9A-Z])[0-9A-Za-z]{10,27}\\/(?:\\d{6}|[A-Za-z]{5})$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/a\\.[-0-9a-z]{4,21}\\.[a-z]{2,5}\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/ar\\.[-0-9a-z]{4,21}\\.[a-z]{2,5}\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/asg\\.[-0-9a-z]{4,21}\\.[a-z]{2,5}\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/emsi\\.[-0-9a-z]{4,21}\\.[a-z]{2,5}\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/pre\\.[0-9a-z]{6,12}\\.[a-z]{3,4}\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/oi\\.[0-9a-z]{6,12}\\.[a-z]{3,4}\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/dl\\.[0-9a-z]{6,12}\\.[a-z]{3,4}\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]{4,8}\\.fun\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]{4,8}\\.lol\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]{4,8}\\.name\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]{4,8}\\.pro\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/(?:q\\.)?[0-9a-z]{4,8}\\.xyz\\/(?=[a-z]*[0-9A-Z])[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\.[a-z]{2,6}\\/[0-9a-zA-Z]{5,8}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{3,15}\\.biz\\/\\?[a-z]e=[0-9a-z]{22,26}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/cdn\\.[a-z]{3,8}\\.[a-z]{2,6}\\/app\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[-0-9a-z]{4,7}.[a-z]{3,5}\\/js\\/responsive\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/.*\\/easylist\\/[0-9]{5}",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/[a-z]{4,}\\/(?!holly7|siksik7)[0-9a-z]{3,}\\d\\.\\d{1,2}\\.\\d{1,2}\\.[0-9a-f]{32}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\.[a-z]{3,5}\\/[0-9a-z]{8,12}\\/[0-9a-z]{8,12}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/www\\.[a-z]{8,16}\\.com\\/(?:[A-Za-z]+\\/)*(?:[_0-9A-Za-z]{1,20}[-.])*[_0-9A-Za-z]{1,20}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/www\\.[a-z]{8,14}\\.com\\/[a-z]{1,4}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/static\\/js\\/jav\\.[a-f0-9]{12}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/supervideo\\.cc/[0-9]+\\.js\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.com\\/$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.net\\/$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{8,15}\\.xyz\\/$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z0-9]{5,15}\\.[a-z]{2,3}\\/5\\/\\d{6,7}(?:\\?_=\\d+|\\/\\??)?$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[-0-9a-z]{5,15}\\.(?:com|net)\\/400\\/\\d{7,8}(?:\\?v=\\d+)?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[-0-9a-z]{5,15}\\.(?:com|net)\\/401\\/\\d{7,8}(?:\\?v=\\d+)?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{8,15}\\.(?:com|net)\\/500\\/\\d{7}\\?",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z0-9]{5,15}\\.com\\/vignette\\.min\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z0-9]{5,15}\\.(?:com|net)\\/tag\\.min\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{8,12}\\.com\\/en\\/(?:[a-z]{2,10}\\/){0,2}[a-z]{2,}\\?(?:[a-z]+=[^&=?\\s]*?&)*?id=[12]\\d{6}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/www\\.gayxnow\\.com\\/[a-z][a-z][a-z][a-z][a-z][a-z]?\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{6,12}\\.(?:com|in)(?:\\/[a-z]{2,10}){1,3}(?:\\?id=\\d+)?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{5,13}\\.[a-z]{3,}\\/[0-9a-z]{1,20}\\?(?=[A-Za-z]{0,21}\\d?)(?=[0-9a-z]{0,21}[A-Z])[0-9A-Za-z]{15,24}=(?=[%a-z]*[0-9A-Z])[%0-9A-Za-z]{35,2000}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/strumyk\\.net\\/assets\\/[0-9]+.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/z-[a-z0-9]{7,10}(\\.js)?$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{4,}\\.top\\/z-[a-z0-9]{7,10}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/z-\\d{8}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{5,13}\\.[a-z]{3,6}\\/[0-9a-h]{1,17}\\?[0-9a-zA-Z]{1,22}=[%0-9a-zA-Z]{200,1300}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/js\\/[a-z0-9]+\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/www\\.locopelis\\.com\\/[a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9]\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.buzz\\/[+\\/0-9a-zA-Z]{140,400}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.buzz\\/[+\\/0-9a-zA-Z]{400,1000}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.co\\/(?=[\\/a-zA-Z]*[+0-9])(?=[+\\/0-9a-z]*[A-Z])[+\\/0-9a-zA-Z]{140,400}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.co\\/(?=[\\/a-zA-Z]*[+0-9])(?=[+\\/0-9a-z]*[A-Z])[+\\/0-9a-zA-Z]{400,1000}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.com\\/(?=[\\/a-zA-Z]*[+0-9])(?=[+\\/0-9a-z]*[A-Z])[+\\/0-9a-zA-Z]{140,400}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.com\\/(?=[\\/a-zA-Z]*[+0-9])(?=[+\\/0-9a-z]*[A-Z])[+\\/0-9a-zA-Z]{400,1000}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.info\\/[+\\/0-9a-zA-Z]{140,400}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.info\\/[+\\/0-9a-zA-Z]{400,1000}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.lol\\/[+\\/0-9a-zA-Z]{140,400}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.lol\\/[+\\/0-9a-zA-Z]{400,1000}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.one\\/[+\\/0-9a-zA-Z]{140,400}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.one\\/[+\\/0-9a-zA-Z]{400,1000}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.org\\/(?=[\\/a-zA-Z]*[+0-9])(?=[+\\/0-9a-z]*[A-Z])[+\\/0-9a-zA-Z]{140,400}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.org\\/(?=[\\/a-zA-Z]*[+0-9])(?=[+\\/0-9a-z]*[A-Z])[+\\/0-9a-zA-Z]{400,1000}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.xyz\\/[+\\/0-9a-zA-Z]{140,400}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.xyz\\/[+\\/0-9a-zA-Z]{400,1000}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z0-9]+\\.cloudfront\\.net\\/(?=[\\/a-zA-Z]*[+0-9])(?=[+\\/0-9a-z]*[A-Z])[-+\\/0-9a-zA-Z]{140,400}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{3,5}\\.[a-z]{10,14}\\.top\\/[a-z]{10,16}\\/[a-z]{5,6}(?:\\?d=\\d)?$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]+\\.[a-z]+\\/embed\\/[a-f0-9]{32}\\.js\\?_=\\d+$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/wp-content\\/plugins\\/[a-f]{6}\\.js\\?ver=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/wp-content\\/uploads(?:\\/[a-f]{6}){2}\\.js",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[-a-z0-9]+\\.[a-z]+\\/uploads(?:\\/[a-f]{6}){2}\\.js\\?ver=17\\d{8}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.com\\/[0-9a-f]{9}\\.js\\?ver=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{3,}\\.[a-z]{7,}\\.com\\/[a-z]{6,}\\/[a-f0-9]{8}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{12,20}\\.com\\/script\\/[a-zA-Z0-9]+_[a-zA-Z0-9]+\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{3,}\\.[a-z]{7,}\\.com\\/[a-z]{4,}\\/[a-f0-9]{8}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.liveonlinesports\\.net/[a-z0-9]{35}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/filmizip\\.com\\/templates\\/filmizip\\/js\\/[a-z0-9]{16}\\.js\\?v=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/filmizip\\.com\\/templates\\/filmizip\\/js\\/[a-z0-9]{12}\\.min\\.js\\?v=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9]{6,10}\\.[a-z]{2,3}\\/js\\d?\\/noadblocker\\.js(?:\\?v=\\d)?$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/([a-z]+\\.)?sythe\\.org\\/[\\w\\W]{30,}",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:cdn77\\.)?aj[0-9a-z]{2}\\d{2}\\.online\\/[0-9a-z]{8}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:cdn77\\.)?aj[0-9a-z]{2}\\d{2}\\.bid\\/[0-9a-z]{8}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:cdn77\\.)?aj[0-9a-z]{2}\\d{2}\\.online\\/[-_0-9A-Za-z]{70,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/(?:cdn77\\.)?aj\\d{4}\\.bid\\/[-_0-9A-Za-z]{80,}\\?",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "xxx\\/(?:[a-z]+[_-]){1,2}[a-z]+\\.(?:gif|jpg)$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.com\\/(full)?ad[0-9a-z]+\\.(?:gif|jpg)$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{8,}\\.[a-z0-9]{7,}\\.[a-z]{4,}\\/[0-9a-f]{32}\\/a4\\/[0-9a-f]{13}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{8,}\\.[a-z0-9]{7,}\\.[a-z]{4,}\\/[0-9a-f]{32}\\/b4\\/[0-9a-f]{13}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/ads\\.host-cdn\\.net\\/\\w+\\.js\\?\\w+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/aot-content\\/modules\\/[^\\.]{40,}\\.js\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\.com\\/[A-Za-z]{9,}\\/[A-Za-z]{9,}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "demonoid\\.is\\/[a-z0-9]{24}\\.jpg$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{5,7}\\.com\\/script\\/[-_0-9A-Za-z]+(\\.min)?\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{6,12}\\.com\\/script\\/n[a-z]su\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.com\\/[0-9a-z]{12,}\\/[0-9a-z]{12,}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/img\\/(?!new).+\\.gif",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/[0-9a-z]{8,10}\\?shu=[0-9a-z]{150,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[-0-9a-z]{5,}\\.com\\/[0-9a-z]{8,10}\\?key=[0-9a-f]{32}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/distrowatch\\.com\\/images\\/[a-z]+\\/[a-z]+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{8}\\.xyz\\/main\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/static\\/[0-9a-z]+/[0-9a-z]+\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\beropics\\.to\\/[a-zA-Z0-9]{8}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/assets\\/jquery\\/jquery-\\d\\.\\d\\.(?:\\d\\.)?min\\.js\\?(?:v=2)?&?type=(?:adult|mainstream)$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/js\\/\\d{2,3}eka\\d{2,3}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/zefoy\\.com\\/[^\\/]+\\?",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{7}\\.com\\/sub\\/(?=[a-z]{0,9}[0-9A-Z])[0-9A-Za-z]{10}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/js\\/[a-z]j\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/common\\/images\\/[a-z0-9]{1,5}\\-[a-z0-9]{1,5}\\.png$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.cloudfront\\.net\\/[a-z]{9,12}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/bbs\\.[a-z0-9-]+\\.[cd][eo][ms]i?\\/[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "nyaa\\.land\\/static\\/[a-z0-9]{32}\\.jpg$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/www\\.thesun\\.co\\.uk\\/[0-9a-z]{32}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "theme/002/js/application.js?2.0|$script,1p,replace=/video\\.maxPop/0",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\bgamatotv\\.info\\/[a-z0-9]{32}\\.js\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "panel\\.freemcserver\\.net\\/.{90,}\\?v=17",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/[A-Z]{1,2}\\/[-0-9a-z]{5,}\\.com\\/(?:[0-9a-f]{2}\\/){3}[0-9a-f]{32}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\.com\\/\\d+/[0-9a-z]+\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/hunterscomics\\.com\\/wp-content\\/themes(\\/[a-f]{6}){2}\\.js\\?ver=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/js\\/script_[0-9][0-9]\\.[0-9][0-9]\\.js\\?[0-9]+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/souq-design\\.com\\/wp-content\\/uploads(?:\\/[a-f]{6}){2}.js\\?ver=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/netembed\\.xyz\\/[a-f0-9]{32}\\.js\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "_static/delivery.js?nonce=$script,1p,header=server:/^openresty\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/_static\\/[a-z0-9]{12}\\.js\\?nonce=\\d+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/js\\/(?:[a-z]+\\/)?[a-z]+_[a-f0-9]{32}\\.js\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.gsmarena\\.com\\/[0-9]+\\.php3",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/smallencode\\.me\\/[a-zA-Z0-9]+\\/[0-9]+\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/?h=[a-f0-9]{32}&z=\\d+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/[0-9a-f]{12}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/wp-content\\/themes\\/[a-z]+\\/assets\\/js\\/fun\\.js\\?ver=[0-9]\\.[0-9]\\.[0-9]$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/mewcdn\\.online\\/[a-f0-9]{32}\\.js\\?",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{32,}\\.pages\\.dev\\/[a-z]{32,}\\.js\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9-]{7,}\\.[a-z]{3,6}\\/assets\\/script$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9-]{7,}\\.[a-z]{3,6}\\/challenge\\/(?:movie|show|episode)\\/[\\/a-z0-9-]+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9-]{7,}\\.[a-z]{3,6}\\/(?:load|register)\\/(?:movie|show|episode)\\/[0-9]+(?:\\/[0-9]{1,2}){0,2}\\/?\\?[a-z]+=[a-zA-Z0-9%&]+(?:&[a-z]+=[0-9a-z]+)?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/nekostream\\.site\\/[a-f0-9]{32}\\.js(?:$|\\?)",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/engine\\.[a-z]+\\.[a-z]+\\/\\?[0-9]+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "postsImgs",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "devfiles.pages.dev\\/img\\/[a-zA-Z0-9]{8,}.jpeg",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z-]+\\.cdn-[a-z]\\.net\\/$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/\\d+\\.cfd\\/[a-z]{3}tag[a-z]{3}\\/v\\d\\/[a-zA-Z0-9]+:C\\d\\.js\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/(?:[0-9a-z]{7,25}-){9,13}[0-9a-z]{10,15}\\/(?:[0-9a-z]+\\/)+index\\.php",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "_dating\\d\\/index\\.html\\?aref=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{3,}\\.[-a-z]{10,}\\.(?:li[fv]e|top|xyz)\\/[a-z]{8}\\/(?:article\\d{4}\\.doc)?\\?utm_campaign=\\w{40,}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{2,3}\\d\\.biz\\/go\\/[0-9a-z]{15,18}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]*\\.?[-0-9a-z]{3,}\\.[a-z]{2,11}\\.?[a-z]{0,7}\\/(?:[0-9a-z]{6,10}\\/)?\\/?(?:article\\d{4}\\.doc)?\\?(?:cid=[0-9a-z]+&)?u=[0-9a-z]{7}(?:&t=\\d+)?&o=[0-9a-z]{7}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[0-9a-z]*\\.?[-0-9a-z]{3,}\\.[a-z]{2,11}\\.?[a-z]{0,7}\\/(?:[0-9a-z]{6,10}\\/)?\\/?(?:article\\d{4}\\.doc)?\\?(?:cid=[0-9a-z]+&)?o=[0-9a-z]{7}(?:&t=\\d+)?&u=[0-9a-z]{7}",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/(?:www\\d\\.)?[-a-z]{6,}\\.(?:club|com|info|net|org)\\/(?=[-_a-zA-Z]{0,42}\\d)(?=[-_0-9a-z]{0,42}[A-Z])[-_0-9a-zA-Z]{43}\\/\\?cid=[-_0-9a-zA-Z]{10,36}(?:&qs\\d=\\S+)?&(?:s|pub)id=[-_0-9a-z{}]{1,32}(?:&s=0\\.\\d+)?(?:#\\S+)?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/(?:www\\d\\.)?[-a-z]{6,}\\.(?:club|com|info|net|org)\\/(?=[-_a-zA-Z]{0,42}\\d)(?=[-_0-9a-z]{0,42}[A-Z])[-_0-9a-zA-Z]{43}\\/\\?(?:pub|s)id=[-_0-9a-z{}]{1,32}(?:&qs\\d=\\S+)?&cid=[-_0-9a-zA-Z]{10,36}(?:&s=0\\.\\d+)?(?:#\\S+)?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/(?:www\\d\\.)?[-a-z]{6,}\\.(?:club|com|info|net|org)\\/(?=[-_a-zA-Z]{0,42}\\d)(?=[-_0-9a-z]{0,42}[A-Z])[-_0-9a-zA-Z]{43}\\/\\?clickID=[0-9a-f]{32}&sourceID=\\d+$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/serch\\d{2}\\.biz\\/\\?p=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^http:\\/\\/[a-z]{5}\\.[a-z]{5}\\.com\\/[a-z]{10}\\.apk$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{16,}\\.s3\\.[-a-z]+1\\.amazonaws\\.com\\/[a-z]{66,}(?:\\/[a-z]{45})?\\.html",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[-a-z]{16,}\\.z\\d{2}\\.web\\.core\\.windows\\.net\\/[a-z]{70,}(\\/[a-z]{40,})?\\.html",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{12,15}\\.com\\/\\?p=[0-9a-f]{32}&u=[0-9a-f]{138}\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{5,20}-[0-9a-z]{16}\\.z0\\d\\.azurefd\\.net\\/[0-9A-Za-z]+0[0-9A-Za-z]+\\/index\\.html",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{4}\\.[a-z]{15,}\\.monster\\/\\?[0-9a-f]{16,}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{7,}\\.(com|icu)\\/[Tt]raffic\\/api$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{7,}\\.sbs\\/[a-z0-9]{8}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{5,7}\\.[0-9a-z]{12}\\.top\\/[0-9a-f]{32}\\/[0-9-a-f]{32}\\/$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\/[0-9a-f]{32}\\/maq\\/$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{10,}\\.[a-z]{3,4}\\/(?:engine|track)-[a-f0-9]{8}\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/vietg[a-z]v[0-9]*\\.cc\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/server\\.[a-z0-9]{4}\\.com\\/invite\\/\\d+\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9]{3,}\\.[a-z]{8,10}\\.ru\\/[a-zA-Z0-9]{6,8}\\/#[A-Z][a-z]{5,}@[a-z]+\\.com$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z0-9]{6,7}\\.lat\\/[A-Z0-9]{5}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https://[a-z]{40,}\\.pages\\.dev\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/accounts\\/19[56]\\d{3}\\/messages\\/\\d{1,2}\\/clicks\\/\\d{4,5}\\/\\d{1,2}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/ee(?:-[a-z]{5,}){1,2}\\.web\\.app\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/ee(?:-[a-z]{5,}){1,2}\\.firebaseapp\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/recharge\\d?\\.(?:html|php)\\?mobile=\\d{10}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/offer\\.(?:html|php)\\?(?:mobile|rechargenumber)=\\d{10}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/icloud\\.apple\\.[a-z]{6,}\\.[a-z]+",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/ourtime\\.[a-z]+-[a-z]+\\.workers\\.dev\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:[-a-z0-9]+\\.){2}workers\\.dev\\/v3\\/(?:forgotpassword|security|signup)\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:[a-z]+\\.)?hotel-(?:id)?\\d{3,8}\\.eu\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:[a-z]+\\.)?hotel-(?:id)?\\d{3,8}\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/hotels-\\d{6}\\.eu\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/booking\\.[a-z]{3,}-(?:id)?\\d{3,8}\\.eu\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/booking(-[a-z]{3,}){2}\\.(?:baby|lat|lol|xyz)\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/([a-z]{4,}\\.)?support-\\d{1,2}\\.ru\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.temporary\\.site\\/service\\/[a-f0-9]{32}\\/",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\.codeanyapp\\.com\\/.+\\/(?:3dsece?|infospage|paiement)\\.php\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/tpbank\\.[-a-z0-9]{5,}\\.[a-z]{3}(?:\\.vn)?\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/mbdk\\d+\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/instagram-[a-z]{5,}\\.[a-z]{2,4}\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/business\\.[a-z]+confii?rm\\.com\\/meta-community-standard\\d{14,15}[^\\d]?",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/business-component\\.[a-z]+(-[a-z]+){2}\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.(?:click|pages\\.dev|surge\\.sh)\\/help\\/contact\\/\\d{14,19}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.workers\\.dev\\/help\\/\\d{14,19}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.(?:boats|cfd)\\/contract\\/\\d{14,19}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.(?:pages\\.dev|vercel\\.app)\\/appeal_case_id\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:appeal|contact|page)\\.[a-z]{15,}\\.com\\/appeal_case_id\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/contract\\/support-case-id=\\d{14,19}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/h5\\.[a-z0-9]{4}\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{12,}\\.vercel\\.app\\/[^.]+?g_ep=?EgoyMDI",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{12,}\\.vercel\\.app\\/[^.]+?=D400e",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z0-9]{25,}\\.vercel\\.app\\/id\\/\\d{15,17}\\.html\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/sp\\d{2,3}88(?:vn)?\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/s[cfntz]y?[ace][acemnu][a-z]{1,4}or?[mn][a-z]{4,8}[iy][a-z]?\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/s[cfntz]y?[ace][acemnu][a-z]{1,4}or?[mn][a-z]{4,8}[iy][a-z]?\\.cc\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/s[cfntz]y?[ace][acemnu][a-z]{1,4}or?[mn][a-z]{4,8}[iy][a-z]?\\.ru\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/steam\\.(?:community)?workshop-?[a-z]+\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:[a-f0-9]+\\.)?[a-f0-9]{58}\\.pages\\.dev\\/",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\.com(\\.[a-z]{2})?\\/wp-includes\\/images\\/smilies\\/images?\\/smili?es\\/[a-z]{25,35}\\.html",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{14}\\.azureedge\\.net\\/\\d{4}j\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[-a-z]{4,}\\.dogfriendlytahoe\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/www\\.telegram[a-z][a-z]\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/telegram-[a-z]{2}\\.[a-z]{2,3}\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/telegram-[a-z]{3,4}\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/web\\.t(el)?gram[a-z][a-z][a-z]?\\.top\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/web\\.tegr[a-z][a-z][a-z]\\.top\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-f0-9]{32}\\.[a-z]{7}\\.sbs\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/usps\\.[-a-z]{6,}\\.(?:com|top)\\/(?:address\\.html|information|verify)\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/transporta[a-z]{8,9}pro\\.top\\/i\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]\\.[a-z]{10,}\\.top\\/l(?:\\/|$)",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:[a-z0-9]{2,}-)+10\\d{4}\\.weeblysite\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[^.]+\\.codeanyapp\\.com\\/wp-content\\/.+\\/spo[a-z]{2}i\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/(?:www\\.)?swan[0-9]\\.[ctv][cio]p?\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/qqh[0-9]\\.mom\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.(?:cc|com|top|vip)\\/index\\/index\\/lang\\/[a-z]{2}-[a-z]{2}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:[^.]+\\.)?\\d{6}-coinbase\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/pancake(?:dro|swa)pclick\\d+\\.vercel\\.app\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/([a-z]-){10,15}[a-z]\\.(?:com|net|org)\\.tr\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/pub-[a-f0-9]{32}\\.r2\\.dev/be[a0-9]\\d{2,3}\\.html\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{4,}\\.(?:com|org)[-.][-a-z]{2,}\\.(?:cc|top|vip|world|xin)\\/pay\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{4,}\\.(?:com|org)[-.][-a-z]{2,}\\.(?:cc|top|vip|world|xin)\\/us\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/dienmayxanh[-a-z0-9]+\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/dich-vu(?:-[a-z0-9]+){2,3}\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/zla\\d{3}\\.top\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/tdk[det]0[0-9]\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(www\\.)?sp\\d{4,5}p\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/amazon[a-z]\\d\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/giaohangtietkiem\\w+\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/amazo[a-z]{2}\\d\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9]{2,}\\.[a-z0-9]{4,11}\\.com\\/[a-zA-Z0-9]{30,}\\?[a-zA-Z0-9]{25,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9]{2,}\\.[a-z0-9]{4,11}\\.ru\\/[a-zA-Z0-9]{30,}\\?[a-zA-Z0-9]{25,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9]{2,}\\.[a-z0-9]{4,11}\\.su\\/[a-zA-Z0-9]{30,}\\?[a-zA-Z0-9]{25,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9]{50,}\\.[a-z0-9]{4,11}\\.com\\/[a-zA-Z0-9]{50,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9]{50,}\\.[a-z0-9]{4,11}\\.ru\\/[a-zA-Z0-9]{50,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z0-9]{50,}\\.[a-z0-9]{4,11}\\.su\\/[a-zA-Z0-9]{50,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{6,19}\\.(?:com|net)\\/(?:static_)?file\\/\\?t=[_a-z0-9]+&ns=[a-z]{2}$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/help\\.[a-z]{3,}-x-[a-z]{3,}\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{7,}\\.[a-z]{3,}\\/get\\/\\?s=[a-zA-Z0-9]+=*$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{7,}\\.[a-z]{3,}\\/img\\/$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]{7,}\\.com\\/go\\/[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z0-9]{8,}\\.ru\\/\\?load=[a-zA-Z0-9]+(-[a-zA-Z0-9]+)+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/gov\\.[^.]*gr\\.[a-z]{2,6}",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.cloudfront\\.net\\/(?=[a-z]{0,6}\\d)[a-f0-9]{7}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "\\.[a-z]{3,}\\/a\\.aspx\\?cid=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.[a-z]{3,}\\/products\\.aspx\\?cname=.+&cid=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/online\\.[a-z]{7,}\\.top\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/www\\.air-?up-?[a-z]{2,}\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/www\\.xn--airup[a-z]{5,6}-[a-z0-9]{3}\\.com\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/www\\.[a-z]{9,20}\\.com\\/o-[a-z]{4}-[a-z]\\d{2}-[a-f0-9]{32}\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]+\\.[a-z]{4,}\\/oop\\/\\d+_md(?:\\/\\d+){5}\\b",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]+\\.[a-z]+\\/[a-z]+\\?rnd=[a-z0-9]{8}&ts=\\d+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{7}\\.([0-9a-z]{7})\\.top\\/[0-9a-z]{7}\\?t=\\1&cid=[0-9a-z]+",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z0-9]{10,}\\.[a-z]{9,}\\.co\\.in\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/thetollroads\\.[a-z]+-[a-z]{4}\\.[a-z]{3}\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:[-a-z0-9]{2,}\\.){1,2}(?:[a-z]{2,3}|click|online)\\/(?:[-a-z0-9]+\\/){1,4}[a-zA-Z0-9]{150}\\/index\\?a=",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/(?:[-a-z0-9]{2,}\\.){1,2}(?:[a-z]{2,3}|click|online)\\/(?:[-a-z0-9]+\\/){1,4}[a-zA-Z0-9]{150}\\/verify\\b",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/reddit-\\d{1,2}\\.[a-z]{4}\\.(?:net|org|pw)\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/wettransfer\\d{2}\\.[a-z]{4}\\.(?:net|org|pw)\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/help-\\d{8}\\.[a-z0-9]{6}-\\d{2}\\.click\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{7,8}\\.com\\/\\?s=[0-9a-z]{13}&q=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{4,}\\.com[-.][-a-z0-9]{2,}\\.[a-z]{2,6}\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[-a-z]{4,}\\.org[-.][-a-z0-9]{2,}\\.[a-z]{2,6}\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/(?:[-a-z]{4,}\\.)?gov[-.][-a-z0-9]{2,}\\.[a-z]{2,6}\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{6,8}\\.[a-z]{2,10}\\/[!.+,=?@\\[][\\/0-9a-z]{20,30}\\.[-a-z]{2,7}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/www\\.[a-z]{12,}\\.com\\/[-a-z]*%E[%0-9A-F]{20,}-[-0-9a-z]{3,}%E[-%0-9A-Fa-z]{70,}-p-\\d{3,5}\\.html$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/pub-[0-9a-f]{32}\\.r2\\.dev\\/(?=[-%0-9a-z]*[A-Z])[-%0-9A-Za-z]+-\\d+\\.html$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{5,10}\\.[a-z]{5,10}\\.[a-z]{3}\\/y1\\.html$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/blockchecker[0-9]\\.pages\\.dev\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/xblock[0-9]+\\.pages\\.dev\\/",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/d[0-9a-z]{19}\\.[a-z]{3,4}-[a-z]{7,8}(?:\\.[a-z]{2})?\\.[a-z]{2,3}\\/xm\\/xm\\d\\/\\?",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/d[0-9a-z]{19}\\.[a-z]{3,4}-adguard(?:\\.[a-z]{2})?\\.[a-z]{2,3}\\/[a-z]{4}\\/[a-z]{4}\\/\\?",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/[a-z]+\\d\\.gogomailbali(\\.it)?\\.eu\\.org\\/#\\?act=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/storage\\.googleapis\\.com\\/[a-z]{5,}\\/[a-z]+_v\\d\\.html#\\?act=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\/checking\\.php\\?t=[a-zA-Z0-9%]+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.com\\/[-_0-9a-zA-Z]{4,}\\/[-\\/_0-9a-zA-Z]{25,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{7,25}\\.com\\/v2(?:\\/0\\/)?(?=[-_0-9a-z]{0,84}[A-Z])(?=[-_a-zA-Z]{0,84}[0-9])[-_0-9a-zA-Z]{54,85}(#\\?v=[0-9a-f]{32})?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{7,25}\\.com\\/(?:assets|build|bundles|chunks|dist|files|j|public|scripts|static)?\\/?(?:js\\/)?[0-9_a-z]{6,16}\\/?[0-9_a-z]{5,120}(?:[-.](?:app|bundle|ma?in|module|prod|index|v\\d|vendor))?(?:\\.js)?(?:\\?r=\\d)?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[0-9a-z]{7,25}\\.net\\/(?:assets|build|bundles|chunks|dist|files|j|public|scripts|static)?\\/?(?:js\\/)?[0-9_a-z]{6,16}\\/?[0-9_a-z]{5,120}(?:[-.](?:app|bundle|ma?in|module|prod|index|v\\d|vendor))?(?:\\.js)?(?:\\?r=\\d)?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/kick\\.com\\/[0-9A-z]{16}\\/[0-9A-z]{16}\\?apiKey=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(www\\.)?[a-z0-9-]+\\.[a-z]+(\\.[a-z]+)?\\/[a-z0-9]{4}\\/$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(www\\.)?[a-z0-9-]+\\.[a-z]+(\\.[a-z]+)?\\/[a-z0-9]{4,9}\\/\\?id=$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(www\\.)?[a-z0-9-]+\\.[a-z]+(\\.[a-z]+)?\\/[a-z0-9]{4,6}\\/\\?id=AW-\\d+",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(www\\.)?[a-z0-9-]+\\.[a-z]+(\\.[a-z]+)?\\/[a-z0-9]{3,6}\\/\\?id=G(TM)?-[A-Z0-9]+",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(www\\.)?[a-z0-9-]+\\.[a-z]+(\\.[a-z]+)?\\/(?:analyticsdata|gemets|gtm[a-z]+|metrics|securegtm)\\/?$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/chatgpt\\.com\\/ces\\/v1\\/[a-z]$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/mudah\\.my\\/[a-zA-Z0-9]{16}\\/[a-zA-Z0-9]{16}\\?apiKey=",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/[a-z][0-9][0-9][0-9]\\.[a-z]+\\.com\\/script\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/grabify\\.org\\/[A-Z0-9]+$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/www\\.[a-z0-9]{8}\\.com\\/i\\/[A-Z0-9]{5}\\/[A-Z0-9]{6}\\/$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "\\.googlevideo\\.com\\/videoplayback\\?expire=(?:[02-9]\\d+|1[1-68-9]\\d+|17[1-7]\\d+)&",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https?:\\/\\/(?:[a-z]{2}\\.)?[0-9a-z]{5,16}\\.[a-z]{3,7}\\/[a-z](?=[a-z]{0,25}[0-9A-Z])[0-9a-zA-Z]{3,26}\\/\\d{4,6}(?:\\?[_a-z]=[-0-9a-z]+)?$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/acscdn\\.com\\/script\\/(?:aclib|atg|compatibility|ippg|suv4|ut)\\.js(\\?cb=\\d{13})?$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/(?:[a-z]{3,4}\\.)?[0-9a-z-]{6,}\\.(?:com|xyz)\\/script\\/(?:[-.0-9A-Za-z]+\\.)?[-0-9A-Za-z]{2,30}\\.js$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/[a-z]{3,4}\\.[a-z]{8,16}\\.com\\/loader\\.min\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/d[0-9a-z]{12,13}\\.cloudfront\\.net\\/loader\\.min\\.js$",
+    "chromeAccepts": true
+  },
+  {
+    "regex": "^https:\\/\\/www\\.igorslab\\.de\\/[0-9a-z]{7,}\\/A[\\/0-9A-Z_a-z-]{100,}$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https:\\/\\/www\\.igorslab\\.de\\/wp-content\\/uploads\\/202\\d\\/\\d{2}\\/(?=[a-z]*\\d)(?=\\d*[a-z])[0-9a-z]{7,15}\\.(?:pn|jp)g$",
+    "chromeAccepts": false
+  },
+  {
+    "regex": "^https?:\\/\\/[www.0-9a-z]{7,}\\.com\\/.*\\/invoke\\.js$",
+    "chromeAccepts": true
+  }
+]

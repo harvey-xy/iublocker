@@ -22,15 +22,17 @@ import { makeListEntry, makeRulesetManifest, resetBackground, stubFetch } from '
 
 const groups = [
   {
+    name: 'set-constant',
     hash: 'aaa',
-    file: 'scriptlet-groups/aaa.js',
-    libs: ['scriptlet-lib/set-constant.js', 'scriptlet-lib/noop.js'],
+    file: 'scriptlet-groups/set-constant.js',
+    libs: ['scriptlet-lib/set-constant.js'],
     hosts: ['example.com', 'b.example.org'],
     listIds: ['easylist'],
   },
   {
+    name: 'noop',
     hash: 'bbb',
-    file: 'scriptlet-groups/bbb.js',
+    file: 'scriptlet-groups/noop.js',
     libs: ['scriptlet-lib/noop.js'],
     hosts: ['annoy.test'],
     listIds: ['annoy'],
@@ -57,13 +59,9 @@ describe('registrar: desired scripts', () => {
     const desired = registrar.buildDesired(groups, new Set(['easylist']), []);
     expect(desired).toHaveLength(1);
     expect(desired[0]).toEqual({
-      id: 'sl-aaa',
-      // libs first (they define self.__iub_lib), then the group's call list.
-      js: [
-        'rulesets/scriptlet-lib/set-constant.js',
-        'rulesets/scriptlet-lib/noop.js',
-        'rulesets/scriptlet-groups/aaa.js',
-      ],
+      id: 'sl-set-constant-0',
+      // the lib first (it defines self.__iub_lib), then the group's host table.
+      js: ['rulesets/scriptlet-lib/set-constant.js', 'rulesets/scriptlet-groups/set-constant.js'],
       matches: ['*://b.example.org/*', '*://*.b.example.org/*', '*://example.com/*', '*://*.example.com/*'],
       world: 'MAIN',
       runAt: 'document_start',
@@ -72,24 +70,60 @@ describe('registrar: desired scripts', () => {
     });
   });
 
+  it('splits a group with more hosts than one script may carry', () => {
+    const hosts = Array.from({ length: 2_500 }, (_, i) => `h${i}.example`);
+    const [first, second, third, fourth] = registrar.buildDesired(
+      [{ name: 'noop', hash: 'x', file: 'scriptlet-groups/noop.js', libs: [], hosts, listIds: [] }],
+      new Set(),
+      [],
+    );
+    expect([first?.id, second?.id, third?.id, fourth?.id]).toEqual([
+      'sl-noop-0',
+      'sl-noop-1',
+      'sl-noop-2',
+      undefined,
+    ]);
+    // 1,000 hosts × two patterns each, then the 500-host remainder.
+    expect(first?.matches).toHaveLength(2_000);
+    expect(third?.matches).toHaveLength(1_000);
+  });
+
+  it('registers a generic group against every http(s) URL', () => {
+    const [script] = registrar.buildDesired(
+      [{ name: 'noop', hash: 'x', file: 'scriptlet-groups/noop.js', libs: [], hosts: ['*'], listIds: [] }],
+      new Set(),
+      [],
+    );
+    expect(script?.id).toBe('sl-noop-0');
+    expect(script?.matches).toEqual(['http://*/*', 'https://*/*']);
+  });
+
   it('excludes hosts in off/basic mode', () => {
     const [script] = registrar.buildDesired(groups, new Set(['easylist']), ['off.test']);
     expect(script?.excludeMatches).toEqual(['*://off.test/*', '*://*.off.test/*']);
   });
 
   it('derives the bundle path when the manifest has none', () => {
-    expect(registrar.groupFilePath({ hash: 'zz', file: '', libs: [], hosts: [], listIds: [] })).toBe(
-      'rulesets/scriptlet-groups/zz.js',
-    );
     expect(
-      registrar.groupFilePath({ hash: 'zz', file: 'rulesets/x/zz.js', libs: [], hosts: [], listIds: [] }),
+      registrar.groupFilePath({ name: 'zz', hash: 'h', file: '', libs: [], hosts: [], listIds: [] }),
+    ).toBe('rulesets/scriptlet-groups/zz.js');
+    expect(
+      registrar.groupFilePath({
+        name: 'zz',
+        hash: 'h',
+        file: 'rulesets/x/zz.js',
+        libs: [],
+        hosts: [],
+        listIds: [],
+      }),
     ).toBe('rulesets/x/zz.js');
   });
 
   it('keeps lib order, dedupes, and prefixes every path with rulesets/', () => {
     expect(
       registrar.groupScriptFiles({
-        hash: 'zz',
+        name: 'zz',
+        hash: 'h',
         file: 'scriptlet-groups/zz.js',
         libs: ['scriptlet-lib/a.js', '/scriptlet-lib/a.js', 'rulesets/scriptlet-lib/b.js'],
         hosts: [],
@@ -105,7 +139,8 @@ describe('registrar: desired scripts', () => {
   it('still works for a group with no libs recorded', () => {
     expect(
       registrar.groupScriptFiles({
-        hash: 'zz',
+        name: 'zz',
+        hash: 'h',
         file: 'scriptlet-groups/zz.js',
         hosts: [],
         listIds: [],
@@ -121,7 +156,7 @@ describe('registrar: reconcile', () => {
     const result = await registrar.reconcile();
     expect(result.registered).toBe(1);
     const registered = await chrome.scripting.getRegisteredContentScripts();
-    expect(registered.map((script) => script.id)).toEqual(['sl-aaa']);
+    expect(registered.map((script) => script.id)).toEqual(['sl-set-constant-0']);
   });
 
   it('registers and unregisters when a list is toggled', async () => {
@@ -131,7 +166,7 @@ describe('registrar: reconcile', () => {
     expect(result.removed).toBe(1);
     expect(result.registered).toBe(1);
     const registered = await chrome.scripting.getRegisteredContentScripts();
-    expect(registered.map((script) => script.id)).toEqual(['sl-bbb']);
+    expect(registered.map((script) => script.id)).toEqual(['sl-noop-0']);
   });
 
   it('updates excludeMatches in place when a site goes off', async () => {
@@ -168,6 +203,6 @@ describe('registrar: reconcile', () => {
     await registrar.reconcile();
     const ids = (await chrome.scripting.getRegisteredContentScripts()).map((script) => script.id);
     expect(ids).toContain('other');
-    expect(ids).toContain('sl-aaa');
+    expect(ids).toContain('sl-set-constant-0');
   });
 });

@@ -98,8 +98,10 @@ function expectedEnabledIds(manifest: RulesetManifest, languages: readonly strin
 
 /**
  * The content scripts the registrar wants for `enabled`, mirroring
- * `background/scriptlets/registrar` `buildDesired`: one script per scriptlet group whose
- * list is enabled, split into chunks of MAX_HOSTS_PER_SCRIPT hosts.
+ * `background/scriptlets/registrar` `buildDesired`: one script per scriptlet group (there
+ * is one group per scriptlet *name*) whose list is enabled, split into chunks of
+ * MAX_HOSTS_PER_SCRIPT hosts — or a single all-URLs script when the group's hosts are the
+ * generic `"*"`.
  */
 function expectedScripts(
   manifest: RulesetManifest,
@@ -110,9 +112,19 @@ function expectedScripts(
   for (const group of manifest.scriptletGroups ?? []) {
     const listIds = group.listIds ?? [];
     if (listIds.length > 0 && !listIds.some((id) => enabled.has(id))) continue;
-    const hosts = (group.hosts ?? []).filter((host) => typeof host === 'string' && host.length > 0);
+    let hosts = (group.hosts ?? []).filter((host) => typeof host === 'string' && host.length > 0);
+    // `hostLists[i]` says which of `listIds` put host `i` there; a host only a disabled list
+    // asks for is not registered (background/scriptlets/registrar `enabledHosts`).
+    const masks = group.hostLists;
+    if (Array.isArray(masks) && masks.length === hosts.length) {
+      let enabledMask = 0;
+      listIds.forEach((id, index) => {
+        if (index < 31 && enabled.has(id)) enabledMask |= 1 << index;
+      });
+      hosts = hosts.filter((_, index) => ((masks[index] ?? 0) & enabledMask) !== 0);
+    }
     if (hosts.length === 0) continue;
-    count += Math.ceil(hosts.length / MAX_HOSTS_PER_SCRIPT);
+    count += hosts.includes('*') ? 1 : Math.ceil(hosts.length / MAX_HOSTS_PER_SCRIPT);
     for (const file of [...(group.libs ?? []), group.file]) {
       if (typeof file === 'string' && file.length > 0) files.add(file);
     }
@@ -391,8 +403,8 @@ test('the registered scriptlet content scripts match the manifest and their file
   });
 
   const expected = expectedScripts(ruleset, new Set(enabled));
-  // Registration runs in batches after install; with thousands of groups it can take a
-  // while. Wait until the count settles on the expected value before asserting.
+  // Registration runs in batches after install. One group per scriptlet name keeps that to
+  // a few dozen entries, but it is still asynchronous — wait for the count to settle.
   const started = Date.now();
   while (registered.length !== expected.count && Date.now() - started < 120_000) {
     await new Promise((r) => setTimeout(r, 500));
@@ -421,7 +433,7 @@ test('the registered scriptlet content scripts match the manifest and their file
 
   summary.scriptlets = {
     groups: (ruleset.scriptletGroups ?? []).length,
-    dynamicHosts: (ruleset.scriptletDynamicHosts ?? []).length,
+    hosts: (ruleset.scriptletGroups ?? []).reduce((n, group) => n + (group.hosts ?? []).length, 0),
     registeredScripts: registered.length,
     files: expected.files.length,
   };

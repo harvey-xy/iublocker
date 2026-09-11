@@ -66,8 +66,9 @@ const manifest = makeRulesetManifest({
   ],
   scriptletGroups: [
     {
+      name: 'noop',
       hash: 'abc123',
-      file: 'scriptlet-groups/abc123.js',
+      file: 'scriptlet-groups/noop.js',
       libs: ['scriptlet-lib/noop.js'],
       hosts: ['example.com'],
       listIds: ['easylist'],

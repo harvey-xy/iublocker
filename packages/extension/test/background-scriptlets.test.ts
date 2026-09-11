@@ -80,7 +80,6 @@ const listDb = makeScriptletDB('easylist', {
   byHost: {
     'example.*': [{ name: 'entity-one', args: [] }],
     'example.com': [{ name: 'concrete-one', args: [] }],
-    'demoted.test': [{ name: 'demoted-one', args: [] }],
   },
 });
 
@@ -91,8 +90,9 @@ function setup(manifestPatch: Record<string, unknown> = {}) {
       lists: [makeListEntry('easylist')],
       scriptletGroups: [
         {
+          name: 'concrete-one',
           hash: 'aaa',
-          file: 'scriptlet-groups/aaa.js',
+          file: 'scriptlet-groups/concrete-one.js',
           libs: ['scriptlet-lib/concrete-one.js'],
           hosts: ['example.com'],
           listIds: ['easylist'],
@@ -128,28 +128,6 @@ describe('ScriptletIndex: entity keys go through the dynamic path', () => {
 
   it('injects nothing for an unrelated hostname', async () => {
     expect(await scriptlets.lookupDynamic('unrelated.test')).toEqual([]);
-  });
-});
-
-describe('ScriptletIndex: demoted hosts', () => {
-  it('injects the concrete calls of a host whose group was demoted', async () => {
-    setup({ scriptletDynamicHosts: ['demoted.test'] });
-    expect(names(await scriptlets.lookupDynamic('demoted.test'))).toEqual(['demoted-one']);
-  });
-
-  it('covers subdomains of a demoted host', async () => {
-    setup({ scriptletDynamicHosts: ['demoted.test'] });
-    expect(names(await scriptlets.lookupDynamic('www.demoted.test'))).toEqual(['demoted-one']);
-  });
-
-  it('leaves a host with a real group on the pre-registered path', async () => {
-    setup({ scriptletDynamicHosts: ['demoted.test'] });
-    expect(names(await scriptlets.lookupDynamic('example.com'))).toEqual(['entity-one']);
-  });
-
-  it('injects nothing extra when the manifest lists no demoted hosts', async () => {
-    setup();
-    expect(await scriptlets.lookupDynamic('demoted.test')).toEqual([]);
   });
 });
 

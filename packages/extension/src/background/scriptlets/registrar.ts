@@ -2,9 +2,10 @@
  * ScriptletRegistrar — pre-registers the shipped MAIN-world scriptlet bundles.
  * docs/SCRIPTLETS.md §3 path 1, docs/ARCHITECTURE.md D4.
  *
- * The set of groups is fixed at build time (`rulesets/manifest.json.scriptletGroups`);
- * at runtime we only decide *which* groups are registered (lists enabled) and on which
- * hosts they must not run (`off`/`basic` sites → `excludeMatches`).
+ * The set of groups is fixed at build time (`rulesets/manifest.json.scriptletGroups`) and
+ * holds one group per scriptlet **name**, each with the hostnames that call it; at runtime
+ * we only decide *which* groups are registered (lists enabled) and on which hosts they must
+ * not run (`off`/`basic` sites → `excludeMatches`).
  */
 import type { ScriptletGroup } from '@iublocker/shared';
 import { log } from '../log';
@@ -14,6 +15,10 @@ import { hostsBelowOptimal } from '../siteModes';
 export const SCRIPT_ID_PREFIX = 'sl-';
 const MAX_HOSTS_PER_SCRIPT = 1_000;
 const REGISTER_BATCH = 20;
+
+/** `hosts: ['*']` — the group has a generic `##+js(...)` call and runs everywhere. */
+const GENERIC_HOST = '*';
+const GENERIC_MATCHES = ['http://*/*', 'https://*/*'];
 
 type GroupMeta = Omit<ScriptletGroup, 'calls'>;
 
@@ -40,12 +45,36 @@ function bundlePath(file: string): string {
 }
 
 export function groupFilePath(group: GroupMeta): string {
-  return bundlePath(group.file && group.file.length > 0 ? group.file : `scriptlet-groups/${group.hash}.js`);
+  return bundlePath(group.file && group.file.length > 0 ? group.file : `scriptlet-groups/${group.name}.js`);
 }
 
 /**
- * The `js` array for a group: its `scriptlet-lib/<name>.js` files first (they define
- * `self.__iub_lib`), then the group's own call list. docs/SCRIPTLETS.md §3.
+ * The hosts of a group that at least one *enabled* list asks for.
+ *
+ * `hostLists[i]` is a bit set over `listIds`: one group serves every list that calls the
+ * scriptlet, so without this a host that only a disabled list names would still get the
+ * scriptlet registered. A build that could not encode the attribution (more than 31 lists)
+ * ships no `hostLists`, and every host is kept.
+ */
+function enabledHosts(group: GroupMeta, enabled: ReadonlySet<string>): string[] {
+  const hosts = (group.hosts ?? []).filter((h) => typeof h === 'string' && h.length > 0);
+  const masks = group.hostLists;
+  if (!Array.isArray(masks) || masks.length !== hosts.length) return hosts;
+  let enabledMask = 0;
+  (group.listIds ?? []).forEach((id, index) => {
+    if (index < 31 && enabled.has(id)) enabledMask |= 1 << index;
+  });
+  return hosts.filter((_, index) => ((masks[index] ?? 0) & enabledMask) !== 0);
+}
+
+/** Script ids are opaque to Chrome but must stay stable and free of surprises. */
+function idPart(name: string): string {
+  return name.replace(/[^A-Za-z0-9._-]/g, '_');
+}
+
+/**
+ * The `js` array for a group: its `scriptlet-lib/<name>.js` file first (it defines
+ * `self.__iub_lib`), then the group's own hostname → arguments table. docs/SCRIPTLETS.md §3.
  *
  * Chrome runs a script's `js` files in order, so the libs are guaranteed to be in place
  * before the group file looks anything up.
@@ -79,7 +108,14 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
   return out;
 }
 
-/** Pure: the scripts that should be registered for these groups. */
+/**
+ * Pure: the scripts that should be registered for these groups.
+ *
+ * One entry per (group, chunk of ≤ MAX_HOSTS_PER_SCRIPT hosts); a group whose hosts are
+ * just `"*"` registers once against every http(s) URL. Since there is one group per
+ * scriptlet *name*, that is a few dozen entries for the shipped lists — small enough that
+ * `registerContentScripts` finishes in well under a second.
+ */
 export function buildDesired(
   groups: readonly GroupMeta[],
   enabled: ReadonlySet<string>,
@@ -88,17 +124,21 @@ export function buildDesired(
   const excludeMatches = hostPatterns(excludeHosts);
   const out: DesiredScript[] = [];
   for (const group of groups) {
-    if (!group?.hash) continue;
+    const name = typeof group?.name === 'string' ? group.name : '';
+    if (name === '') continue;
     const listIds = group.listIds ?? [];
     if (listIds.length > 0 && !listIds.some((id) => enabled.has(id))) continue;
-    const hosts = (group.hosts ?? []).filter((h) => typeof h === 'string' && h.length > 0);
+    const hosts = enabledHosts(group, enabled);
     if (hosts.length === 0) continue;
-    const parts = chunk([...hosts].sort(), MAX_HOSTS_PER_SCRIPT);
+    const js = groupScriptFiles(group);
+    const parts = hosts.includes(GENERIC_HOST) ? [null] : chunk([...hosts].sort(), MAX_HOSTS_PER_SCRIPT);
     parts.forEach((part, index) => {
+      const matches = part === null ? [...GENERIC_MATCHES] : hostPatterns(part);
+      if (matches.length === 0) return;
       out.push({
-        id: index === 0 ? `${SCRIPT_ID_PREFIX}${group.hash}` : `${SCRIPT_ID_PREFIX}${group.hash}.${index}`,
-        js: groupScriptFiles(group),
-        matches: hostPatterns(part),
+        id: `${SCRIPT_ID_PREFIX}${idPart(name)}-${index}`,
+        js,
+        matches,
         ...(excludeMatches.length ? { excludeMatches } : {}),
         world: 'MAIN',
         runAt: 'document_start',
@@ -178,7 +218,7 @@ export async function reconcile(): Promise<ReconcileResult> {
       result.registered += batch.length;
     } catch (err) {
       result.failed += batch.length;
-      log.warn(`registerContentScripts failed for ${batch.length} group(s)`, err);
+      log.warn(`registerContentScripts failed for ${batch.length} script(s)`, err);
     }
   }
   for (const batch of chunk(toUpdate, REGISTER_BATCH)) {
@@ -187,7 +227,7 @@ export async function reconcile(): Promise<ReconcileResult> {
       result.updated += batch.length;
     } catch (err) {
       result.failed += batch.length;
-      log.warn(`updateContentScripts failed for ${batch.length} group(s)`, err);
+      log.warn(`updateContentScripts failed for ${batch.length} script(s)`, err);
     }
   }
   log.debug('scriptlet groups reconciled', result);

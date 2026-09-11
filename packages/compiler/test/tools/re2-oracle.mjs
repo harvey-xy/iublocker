@@ -31,6 +31,9 @@
  * run `playwright install`. Any unpacked MV3 build works as the host extension — the tool
  * only needs a service worker with the `declarativeNetRequest` permission.
  */
+/* global process, console, setTimeout, URL, chrome -- Node globals, plus `chrome` inside
+   the sw.evaluate() callbacks, which run in the extension's service worker. Flat-config
+   ESLint has no `env`, and this is the only file in the package that is not TypeScript. */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -83,7 +86,8 @@ function findChromium() {
     candidates.push(path.join(root, dir, 'chrome-linux', 'chrome'));
   }
   const found = candidates.find((p) => fs.existsSync(p));
-  if (!found) throw new Error(`no chromium under ${root} — do not run "playwright install", ask for the image's build`);
+  if (!found)
+    throw new Error(`no chromium under ${root} — do not run "playwright install", ask for the image's build`);
   return found;
 }
 
@@ -205,7 +209,9 @@ async function main() {
 
     const rejected = results.filter((r) => !r.chromeAccepts).length;
     const disagree = results.filter((r) => r.chromeAccepts !== r.isRegexSupported).length;
-    console.error(`oracle: ${results.length} regexes, ${rejected} rejected by Chrome, ${disagree} where isRegexSupported disagrees`);
+    console.error(
+      `oracle: ${results.length} regexes, ${rejected} rejected by Chrome, ${disagree} where isRegexSupported disagrees`,
+    );
 
     const json = JSON.stringify(results, null, 2);
     if (args.out) fs.writeFileSync(args.out, `${json}\n`);

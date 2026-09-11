@@ -23,6 +23,7 @@ import type {
   ScriptletDB,
   ScriptletGroup,
 } from '@iublocker/shared';
+import type { ScriptletGroupBuild } from '../scriptlet';
 import { BUILD_BUDGET, DNR_LIMITS, ID_RANGE, emptyCosmeticDB, emptyScriptletDB } from '@iublocker/shared';
 import type { ClassifiedList, CompileOptions } from '../types';
 import { classifyLines } from '../parser/classify';
@@ -31,19 +32,43 @@ import { cosmeticApi, scriptletApi } from '../user';
 import * as scriptletModule from '../scriptlet';
 
 interface ScriptletGroupApi {
-  computeScriptletGroups?: (dbs: { listId: string; db: ScriptletDB }[]) => ScriptletGroup[];
-  emitScriptletGroupBundle?: (group: ScriptletGroup) => string;
+  computeScriptletGroups?: (dbs: { listId: string; db: ScriptletDB }[]) => ScriptletGroupBuild[];
+  emitScriptletGroupBundle?: (group: ScriptletGroupBuild) => string;
   emitScriptletLib?: (name: string) => string | null;
   collectScriptletLibs?: (groups: readonly ScriptletGroup[]) => string[];
-  capScriptletGroups?: (groups: readonly ScriptletGroup[]) => {
-    groups: ScriptletGroup[];
-    dynamicHosts: string[];
-  };
   SCRIPTLET_LIB_DIR?: string;
 }
 
 function scriptletGroupApi(): ScriptletGroupApi {
   return scriptletModule as unknown as ScriptletGroupApi;
+}
+
+/** The manifest ships the registration metadata only; the tables live in the group file. */
+function toManifestGroup(group: ScriptletGroupBuild): Omit<ScriptletGroup, 'calls'> {
+  return {
+    name: group.name,
+    hash: group.hash,
+    file: group.file,
+    libs: group.libs,
+    hosts: group.hosts,
+    listIds: group.listIds,
+    ...(group.hostLists === undefined ? {} : { hostLists: group.hostLists }),
+  };
+}
+
+/**
+ * Hosts per registered content script — mirrors `MAX_HOSTS_PER_SCRIPT` in
+ * `packages/extension/src/background/scriptlets/registrar.ts`. Only used to print what the
+ * build will cost `registerContentScripts`.
+ */
+const HOSTS_PER_SCRIPT = 1_000;
+
+function registrationCount(groups: readonly ScriptletGroupBuild[]): number {
+  let count = 0;
+  for (const group of groups) {
+    count += group.hosts.includes('*') ? 1 : Math.ceil(group.hosts.length / HOSTS_PER_SCRIPT);
+  }
+  return count;
 }
 
 export interface CliOptions {
@@ -424,19 +449,11 @@ export function runCli(argv: readonly string[]): number {
   }
 
   // ---- scriptlet libs + groups ---------------------------------------------
-  // One `scriptlet-lib/<name>.js` per scriptlet name (the function bodies, shared by every
-  // group that uses them) plus one tiny `scriptlet-groups/<hash>.js` per group (nothing but
-  // `run(key, name, args)` calls). docs/SCRIPTLETS.md §3.
+  // One `scriptlet-lib/<name>.js` per scriptlet name (the function body) plus one
+  // `scriptlet-groups/<name>.js` per scriptlet name (nothing but the hostname → arguments
+  // table the runtime walks). docs/SCRIPTLETS.md §3.
   const groupApi = scriptletGroupApi();
-  const allGroups: ScriptletGroup[] = groupApi.computeScriptletGroups?.(scriptletDbs) ?? [];
-  const capped = groupApi.capScriptletGroups?.(allGroups) ?? { groups: allGroups, dynamicHosts: [] };
-  const groups = capped.groups;
-  if (capped.dynamicHosts.length > 0) {
-    warningsGlobal.push(
-      `${allGroups.length - groups.length} scriptlet group(s) demoted to the dynamic path ` +
-        `(${capped.dynamicHosts.length} hosts) — per-list group cap`,
-    );
-  }
+  const groups: ScriptletGroupBuild[] = groupApi.computeScriptletGroups?.(scriptletDbs) ?? [];
 
   let scriptletLibBytes = 0;
   const libFiles = groupApi.collectScriptletLibs?.(groups) ?? [];
@@ -455,9 +472,11 @@ export function runCli(argv: readonly string[]): number {
   }
 
   let scriptletGroupBytes = 0;
+  let scriptletGroupHosts = 0;
   for (const group of groups) {
     const source = groupApi.emitScriptletGroupBundle?.(group) ?? '';
-    const file = join(outDir, 'scriptlet-groups', `${group.hash}.js`);
+    scriptletGroupHosts += group.hosts.length;
+    const file = join(outDir, ...group.file.split('/'));
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, source);
     scriptletGroupBytes += Buffer.byteLength(source);
@@ -476,8 +495,7 @@ export function runCli(argv: readonly string[]): number {
     builtAt: new Date().toISOString(),
     lists: entries,
     budget: { staticRulesTotal, staticRulesDefaultEnabled, regexTotal },
-    scriptletGroups: groups.map(({ calls: _calls, ...rest }) => rest),
-    ...(capped.dynamicHosts.length > 0 ? { scriptletDynamicHosts: capped.dynamicHosts } : {}),
+    scriptletGroups: groups.map((group) => toManifestGroup(group)),
   };
   writeJson(join(outDir, 'manifest.json'), manifest);
 
@@ -510,7 +528,8 @@ export function runCli(argv: readonly string[]): number {
   );
   console.info(
     `scriptlets · ${libFiles.length} lib files (${scriptletLibBytes} B) · ` +
-      `${groups.length} groups (${scriptletGroupBytes} B)`,
+      `${groups.length} groups (${scriptletGroupBytes} B) · ` +
+      `${scriptletGroupHosts} host patterns · ${registrationCount(groups)} registrations`,
   );
   for (const w of warningsGlobal) console.warn(`warning: ${w}`);
 

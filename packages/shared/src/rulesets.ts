@@ -32,13 +32,8 @@ export interface RulesetManifest {
   builtAt: string;
   lists: RulesetListEntry[];
   budget: { staticRulesTotal: number; staticRulesDefaultEnabled: number; regexTotal: number };
+  /** One entry per scriptlet name. docs/SCRIPTLETS.md §3. */
   scriptletGroups: Omit<ScriptletGroup, 'calls'>[];
-  /**
-   * Hostnames whose scriptlet group was demoted by the per-list group cap, plus nothing
-   * else. The worker injects their calls with `executeScript` at `onCommitted` instead of
-   * relying on a pre-registered bundle. docs/SCRIPTLETS.md §3.
-   */
-  scriptletDynamicHosts?: string[];
 }
 
 export interface DroppedFilter {

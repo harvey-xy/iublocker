@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import corpus from './fixtures/re2-corpus.json';
 import {
   MAX_REGEX_LENGTH,
   MAX_REGEX_PROGRAM_SIZE,
@@ -68,9 +69,13 @@ describe('checkRe2 — rejected', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toContain(`longer than ${MAX_REGEX_LENGTH}`);
     // A regex that fits the length bound but not Chrome's compiled-memory budget is
-    // rejected too — every literal character costs an instruction.
-    expect(isRe2Supported(`a${'b'.repeat(MAX_REGEX_PROGRAM_SIZE)}`)).toBe(false);
-    expect(isRe2Supported(`a${'b'.repeat(MAX_REGEX_PROGRAM_SIZE - 2)}`)).toBe(true);
+    // rejected too — every literal character costs an instruction. Chromium 141 takes a
+    // bare run of 112 literals and skips 113 (test/tools/re2-oracle.mjs), which is the
+    // budget minus the Fail, Match and `.*?`-loop instructions every program carries.
+    const literals = MAX_REGEX_PROGRAM_SIZE - 4;
+    expect(estimateProgramSize('a'.repeat(literals))).toBe(MAX_REGEX_PROGRAM_SIZE);
+    expect(isRe2Supported('a'.repeat(literals))).toBe(true);
+    expect(isRe2Supported('a'.repeat(literals + 1))).toBe(false);
   });
 });
 
@@ -116,6 +121,87 @@ describe("estimateProgramSize — Chrome's 2 KB regex budget", () => {
   it('charges counted repetition for every unrolled copy', () => {
     expect(estimateProgramSize('a{10}')).toBeGreaterThan(estimateProgramSize('a{2}'));
     expect(estimateProgramSize('[0-9a-f]{20}')).toBeGreaterThan(estimateProgramSize('[0-9]{20}'));
-    expect(estimateProgramSize('abc')).toBe(3);
+    // Fail + Match + the `.*?` loop of an unanchored program, then one byte range each.
+    expect(estimateProgramSize('abc')).toBe(7);
   });
+
+  /**
+   * Each of these is a construct whose price the oracle measured directly, by binary
+   * searching the largest repetition count Chromium 141 still accepts. They are the
+   * load-bearing parts of the model: a character class costs one instruction per maximal
+   * byte range plus an Alt between them, a range and its exact case-twin share one
+   * folding instruction, and `.` is a plain byte range because Chrome matches URLs in
+   * Latin-1 rather than UTF-8.
+   */
+  it('prices each construct the way RE2 compiles it', () => {
+    const budget = MAX_REGEX_PROGRAM_SIZE - 4; // what is left for the body of `x{n}`
+    const perCopy = (source: string, n: number): number => (estimateProgramSize(`${source}{${n}}`) - 4) / n;
+
+    expect(perCopy('a', 10)).toBe(1); // one literal byte
+    expect(perCopy('[0-9]', 10)).toBe(1); // one range
+    expect(perCopy('[a-z]', 10)).toBe(1); // `A-Z` ∪ `a-z` folds into one range
+    expect(perCopy('[0-9a-f]', 10)).toBe(3); // two ranges: 2k - 1
+    expect(perCopy('\\w', 10)).toBe(5); // [0-9] [_] [A-Za-z]
+    expect(perCopy('[aceg]', 10)).toBe(7); // four ranges that cannot merge
+    expect(perCopy('.', 10)).toBe(3); // Latin-1: two ranges, no UTF-8 automaton
+    expect(perCopy('[^a]', 10)).toBe(5); // folding splits the gap in two
+    expect(perCopy('(?:aa|bb)', 10)).toBe(5); // two branches plus one Alt
+    expect(perCopy('(?:a|b|c|d)', 10)).toBe(1); // …but single characters fold to `[a-d]`
+
+    // Chromium 141: `a{112}` is accepted and `a{113}` skipped.
+    expect(estimateProgramSize(`a{${budget}}`)).toBe(MAX_REGEX_PROGRAM_SIZE);
+    expect(isRe2Supported(`a{${budget}}`)).toBe(true);
+    expect(isRe2Supported(`a{${budget + 1}}`)).toBe(false);
+    // `^` costs one instruction instead of the two-instruction unanchored `.*?` loop…
+    expect(isRe2Supported(`^a{${budget + 1}}`)).toBe(true);
+    // …and a literal prefix after `^` is lifted out of the program entirely.
+    expect(estimateProgramSize('^https:\\/\\/a')).toBe(estimateProgramSize('a'));
+  });
+
+  it('rejects a repetition count RE2 will not even parse', () => {
+    const check = checkRe2('a{1001}');
+    expect(check.ok).toBe(false);
+    if (!check.ok) expect(check.reason).toContain('repetition count');
+  });
+});
+
+/**
+ * Every regex-pattern filter in the shipped lists, plus the handful the estimator used to
+ * wave through, labelled with what Chromium 141 did with it — see
+ * `packages/compiler/test/tools/re2-oracle.mjs`, which produced the fixture by feeding
+ * each one to `declarativeNetRequest.updateDynamicRules` in a real browser.
+ *
+ * The contract is asymmetric on purpose. A regex Chrome skips **must** be rejected here:
+ * shipping it means the manifest claims a rule Chrome silently drops, and
+ * e2e/tests/real-rulesets.spec.ts fails on the count mismatch. A regex Chrome accepts
+ * should be accepted, but over-charging one only costs us that filter, so any that the
+ * model cannot price exactly are listed below instead of being papered over.
+ */
+describe('checkRe2 — the live-list corpus, as judged by Chromium 141', () => {
+  /** Chrome-accepted regexes this estimator still rejects. Keep at zero if you can. */
+  const KNOWN_FALSE_REJECTS: string[] = [];
+
+  it('covers the whole corpus', () => {
+    expect(corpus.length).toBeGreaterThan(400);
+    expect(corpus.filter((entry) => !entry.chromeAccepts).length).toBeGreaterThan(100);
+  });
+
+  for (const { regex, chromeAccepts } of corpus) {
+    const label = regex.length > 56 ? `${regex.slice(0, 56)}…` : regex;
+    if (!chromeAccepts) {
+      it(`rejects ${label}`, () => {
+        expect(checkRe2(regex).ok, regex).toBe(false);
+      });
+      continue;
+    }
+    if (KNOWN_FALSE_REJECTS.includes(regex)) {
+      it(`over-charges ${label} (known)`, () => {
+        expect(checkRe2(regex).ok, regex).toBe(false);
+      });
+      continue;
+    }
+    it(`accepts ${label}`, () => {
+      expect(checkRe2(regex), regex).toEqual({ ok: true });
+    });
+  }
 });
