@@ -147,7 +147,9 @@ export const test = base.extend<ExtensionFixtures, ExtensionWorkerFixtures>({
       for (const file of ['popup.html', 'dashboard.html']) {
         try {
           await candidate.goto(`chrome-extension://${extensionId}/${file}`);
-          const ok = await candidate.evaluate(() => typeof (globalThis as any).chrome?.runtime?.sendMessage === 'function');
+          const ok = await candidate.evaluate(
+            () => typeof (globalThis as any).chrome?.runtime?.sendMessage === 'function',
+          );
           if (ok) {
             helper = candidate;
             // Opening the helper focused it; hand focus back so chrome.tabs.query({active:true})

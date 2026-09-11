@@ -18,9 +18,12 @@ import { boolFlag, parseArgs, stringFlag } from './lib/args';
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
-const UPLOAD_URL = (id: string) => `https://www.googleapis.com/upload/chromewebstore/v1.1/items/${id}?uploadType=media`;
-const PUBLISH_URL = (id: string, target: string) => `https://www.googleapis.com/chromewebstore/v1.1/items/${id}/publish?publishTarget=${target}`;
-const ITEM_URL = (id: string) => `https://www.googleapis.com/chromewebstore/v1.1/items/${id}?projection=DRAFT`;
+const UPLOAD_URL = (id: string) =>
+  `https://www.googleapis.com/upload/chromewebstore/v1.1/items/${id}?uploadType=media`;
+const PUBLISH_URL = (id: string, target: string) =>
+  `https://www.googleapis.com/chromewebstore/v1.1/items/${id}/publish?publishTarget=${target}`;
+const ITEM_URL = (id: string) =>
+  `https://www.googleapis.com/chromewebstore/v1.1/items/${id}?projection=DRAFT`;
 
 const USAGE = `Usage: tsx tools/cws-upload.ts --zip <file> [options]
 
@@ -40,7 +43,10 @@ export interface CwsCredentials {
   extensionId: string;
 }
 
-export function readCredentials(env: NodeJS.ProcessEnv = process.env): { creds?: CwsCredentials; missing: string[] } {
+export function readCredentials(env: NodeJS.ProcessEnv = process.env): {
+  creds?: CwsCredentials;
+  missing: string[];
+} {
   const names = ['CWS_CLIENT_ID', 'CWS_CLIENT_SECRET', 'CWS_REFRESH_TOKEN', 'CWS_EXTENSION_ID'] as const;
   const missing = names.filter((n) => !env[n]);
   if (missing.length > 0) return { missing };
@@ -84,10 +90,18 @@ interface CwsItemResponse {
   itemError?: { error_detail?: string }[];
 }
 
-export async function uploadPackage(token: string, extensionId: string, zip: Buffer): Promise<CwsItemResponse> {
+export async function uploadPackage(
+  token: string,
+  extensionId: string,
+  zip: Buffer,
+): Promise<CwsItemResponse> {
   const res = await fetch(UPLOAD_URL(extensionId), {
     method: 'PUT',
-    headers: { authorization: `Bearer ${token}`, 'x-goog-api-version': '2', 'content-type': 'application/zip' },
+    headers: {
+      authorization: `Bearer ${token}`,
+      'x-goog-api-version': '2',
+      'content-type': 'application/zip',
+    },
     body: new Uint8Array(zip),
   });
   if (!res.ok) throw await asError(res, 'upload');
@@ -98,7 +112,11 @@ export async function uploadPackage(token: string, extensionId: string, zip: Buf
   return json;
 }
 
-export async function publishItem(token: string, extensionId: string, target: string): Promise<CwsItemResponse> {
+export async function publishItem(
+  token: string,
+  extensionId: string,
+  target: string,
+): Promise<CwsItemResponse> {
   const res = await fetch(PUBLISH_URL(extensionId, target), {
     method: 'POST',
     headers: { authorization: `Bearer ${token}`, 'x-goog-api-version': '2', 'content-length': '0' },
@@ -153,8 +171,12 @@ async function main(argv: string[]): Promise<number> {
     }
   }
 
-  console.info(`cws-upload: package ${path.relative(REPO_ROOT, zipPath)} (${(bytes / 1024 / 1024).toFixed(2)} MiB)`);
-  console.info(`cws-upload: item ${creds?.extensionId ?? '<unset>'} publishTarget ${target}${boolFlag(args, 'skip-publish') ? ' (upload only)' : ''}`);
+  console.info(
+    `cws-upload: package ${path.relative(REPO_ROOT, zipPath)} (${(bytes / 1024 / 1024).toFixed(2)} MiB)`,
+  );
+  console.info(
+    `cws-upload: item ${creds?.extensionId ?? '<unset>'} publishTarget ${target}${boolFlag(args, 'skip-publish') ? ' (upload only)' : ''}`,
+  );
   if (dryRun) {
     console.info('cws-upload: dry run — no requests made.');
     return 0;
@@ -177,7 +199,8 @@ async function main(argv: string[]): Promise<number> {
   return failed ? 1 : 0;
 }
 
-const invokedDirectly = process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const invokedDirectly =
+  process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
   main(process.argv.slice(2)).then(
     (code) => {

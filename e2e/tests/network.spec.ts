@@ -5,7 +5,10 @@
  */
 import { expect, test } from '../fixtures/extension';
 
-test('scripts, images and frames under /ads/ and /track/ never reach the network', async ({ page, server }) => {
+test('scripts, images and frames under /ads/ and /track/ never reach the network', async ({
+  page,
+  server,
+}) => {
   await page.goto(server.url('/network.html'));
   await page.waitForFunction(() => (globalThis as any).__loaded === true);
 
@@ -18,7 +21,10 @@ test('scripts, images and frames under /ads/ and /track/ never reach the network
 
   // The blocked iframe never loaded its document.
   const frame = page.frames().find((f) => f.url().includes('/ads/frame.html'));
-  expect(frame === undefined || (await frame.evaluate(() => (globalThis as any).__adFrame).catch(() => undefined)) !== true).toBe(true);
+  expect(
+    frame === undefined ||
+      (await frame.evaluate(() => (globalThis as any).__adFrame).catch(() => undefined)) !== true,
+  ).toBe(true);
 
   // Nothing hit the server: DNR blocks before the request leaves the browser.
   expect(server.hitsFor('/ads/banner.js')).toBe(0);

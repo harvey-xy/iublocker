@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * `pnpm e2e` entry point.
  *
@@ -16,7 +15,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const E2E_ROOT = path.dirname(fileURLToPath(import.meta.url));
-const bin = path.join(E2E_ROOT, 'node_modules', '.bin', process.platform === 'win32' ? 'playwright.cmd' : 'playwright');
+const bin = path.join(
+  E2E_ROOT,
+  'node_modules',
+  '.bin',
+  process.platform === 'win32' ? 'playwright.cmd' : 'playwright',
+);
 
 if (!existsSync(bin)) {
   console.error(`[e2e] Playwright is not installed in ${E2E_ROOT} — run \`pnpm install\` first.`);
@@ -25,8 +29,10 @@ if (!existsSync(bin)) {
 
 const args = process.argv.slice(2).filter((arg) => arg !== '--');
 const child = spawn(bin, ['test', ...args], { cwd: E2E_ROOT, stdio: 'inherit' });
-child.on('error', (err) => {
+child.on('error', (err: Error) => {
   console.error(`[e2e] could not start Playwright: ${err.message}`);
   process.exit(1);
 });
-child.on('exit', (code, signal) => process.exit(signal ? 1 : (code ?? 0)));
+child.on('exit', (code: number | null, signal: NodeJS.Signals | null) =>
+  process.exit(signal ? 1 : (code ?? 0)),
+);

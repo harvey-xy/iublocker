@@ -25,7 +25,10 @@ const MANIFEST = {
 async function makeProbeExtension(): Promise<string> {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'iub-e2e-probe-'));
   await writeFile(path.join(dir, 'manifest.json'), JSON.stringify(MANIFEST, null, 2));
-  await writeFile(path.join(dir, 'sw.js'), 'self.addEventListener("install", () => {});\nglobalThis.__probe = true;\n');
+  await writeFile(
+    path.join(dir, 'sw.js'),
+    'self.addEventListener("install", () => {});\nglobalThis.__probe = true;\n',
+  );
   return dir;
 }
 

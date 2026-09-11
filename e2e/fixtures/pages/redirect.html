@@ -17,11 +17,16 @@
     <p id="original">pending</p>
     <script>
       (function () {
-        var hasSurrogate = typeof window.googletag === 'object' && window.googletag !== null && !!window.googletag.cmd;
+        var hasSurrogate =
+          typeof window.googletag === 'object' && window.googletag !== null && !!window.googletag.cmd;
         var original = window.__gptLoaded === true;
         document.getElementById('googletag').textContent = String(hasSurrogate);
         document.getElementById('original').textContent = String(original);
-        document.getElementById('result').textContent = hasSurrogate ? 'surrogate' : original ? 'original' : 'blocked';
+        document.getElementById('result').textContent = hasSurrogate
+          ? 'surrogate'
+          : original
+            ? 'original'
+            : 'blocked';
       })();
     </script>
   </body>

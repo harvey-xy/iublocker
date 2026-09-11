@@ -71,7 +71,9 @@ describe('expandIncludes', () => {
 
 describe('parseArgs', () => {
   it('parses flags, values, equals form and positionals, ignoring a bare --', () => {
-    const args = parseArgs(['--', 'old', 'new', '--out', 'delta.json', '--only=a,b', '--summary'], { boolean: ['summary'] });
+    const args = parseArgs(['--', 'old', 'new', '--out', 'delta.json', '--only=a,b', '--summary'], {
+      boolean: ['summary'],
+    });
     expect(args.positionals).toEqual(['old', 'new']);
     expect(stringFlag(args, 'out')).toBe('delta.json');
     expect(listFlag(args, 'only')).toEqual(['a', 'b']);

@@ -22,7 +22,7 @@
     "rulesets:build": "tsx packages/compiler/src/cli/index.ts --lists tools/filterlists.json --cache .cache/lists --out packages/extension/rulesets",
     "delta": "tsx tools/make-delta.ts",
     "package": "tsx tools/package.ts",
-    "e2e": "node e2e/run.mjs"
+    "e2e": "tsx e2e/run.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

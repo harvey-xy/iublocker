@@ -57,6 +57,8 @@ test('the popup reports blocked counts for the tab', async ({ popup, page, serve
   await page.waitForFunction(() => (globalThis as any).__loaded === true).catch(() => undefined);
 
   // The count is refreshed on popup open (getMatchedRules), so poll the rendered text.
-  await expect.poll(async () => (await popupPage.locator('body').innerText()).replace(/\s+/g, ' ')).toMatch(/\d/);
+  await expect
+    .poll(async () => (await popupPage.locator('body').innerText()).replace(/\s+/g, ' '))
+    .toMatch(/\d/);
   await popupPage.close();
 });

@@ -7,7 +7,12 @@
  * generates its own throwaway extension) still run on a clean checkout. Every fixture
  * that needs the real extension fails immediately with the same message.
  */
-import { EXTENSION_DIST, MISSING_DIST_MESSAGE, chromeExecutablePath, extensionDistExists } from './fixtures/paths';
+import {
+  EXTENSION_DIST,
+  MISSING_DIST_MESSAGE,
+  chromeExecutablePath,
+  extensionDistExists,
+} from './fixtures/paths';
 
 export default function globalSetup(): void {
   const executablePath = chromeExecutablePath();

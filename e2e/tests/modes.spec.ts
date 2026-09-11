@@ -34,7 +34,11 @@ test('off: ads load again', async ({ page, server, sendRequest }) => {
   await expect(page.locator('#sponsored')).toBeVisible();
 });
 
-test('basic: network is blocked but cosmetic filters are not applied', async ({ page, server, sendRequest }) => {
+test('basic: network is blocked but cosmetic filters are not applied', async ({
+  page,
+  server,
+  sendRequest,
+}) => {
   await setMode(sendRequest, 'basic');
   await page.goto(server.url('/modes.html'));
 
@@ -45,7 +49,11 @@ test('basic: network is blocked but cosmetic filters are not applied', async ({ 
   await expect(page.locator('#sponsored')).toBeVisible();
 });
 
-test('optimal: network plus specific cosmetics, procedural still off', async ({ page, server, sendRequest }) => {
+test('optimal: network plus specific cosmetics, procedural still off', async ({
+  page,
+  server,
+  sendRequest,
+}) => {
   await setMode(sendRequest, 'optimal');
   await page.goto(server.url('/modes.html'));
 
@@ -72,7 +80,11 @@ test('the mode round-trips through tab:getState', async ({ page, server, sendReq
 
   await setMode(sendRequest, 'basic');
   await expect
-    .poll(async () => (await sendRequest<{ effectiveMode: string; hostname: string }>({ type: 'tab:getState' })).effectiveMode)
+    .poll(
+      async () =>
+        (await sendRequest<{ effectiveMode: string; hostname: string }>({ type: 'tab:getState' }))
+          .effectiveMode,
+    )
     .toBe('basic');
 
   await setMode(sendRequest, null);

@@ -81,11 +81,16 @@ async function main(argv: string[]): Promise<number> {
 
   let version = stringFlag(args, 'version');
   if (!version) {
-    const pkg = JSON.parse(await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8')) as { version?: string };
+    const pkg = JSON.parse(await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8')) as {
+      version?: string;
+    };
     version = pkg.version ?? '0.0.0';
   }
 
-  const out = path.resolve(REPO_ROOT, stringFlag(args, 'out') ?? path.join('artifacts', `iublocker-${version}.zip`));
+  const out = path.resolve(
+    REPO_ROOT,
+    stringFlag(args, 'out') ?? path.join('artifacts', `iublocker-${version}.zip`),
+  );
   const { buffer, files } = await zipDirectory(dir);
   if (files.length === 0) {
     console.error(`package: ${display(dir)} is empty`);
@@ -95,11 +100,13 @@ async function main(argv: string[]): Promise<number> {
   await writeFile(out, buffer);
 
   console.info(`package: ${display(out)} — ${files.length} file(s), ${human(buffer.length)}`);
-  if (buffer.length > 100 * 1024 * 1024) console.warn('package: over the Chrome Web Store 100 MiB upload limit');
+  if (buffer.length > 100 * 1024 * 1024)
+    console.warn('package: over the Chrome Web Store 100 MiB upload limit');
   return 0;
 }
 
-const invokedDirectly = process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const invokedDirectly =
+  process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
   main(process.argv.slice(2)).then(
     (code) => {

@@ -90,7 +90,9 @@ export async function fetchText(url: string, retries = RETRIES, timeoutMs = TIME
       console.warn(`  ! attempt ${attempt + 1}/${retries + 1} failed for ${url}: ${message}`);
     }
   }
-  throw new Error(`could not fetch ${url}: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+  throw new Error(
+    `could not fetch ${url}: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+  );
 }
 
 /* ----------------------------------------------------------------- includes */
@@ -143,10 +145,17 @@ export async function expandIncludes(
     try {
       body = await fetcher(target);
     } catch (err) {
-      out.push(`! [iublocker] include failed (${err instanceof Error ? err.message : String(err)}): ${target}`);
+      out.push(
+        `! [iublocker] include failed (${err instanceof Error ? err.message : String(err)}): ${target}`,
+      );
       continue;
     }
-    sources.push({ url: target, sha256: sha256(body), fetchedAt: new Date().toISOString(), bytes: Buffer.byteLength(body) });
+    sources.push({
+      url: target,
+      sha256: sha256(body),
+      fetchedAt: new Date().toISOString(),
+      bytes: Buffer.byteLength(body),
+    });
     const nested = await expandIncludes(body, target, fetcher, depth + 1, new Set([...seen, target]));
     sources.push(...nested.sources);
     out.push(SEPARATOR(target), nested.text);
@@ -161,7 +170,12 @@ async function fetchList(list: FilterListSource): Promise<{ text: string; meta: 
   const sources: SourceMeta[] = [];
   for (const url of list.urls) {
     const body = await fetchText(url);
-    sources.push({ url, sha256: sha256(body), fetchedAt: new Date().toISOString(), bytes: Buffer.byteLength(body) });
+    sources.push({
+      url,
+      sha256: sha256(body),
+      fetchedAt: new Date().toISOString(),
+      bytes: Buffer.byteLength(body),
+    });
     const expanded = await expandIncludes(body, url, (u) => fetchText(u), 0, new Set([url]));
     sources.push(...expanded.sources);
     chunks.push(SEPARATOR(url), expanded.text);
@@ -207,7 +221,14 @@ async function copySnapshot(snapshotDir: string, cacheDir: string, list: FilterL
   const existing = await readMeta(snapshotDir, list.id);
   const meta: ListMeta = existing ?? {
     id: list.id,
-    sources: [{ url: `snapshot:${list.id}.txt`, sha256: sha256(text), fetchedAt: '1970-01-01T00:00:00.000Z', bytes: Buffer.byteLength(text) }],
+    sources: [
+      {
+        url: `snapshot:${list.id}.txt`,
+        sha256: sha256(text),
+        fetchedAt: '1970-01-01T00:00:00.000Z',
+        bytes: Buffer.byteLength(text),
+      },
+    ],
     fetchedAt: '1970-01-01T00:00:00.000Z',
   };
   await writeList(cacheDir, list.id, text, meta);
@@ -216,7 +237,11 @@ async function copySnapshot(snapshotDir: string, cacheDir: string, list: FilterL
 
 /* --------------------------------------------------------------------- main */
 
-async function pool<T>(items: readonly T[], limit: number, worker: (item: T) => Promise<void>): Promise<void> {
+async function pool<T>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
   let next = 0;
   const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
     for (;;) {
@@ -238,7 +263,9 @@ async function main(argv: string[]): Promise<number> {
 
   const listsFile = path.resolve(REPO_ROOT, stringFlag(args, 'lists') ?? 'tools/filterlists.json');
   const cacheDir = path.resolve(REPO_ROOT, stringFlag(args, 'cache') ?? '.cache/lists');
-  const snapshotDir = stringFlag(args, 'snapshot') ? path.resolve(REPO_ROOT, stringFlag(args, 'snapshot') as string) : null;
+  const snapshotDir = stringFlag(args, 'snapshot')
+    ? path.resolve(REPO_ROOT, stringFlag(args, 'snapshot') as string)
+    : null;
   const only = listFlag(args, 'only');
   const force = boolFlag(args, 'force');
   const allowMissing = boolFlag(args, 'allow-missing');
@@ -247,7 +274,9 @@ async function main(argv: string[]): Promise<number> {
   try {
     config = JSON.parse(await readFile(listsFile, 'utf8')) as FilterListsConfig;
   } catch (err) {
-    console.error(`fetch-lists: cannot read ${display(listsFile)}: ${err instanceof Error ? err.message : String(err)}`);
+    console.error(
+      `fetch-lists: cannot read ${display(listsFile)}: ${err instanceof Error ? err.message : String(err)}`,
+    );
     return 1;
   }
   if (!Array.isArray(config.lists) || config.lists.length === 0) {
@@ -265,7 +294,9 @@ async function main(argv: string[]): Promise<number> {
   const lists = config.lists.filter((l) => !only || only.includes(l.id));
 
   await mkdir(cacheDir, { recursive: true });
-  console.info(`fetch-lists: ${lists.length} list(s) → ${display(cacheDir)}${snapshotDir ? ` (snapshot ${display(snapshotDir)})` : ''}`);
+  console.info(
+    `fetch-lists: ${lists.length} list(s) → ${display(cacheDir)}${snapshotDir ? ` (snapshot ${display(snapshotDir)})` : ''}`,
+  );
 
   const failures: { id: string; error: string }[] = [];
   const skipped: string[] = [];
@@ -293,7 +324,9 @@ async function main(argv: string[]): Promise<number> {
       const { text, meta } = await fetchList(list);
       await writeList(cacheDir, list.id, text, meta);
       fetched++;
-      console.info(`  ✓ ${list.id} (${meta.sources.length} source(s), ${(Buffer.byteLength(text) / 1024).toFixed(0)} KiB)`);
+      console.info(
+        `  ✓ ${list.id} (${meta.sources.length} source(s), ${(Buffer.byteLength(text) / 1024).toFixed(0)} KiB)`,
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       failures.push({ id: list.id, error: message });
@@ -301,7 +334,9 @@ async function main(argv: string[]): Promise<number> {
     }
   });
 
-  console.info(`fetch-lists: ${fetched} written, ${fresh} cached, ${skipped.length} skipped, ${failures.length} failed`);
+  console.info(
+    `fetch-lists: ${fetched} written, ${fresh} cached, ${skipped.length} skipped, ${failures.length} failed`,
+  );
   if (failures.length > 0) {
     console.error('fetch-lists: the following lists could not be fetched:');
     for (const f of failures) console.error(`  - ${f.id}: ${f.error}`);
@@ -314,7 +349,8 @@ async function main(argv: string[]): Promise<number> {
   return 0;
 }
 
-const invokedDirectly = process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const invokedDirectly =
+  process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
   main(process.argv.slice(2)).then(
     (code) => {

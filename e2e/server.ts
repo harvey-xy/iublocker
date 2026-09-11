@@ -68,7 +68,10 @@ export async function startServer(): Promise<FixtureServer> {
 
     if (pathname === '/__hits') {
       if (req.method === 'DELETE') counters.clear();
-      res.writeHead(200, { 'content-type': CONTENT_TYPES['.json'] as string, 'access-control-allow-origin': '*' });
+      res.writeHead(200, {
+        'content-type': CONTENT_TYPES['.json'] as string,
+        'access-control-allow-origin': '*',
+      });
       res.end(JSON.stringify(Object.fromEntries(counters)));
       return;
     }
@@ -90,7 +93,9 @@ export async function startServer(): Promise<FixtureServer> {
         return;
       case '/ads/frame.html':
         res.writeHead(200, { 'content-type': CONTENT_TYPES['.html'] as string });
-        res.end('<!doctype html><html><body><p id="ad-frame">AD FRAME</p><script>window.__adFrame = true;</script></body></html>');
+        res.end(
+          '<!doctype html><html><body><p id="ad-frame">AD FRAME</p><script>window.__adFrame = true;</script></body></html>',
+        );
         return;
       case '/track/pixel.gif':
         res.writeHead(200, { 'content-type': 'image/gif', 'content-length': String(PIXEL.length) });

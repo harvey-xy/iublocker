@@ -1,0 +1,142 @@
+name: Rulesets nightly
+
+on:
+  schedule:
+    # 03:00 UTC daily.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      allow_missing:
+        description: 'Continue when some lists cannot be downloaded'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rulesets-nightly
+  cancel-in-progress: false
+
+jobs:
+  rulesets:
+    name: fetch, build, delta, publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Fetch the live filter lists
+        run: pnpm rulesets:fetch -- --force ${{ (github.event_name == 'schedule' || inputs.allow_missing) && '--allow-missing' || '' }}
+
+      - name: Compile rulesets
+        run: pnpm rulesets:build
+
+      - name: Read the ruleset version
+        id: version
+        run: echo "version=$(node -p "require('./packages/extension/rulesets/manifest.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Build deltas against the last 3 releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/delta
+          tags=$(gh release list --limit 20 --json tagName,isPrerelease \
+            --jq '[.[] | select(.isPrerelease == false) | .tagName | select(startswith("v"))] | .[0:3] | .[]' || true)
+          if [ -z "$tags" ]; then
+            echo "No released versions yet — nothing to diff against."
+            exit 0
+          fi
+          for tag in $tags; do
+            version="${tag#v}"
+            work="${RUNNER_TEMP}/old-${version}"
+            rm -rf "$work" && mkdir -p "$work"
+            if ! gh release download "$tag" --pattern 'rulesets.zip' --dir "$work"; then
+              echo "::warning::release $tag has no rulesets.zip asset, skipping"
+              continue
+            fi
+            unzip -q "$work/rulesets.zip" -d "$work/rulesets"
+            pnpm delta -- "$work/rulesets" packages/extension/rulesets \
+              --out "artifacts/delta/${version}.json" --extension-version "$version" --summary
+          done
+          ls -la artifacts/delta
+
+      - name: Publish to the rulesets branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          work="${RUNNER_TEMP}/rulesets-branch"
+          rm -rf "$work"
+          if git ls-remote --exit-code --heads "$remote" rulesets >/dev/null 2>&1; then
+            git clone --depth 1 --branch rulesets "$remote" "$work"
+          else
+            echo "Creating the orphan 'rulesets' branch."
+            mkdir -p "$work"
+            git -C "$work" init -q -b rulesets
+            git -C "$work" remote add origin "$remote"
+          fi
+          mkdir -p "$work/delta"
+          cp packages/extension/rulesets/manifest.json "$work/manifest.json"
+          if [ -f packages/extension/rulesets/report.json ]; then
+            cp packages/extension/rulesets/report.json "$work/report.json"
+          fi
+          # Deltas are additive: keep the ones for versions this run did not rebuild.
+          if compgen -G 'artifacts/delta/*.json' > /dev/null; then cp artifacts/delta/*.json "$work/delta/"; fi
+          cd "$work"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No ruleset changes."
+            exit 0
+          fi
+          git commit -m "chore(rulesets): nightly snapshot ${VERSION}"
+          git push origin rulesets
+
+      - name: Package the rulesets
+        run: pnpm package -- --dir packages/extension/rulesets --out artifacts/rulesets.zip
+
+      - name: Update the rolling rulesets-nightly prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          notes="Rolling nightly filter-list build. Ruleset version \`${VERSION}\`, built $(date -u +%Y-%m-%dT%H:%M:%SZ) from the live lists. Not an extension release."
+          if ! gh release view rulesets-nightly >/dev/null 2>&1; then
+            gh release create rulesets-nightly \
+              --title 'Rulesets (nightly)' --notes "$notes" --prerelease --latest=false
+          else
+            gh release edit rulesets-nightly --notes "$notes" --prerelease
+          fi
+          assets=(artifacts/rulesets.zip packages/extension/rulesets/manifest.json)
+          if [ -f packages/extension/rulesets/report.json ]; then assets+=(packages/extension/rulesets/report.json); fi
+          if compgen -G 'artifacts/delta/*.json' > /dev/null; then assets+=(artifacts/delta/*.json); fi
+          gh release upload rulesets-nightly "${assets[@]}" --clobber
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rulesets-${{ steps.version.outputs.version }}
+          path: |
+            packages/extension/rulesets
+            artifacts/delta
+          if-no-files-found: ignore
+          retention-days: 14

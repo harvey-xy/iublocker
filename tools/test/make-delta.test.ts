@@ -47,14 +47,34 @@ describe('ruleKey', () => {
   });
 
   it('ignores the order of domain and resource-type lists', () => {
-    const a = block(1, '||a.com^', { condition: { urlFilter: '||a.com^', initiatorDomains: ['b.com', 'a.com'], resourceTypes: ['script', 'image'] } });
-    const b = block(2, '||a.com^', { condition: { urlFilter: '||a.com^', initiatorDomains: ['a.com', 'b.com'], resourceTypes: ['image', 'script'] } });
+    const a = block(1, '||a.com^', {
+      condition: {
+        urlFilter: '||a.com^',
+        initiatorDomains: ['b.com', 'a.com'],
+        resourceTypes: ['script', 'image'],
+      },
+    });
+    const b = block(2, '||a.com^', {
+      condition: {
+        urlFilter: '||a.com^',
+        initiatorDomains: ['a.com', 'b.com'],
+        resourceTypes: ['image', 'script'],
+      },
+    });
     expect(ruleKey(a)).toBe(ruleKey(b));
   });
 
   it('ignores object key order but not values', () => {
-    const a: DNRRule = { id: 1, action: { type: 'block' }, condition: { urlFilter: '||a.com^', domainType: 'thirdParty' } };
-    const b: DNRRule = { id: 1, condition: { domainType: 'thirdParty', urlFilter: '||a.com^' }, action: { type: 'block' } };
+    const a: DNRRule = {
+      id: 1,
+      action: { type: 'block' },
+      condition: { urlFilter: '||a.com^', domainType: 'thirdParty' },
+    };
+    const b: DNRRule = {
+      id: 1,
+      condition: { domainType: 'thirdParty', urlFilter: '||a.com^' },
+      action: { type: 'block' },
+    };
     expect(ruleKey(a)).toBe(ruleKey(b));
     expect(ruleKey(a)).not.toBe(ruleKey(block(1, '||b.com^')));
   });
@@ -63,7 +83,9 @@ describe('ruleKey', () => {
 describe('computeDnrDelta', () => {
   it('adds only rules missing from the old build and numbers them in the delta range', () => {
     const oldB = bundle({ dnr: { easylist: [block(1, '||a.com^')] } });
-    const newB = bundle({ dnr: { easylist: [block(7, '||a.com^'), block(8, '||b.com^'), block(9, '||c.com^')] } });
+    const newB = bundle({
+      dnr: { easylist: [block(7, '||a.com^'), block(8, '||b.com^'), block(9, '||c.com^')] },
+    });
     const { add, stats } = computeDnrDelta(oldB, newB, ['easylist']);
     expect(add.map((r) => r.condition.urlFilter)).toEqual(['||b.com^', '||c.com^']);
     expect(add.map((r) => r.id)).toEqual([ID_RANGE.DELTA.start, ID_RANGE.DELTA.start + 1]);
@@ -73,7 +95,9 @@ describe('computeDnrDelta', () => {
 
   it('deduplicates identical rules coming from several lists', () => {
     const oldB = bundle({ dnr: { easylist: [], easyprivacy: [] } });
-    const newB = bundle({ dnr: { easylist: [block(1, '||dup.com^')], easyprivacy: [block(2, '||dup.com^')] } });
+    const newB = bundle({
+      dnr: { easylist: [block(1, '||dup.com^')], easyprivacy: [block(2, '||dup.com^')] },
+    });
     const { add } = computeDnrDelta(oldB, newB, ['easylist', 'easyprivacy']);
     expect(add).toHaveLength(1);
   });
@@ -102,7 +126,9 @@ describe('computeDnrDelta', () => {
   });
 
   it('caps additions at the delta dynamic-rule budget', () => {
-    const many = Array.from({ length: BUILD_BUDGET.DELTA_DYNAMIC_RULES + 5 }, (_, i) => block(i + 1, `||x${i}.com^`));
+    const many = Array.from({ length: BUILD_BUDGET.DELTA_DYNAMIC_RULES + 5 }, (_, i) =>
+      block(i + 1, `||x${i}.com^`),
+    );
     const oldB = bundle({ dnr: { easylist: [] } });
     const newB = bundle({ dnr: { easylist: many } });
     const { add, stats } = computeDnrDelta(oldB, newB, ['easylist']);
@@ -134,7 +160,11 @@ describe('computeDnrDelta', () => {
 });
 
 describe('cosmetic delta', () => {
-  const withSpecific = (listId: string, specific: Record<string, string[]>, extra: Partial<CosmeticDB> = {}): CosmeticDB => ({
+  const withSpecific = (
+    listId: string,
+    specific: Record<string, string[]>,
+    extra: Partial<CosmeticDB> = {},
+  ): CosmeticDB => ({
     ...emptyCosmeticDB(listId),
     specific,
     ...extra,
@@ -165,20 +195,61 @@ describe('cosmetic delta', () => {
       ...emptyCosmeticDB('old'),
       generic: { byId: { ad: ['#ad'] }, byClass: {}, complex: ['[data-ad]'] },
       styles: { 'example.com': [['.a', 'opacity:0']] },
-      procedural: { 'example.com': [{ raw: '.card:has-text(A)', tasks: [['css', '.card'], ['has-text', 'A']] }] },
-      exceptions: { selectors: { 'ex.com': ['.keep'] }, elemhide: ['e.com'], generichide: [], specifichide: [] },
+      procedural: {
+        'example.com': [
+          {
+            raw: '.card:has-text(A)',
+            tasks: [
+              ['css', '.card'],
+              ['has-text', 'A'],
+            ],
+          },
+        ],
+      },
+      exceptions: {
+        selectors: { 'ex.com': ['.keep'] },
+        elemhide: ['e.com'],
+        generichide: [],
+        specifichide: [],
+      },
     };
     const newDb: CosmeticDB = {
       ...emptyCosmeticDB('new'),
-      generic: { byId: { ad: ['#ad', '#ad2'] }, byClass: { promo: ['.promo'] }, complex: ['[data-ad]', '[data-promo]'] },
-      styles: { 'example.com': [['.a', 'opacity:0'], ['.b', 'display:none']] },
-      procedural: {
+      generic: {
+        byId: { ad: ['#ad', '#ad2'] },
+        byClass: { promo: ['.promo'] },
+        complex: ['[data-ad]', '[data-promo]'],
+      },
+      styles: {
         'example.com': [
-          { raw: '.card:has-text(A)', tasks: [['css', '.card'], ['has-text', 'A']] },
-          { raw: '.card:has-text(B)', tasks: [['css', '.card'], ['has-text', 'B']] },
+          ['.a', 'opacity:0'],
+          ['.b', 'display:none'],
         ],
       },
-      exceptions: { selectors: { 'ex.com': ['.keep', '.new'] }, elemhide: ['e.com', 'f.com'], generichide: [], specifichide: [] },
+      procedural: {
+        'example.com': [
+          {
+            raw: '.card:has-text(A)',
+            tasks: [
+              ['css', '.card'],
+              ['has-text', 'A'],
+            ],
+          },
+          {
+            raw: '.card:has-text(B)',
+            tasks: [
+              ['css', '.card'],
+              ['has-text', 'B'],
+            ],
+          },
+        ],
+      },
+      exceptions: {
+        selectors: { 'ex.com': ['.keep', '.new'] },
+        elemhide: ['e.com', 'f.com'],
+        generichide: [],
+        specifichide: [],
+      },
     };
     const { add, stats } = computeCosmeticDelta(oldDb, newDb);
     expect(add.generic.byId).toEqual({ ad: ['#ad2'] });
@@ -199,9 +270,16 @@ describe('scriptlet delta', () => {
   });
 
   it('merges lists and diffs calls by name + args', () => {
-    const oldDb = mergeScriptletDBs([db('a', { 'example.com': [{ name: 'set-constant', args: ['adConfig', 'false'] }] })]);
+    const oldDb = mergeScriptletDBs([
+      db('a', { 'example.com': [{ name: 'set-constant', args: ['adConfig', 'false'] }] }),
+    ]);
     const newDb = mergeScriptletDBs([
-      db('a', { 'example.com': [{ name: 'set-constant', args: ['adConfig', 'false'] }, { name: 'abort-on-property-read', args: ['ads'] }] }),
+      db('a', {
+        'example.com': [
+          { name: 'set-constant', args: ['adConfig', 'false'] },
+          { name: 'abort-on-property-read', args: ['ads'] },
+        ],
+      }),
       db('b', { 'other.com': [{ name: 'nowebrtc', args: [] }] }),
     ]);
     const { add, remove, stats } = computeScriptletDelta(oldDb, newDb);
@@ -220,8 +298,14 @@ describe('scriptlet delta', () => {
 describe('computeDelta', () => {
   it('produces a DeltaFile with base/version from the two manifests', () => {
     const oldB = bundle({ version: '2026.01.01.1', dnr: { easylist: [block(1, '||a.com^')] } });
-    const newB = bundle({ version: '2026.02.02.3', dnr: { easylist: [block(1, '||a.com^'), block(2, '||b.com^')] } });
-    const { delta, summary } = computeDelta(oldB, newB, { builtAt: '2026-02-02T00:00:00.000Z', extensionVersion: '1.2.3' });
+    const newB = bundle({
+      version: '2026.02.02.3',
+      dnr: { easylist: [block(1, '||a.com^'), block(2, '||b.com^')] },
+    });
+    const { delta, summary } = computeDelta(oldB, newB, {
+      builtAt: '2026-02-02T00:00:00.000Z',
+      extensionVersion: '1.2.3',
+    });
     expect(delta.base).toBe('2026.01.01.1');
     expect(delta.version).toBe('2026.02.02.3');
     expect(delta.builtAt).toBe('2026-02-02T00:00:00.000Z');
@@ -252,8 +336,20 @@ describe('loadBundle', () => {
             defaultEnabled: true,
             trusted: false,
             sources: [],
-            counts: { dnr: 1, regex: 0, cosmeticGeneric: 0, cosmeticSpecific: 1, procedural: 0, scriptlets: 0, dropped: 0 },
-            files: { dnr: 'dnr/easylist.json', cosmetic: 'cosmetic/easylist.json', scriptlets: 'scriptlets/easylist.json' },
+            counts: {
+              dnr: 1,
+              regex: 0,
+              cosmeticGeneric: 0,
+              cosmeticSpecific: 1,
+              procedural: 0,
+              scriptlets: 0,
+              dropped: 0,
+            },
+            files: {
+              dnr: 'dnr/easylist.json',
+              cosmetic: 'cosmetic/easylist.json',
+              scriptlets: 'scriptlets/easylist.json',
+            },
           },
         ],
         budget: { staticRulesTotal: 1, staticRulesDefaultEnabled: 1, regexTotal: 0 },

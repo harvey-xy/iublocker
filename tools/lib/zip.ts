@@ -72,7 +72,8 @@ export class ZipWriter {
     const data = Buffer.isBuffer(content) ? content : Buffer.from(content as Uint8Array | string);
     const normalized = name.replace(/\\/g, '/').replace(/^\/+/, '');
     if (normalized.length === 0) throw new Error('zip: empty entry name');
-    if (this.entries.some((e) => e.name === normalized)) throw new Error(`zip: duplicate entry ${normalized}`);
+    if (this.entries.some((e) => e.name === normalized))
+      throw new Error(`zip: duplicate entry ${normalized}`);
 
     const deflated = this.level > 0 && data.length > 0 ? deflateRawSync(data, { level: this.level }) : null;
     const useDeflate = deflated !== null && deflated.length < data.length;

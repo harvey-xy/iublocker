@@ -55,13 +55,25 @@ export async function loadBundle(dir: string): Promise<RulesetBundle> {
   const manifest = await readJson<RulesetManifest>(path.join(dir, 'manifest.json'));
   if (!manifest) throw new Error(`no readable manifest.json in ${dir}`);
 
-  const bundle: RulesetBundle = { version: manifest.version, listIds: [], dnr: {}, cosmetic: {}, scriptlets: {} };
+  const bundle: RulesetBundle = {
+    version: manifest.version,
+    listIds: [],
+    dnr: {},
+    cosmetic: {},
+    scriptlets: {},
+  };
   for (const entry of manifest.lists ?? []) {
     bundle.listIds.push(entry.id);
-    const files = entry.files ?? { dnr: `dnr/${entry.id}.json`, cosmetic: `cosmetic/${entry.id}.json`, scriptlets: `scriptlets/${entry.id}.json` };
+    const files = entry.files ?? {
+      dnr: `dnr/${entry.id}.json`,
+      cosmetic: `cosmetic/${entry.id}.json`,
+      scriptlets: `scriptlets/${entry.id}.json`,
+    };
     bundle.dnr[entry.id] = (await readJson<DNRRule[]>(path.join(dir, files.dnr))) ?? [];
-    bundle.cosmetic[entry.id] = (await readJson<CosmeticDB>(path.join(dir, files.cosmetic))) ?? emptyCosmeticDB(entry.id);
-    bundle.scriptlets[entry.id] = (await readJson<ScriptletDB>(path.join(dir, files.scriptlets))) ?? emptyScriptletDB(entry.id);
+    bundle.cosmetic[entry.id] =
+      (await readJson<CosmeticDB>(path.join(dir, files.cosmetic))) ?? emptyCosmeticDB(entry.id);
+    bundle.scriptlets[entry.id] =
+      (await readJson<ScriptletDB>(path.join(dir, files.scriptlets))) ?? emptyScriptletDB(entry.id);
   }
   return bundle;
 }
@@ -109,10 +121,21 @@ function isHighRank(rule: DNRRule): boolean {
 export interface DnrDelta {
   add: DNRRule[];
   disable: Record<string, number[]>;
-  stats: { candidates: number; added: number; droppedOverBudget: number; disabled: number; disabledRulesets: number; missingInNew: string[] };
+  stats: {
+    candidates: number;
+    added: number;
+    droppedOverBudget: number;
+    disabled: number;
+    disabledRulesets: number;
+    missingInNew: string[];
+  };
 }
 
-export function computeDnrDelta(oldBundle: RulesetBundle, newBundle: RulesetBundle, listOrder: readonly string[]): DnrDelta {
+export function computeDnrDelta(
+  oldBundle: RulesetBundle,
+  newBundle: RulesetBundle,
+  listOrder: readonly string[],
+): DnrDelta {
   const rank = (listId: string): number => {
     const index = listOrder.indexOf(listId);
     return index === -1 ? listOrder.length : index;
@@ -209,7 +232,8 @@ export function mergeCosmeticDBs(dbs: readonly CosmeticDB[], listId = DELTA_LIST
     unionInto(out.specific, db.specific);
     for (const [host, pairs] of Object.entries(db.styles ?? {})) {
       const bucket = (out.styles[host] ??= []);
-      for (const pair of pairs) if (!bucket.some((p) => p[0] === pair[0] && p[1] === pair[1])) bucket.push(pair);
+      for (const pair of pairs)
+        if (!bucket.some((p) => p[0] === pair[0] && p[1] === pair[1])) bucket.push(pair);
     }
     for (const [host, filters] of Object.entries(db.procedural ?? {})) {
       const bucket = (out.procedural[host] ??= []);
@@ -316,7 +340,10 @@ export interface ScriptletDelta {
   stats: { added: number; removed: number };
 }
 
-function diffCalls(next: Record<string, ScriptletCall[]>, prev: Record<string, ScriptletCall[]>): Record<string, ScriptletCall[]> {
+function diffCalls(
+  next: Record<string, ScriptletCall[]>,
+  prev: Record<string, ScriptletCall[]>,
+): Record<string, ScriptletCall[]> {
   const out: Record<string, ScriptletCall[]> = {};
   for (const [host, calls] of Object.entries(next)) {
     const before = new Set((prev[host] ?? []).map(callKey));
@@ -363,12 +390,20 @@ export function computeDelta(
   const listOrder = options.listOrder ?? newBundle.listIds;
   const dnr = computeDnrDelta(oldBundle, newBundle, listOrder);
   const cosmetic = computeCosmeticDelta(
-    mergeCosmeticDBs(oldBundle.listIds.map((id) => oldBundle.cosmetic[id]).filter((db): db is CosmeticDB => !!db)),
-    mergeCosmeticDBs(newBundle.listIds.map((id) => newBundle.cosmetic[id]).filter((db): db is CosmeticDB => !!db)),
+    mergeCosmeticDBs(
+      oldBundle.listIds.map((id) => oldBundle.cosmetic[id]).filter((db): db is CosmeticDB => !!db),
+    ),
+    mergeCosmeticDBs(
+      newBundle.listIds.map((id) => newBundle.cosmetic[id]).filter((db): db is CosmeticDB => !!db),
+    ),
   );
   const scriptlets = computeScriptletDelta(
-    mergeScriptletDBs(oldBundle.listIds.map((id) => oldBundle.scriptlets[id]).filter((db): db is ScriptletDB => !!db)),
-    mergeScriptletDBs(newBundle.listIds.map((id) => newBundle.scriptlets[id]).filter((db): db is ScriptletDB => !!db)),
+    mergeScriptletDBs(
+      oldBundle.listIds.map((id) => oldBundle.scriptlets[id]).filter((db): db is ScriptletDB => !!db),
+    ),
+    mergeScriptletDBs(
+      newBundle.listIds.map((id) => newBundle.scriptlets[id]).filter((db): db is ScriptletDB => !!db),
+    ),
   );
 
   const delta: DeltaFile = {
@@ -395,13 +430,17 @@ export function formatSummary(summary: DeltaResult['summary']): string {
   const lines = [
     `make-delta: base ${summary.base} → ${summary.version}${summary.extensionVersion ? ` (extension ${summary.extensionVersion})` : ''}`,
     `  dnr.add        ${summary.dnr.added} of ${summary.dnr.candidates} candidate(s)` +
-      (summary.dnr.droppedOverBudget > 0 ? ` (${summary.dnr.droppedOverBudget} dropped over the ${MAX_ADD} budget)` : ''),
+      (summary.dnr.droppedOverBudget > 0
+        ? ` (${summary.dnr.droppedOverBudget} dropped over the ${MAX_ADD} budget)`
+        : ''),
     `  dnr.disable    ${summary.dnr.disabled} rule id(s) across ${summary.dnr.disabledRulesets} ruleset(s)`,
     `  cosmetic       +${summary.cosmetic.addedSelectors} selector(s), +${summary.cosmetic.addedProcedural} procedural, -${summary.cosmetic.removedSelectors} selector(s) on ${summary.cosmetic.hosts} host(s)`,
     `  scriptlets     +${summary.scriptlets.added}, -${summary.scriptlets.removed}`,
   ];
   if (summary.dnr.missingInNew.length > 0) {
-    lines.push(`  note           ${summary.dnr.missingInNew.length} ruleset(s) in the old build are gone from the new one: ${summary.dnr.missingInNew.join(', ')}`);
+    lines.push(
+      `  note           ${summary.dnr.missingInNew.length} ruleset(s) in the old build are gone from the new one: ${summary.dnr.missingInNew.join(', ')}`,
+    );
   }
   return lines.join('\n');
 }
@@ -445,18 +484,22 @@ async function main(argv: string[]): Promise<number> {
   if (extensionVersion) options.extensionVersion = extensionVersion;
   const { delta, summary } = computeDelta(oldBundle, newBundle, options);
 
-  const outPath = out.endsWith('/') || out.endsWith(path.sep) || path.extname(out) === ''
-    ? path.join(path.resolve(out), `${extensionVersion ?? delta.version}.json`)
-    : path.resolve(out);
+  const outPath =
+    out.endsWith('/') || out.endsWith(path.sep) || path.extname(out) === ''
+      ? path.join(path.resolve(out), `${extensionVersion ?? delta.version}.json`)
+      : path.resolve(out);
   await mkdir(path.dirname(outPath), { recursive: true });
   await writeFile(outPath, `${JSON.stringify(delta, null, 2)}\n`, 'utf8');
 
   if (boolFlag(args, 'summary')) console.info(formatSummary(summary));
-  console.info(`make-delta: wrote ${path.relative(process.cwd(), outPath)} (${delta.dnr.add.length} add, ${Object.keys(delta.dnr.disable).length} ruleset(s) with disables)`);
+  console.info(
+    `make-delta: wrote ${path.relative(process.cwd(), outPath)} (${delta.dnr.add.length} add, ${Object.keys(delta.dnr.disable).length} ruleset(s) with disables)`,
+  );
   return 0;
 }
 
-const invokedDirectly = process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const invokedDirectly =
+  process.argv[1] !== undefined && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (invokedDirectly) {
   main(process.argv.slice(2)).then(
     (code) => {
