@@ -1,0 +1,19 @@
+{
+  "name": "@iublocker/compiler",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts", "./cli": "./src/cli/index.ts" },
+  "bin": { "iub-compile": "./src/cli/index.ts" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@iublocker/scriptlets": "workspace:*",
+    "@iublocker/shared": "workspace:*"
+  }
+}

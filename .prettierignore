@@ -1,0 +1,8 @@
+dist
+node_modules
+rulesets
+.cache
+artifacts
+pnpm-lock.yaml
+CHANGELOG.md
+LICENSE

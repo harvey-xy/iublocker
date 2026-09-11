@@ -1,0 +1,35 @@
+/** Base manifest; scripts/build.ts merges rulesets + version. docs/ARCHITECTURE.md §8 */
+export const baseManifest = {
+  manifest_version: 3,
+  name: '__MSG_extName__',
+  description: '__MSG_extDescription__',
+  default_locale: 'en',
+  minimum_chrome_version: '128',
+  icons: { 16: 'icons/16.png', 32: 'icons/32.png', 48: 'icons/48.png', 128: 'icons/128.png' },
+  action: { default_popup: 'popup.html', default_icon: { 16: 'icons/16.png', 32: 'icons/32.png' } },
+  options_page: 'dashboard.html',
+  background: { service_worker: 'background.js', type: 'module' },
+  permissions: [
+    'declarativeNetRequest',
+    'declarativeNetRequestFeedback',
+    'scripting',
+    'storage',
+    'unlimitedStorage',
+    'tabs',
+    'webNavigation',
+    'alarms',
+  ],
+  host_permissions: ['<all_urls>'],
+  content_scripts: [
+    {
+      matches: ['http://*/*', 'https://*/*'],
+      js: ['content/cosmetic.js'],
+      run_at: 'document_start',
+      all_frames: true,
+      match_about_blank: true,
+    },
+  ],
+  web_accessible_resources: [{ resources: ['resources/*'], matches: ['<all_urls>'], use_dynamic_url: true }],
+  content_security_policy: { extension_pages: "script-src 'self'; object-src 'self'" },
+  declarative_net_request: { rule_resources: [] as { id: string; enabled: boolean; path: string }[] },
+} as const;

@@ -1,0 +1,33 @@
+{
+  "$schema": "./filterlists.schema.json",
+  "lists": [
+    { "id": "easylist", "title": "EasyList", "urls": ["https://easylist.to/easylist/easylist.txt"], "group": "ads", "defaultEnabled": true, "trusted": false, "homepage": "https://easylist.to", "license": "CC BY-SA 3.0 / GPL-3.0" },
+    { "id": "easyprivacy", "title": "EasyPrivacy", "urls": ["https://easylist.to/easylist/easyprivacy.txt"], "group": "privacy", "defaultEnabled": true, "trusted": false, "homepage": "https://easylist.to", "license": "CC BY-SA 3.0 / GPL-3.0" },
+    { "id": "ubo-filters", "title": "uBlock filters", "urls": [
+        "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+        "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt",
+        "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
+        "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/quick-fixes.txt",
+        "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/unbreak.txt"
+      ], "group": "ads", "defaultEnabled": true, "trusted": true, "homepage": "https://github.com/uBlockOrigin/uAssets", "license": "GPL-3.0" },
+    { "id": "peter-lowe", "title": "Peter Lowe's Ad and tracking server list", "urls": ["https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext"], "format": "hosts", "group": "privacy", "defaultEnabled": true, "trusted": false, "homepage": "https://pgl.yoyo.org/adservers/", "license": "McRae General Public License" },
+    { "id": "malware-urlhaus", "title": "Online Malicious URL Blocklist", "urls": ["https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-online.txt"], "group": "malware", "defaultEnabled": true, "trusted": false, "homepage": "https://gitlab.com/malware-filter/urlhaus-filter", "license": "CC0-1.0" },
+    { "id": "easylist-cookie", "title": "EasyList Cookie", "urls": ["https://secure.fanboy.co.nz/fanboy-cookiemonster.txt"], "group": "annoyances", "defaultEnabled": false, "trusted": false },
+    { "id": "ubo-annoyances", "title": "uBlock annoyances", "urls": ["https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances.txt"], "group": "annoyances", "defaultEnabled": false, "trusted": true },
+    { "id": "fanboy-annoyance", "title": "Fanboy's Annoyance", "urls": ["https://secure.fanboy.co.nz/fanboy-annoyance.txt"], "group": "annoyances", "defaultEnabled": false, "trusted": false },
+    { "id": "adguard-mobile", "title": "AdGuard Mobile Ads", "urls": ["https://filters.adtidy.org/extension/ublock/filters/11.txt"], "group": "ads", "defaultEnabled": false, "trusted": false },
+    { "id": "easylist-zh", "title": "EasyList China", "urls": ["https://easylist-downloads.adblockplus.org/easylistchina.txt"], "group": "regional", "lang": ["zh"], "defaultEnabled": false, "trusted": false },
+    { "id": "cjx-annoyance", "title": "CJX's Annoyance List", "urls": ["https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt"], "group": "regional", "lang": ["zh"], "defaultEnabled": false, "trusted": false },
+    { "id": "easylist-jp", "title": "ABP Japanese filters", "urls": ["https://raw.githubusercontent.com/k2jp/abp-japanese-filters/master/abpjf.txt"], "group": "regional", "lang": ["ja"], "defaultEnabled": false, "trusted": false },
+    { "id": "list-kr", "title": "List-KR", "urls": ["https://raw.githubusercontent.com/List-KR/List-KR/master/filter-uBlockOrigin.txt"], "group": "regional", "lang": ["ko"], "defaultEnabled": false, "trusted": false },
+    { "id": "easylist-de", "title": "EasyList Germany", "urls": ["https://easylist.to/easylistgermany/easylistgermany.txt"], "group": "regional", "lang": ["de"], "defaultEnabled": false, "trusted": false },
+    { "id": "easylist-fr", "title": "Liste FR", "urls": ["https://easylist-downloads.adblockplus.org/liste_fr.txt"], "group": "regional", "lang": ["fr"], "defaultEnabled": false, "trusted": false },
+    { "id": "easylist-es", "title": "EasyList Spanish", "urls": ["https://easylist-downloads.adblockplus.org/easylistspanish.txt"], "group": "regional", "lang": ["es"], "defaultEnabled": false, "trusted": false },
+    { "id": "easylist-it", "title": "EasyList Italy", "urls": ["https://easylist-downloads.adblockplus.org/easylistitaly.txt"], "group": "regional", "lang": ["it"], "defaultEnabled": false, "trusted": false },
+    { "id": "ruadlist", "title": "RU AdList", "urls": ["https://easylist-downloads.adblockplus.org/advblock.txt"], "group": "regional", "lang": ["ru"], "defaultEnabled": false, "trusted": false },
+    { "id": "easylist-pt", "title": "EasyList Portuguese", "urls": ["https://easylist-downloads.adblockplus.org/easylistportuguese.txt"], "group": "regional", "lang": ["pt"], "defaultEnabled": false, "trusted": false },
+    { "id": "easylist-nl", "title": "EasyList Dutch", "urls": ["https://easylist-downloads.adblockplus.org/easylistdutch.txt"], "group": "regional", "lang": ["nl"], "defaultEnabled": false, "trusted": false },
+    { "id": "easylist-pl", "title": "EasyList Polish", "urls": ["https://easylist-downloads.adblockplus.org/easylistpolish.txt"], "group": "regional", "lang": ["pl"], "defaultEnabled": false, "trusted": false },
+    { "id": "abpvn", "title": "ABPVN (Vietnamese)", "urls": ["https://raw.githubusercontent.com/abpvn/abpvn/master/filter/abpvn.txt"], "group": "regional", "lang": ["vi"], "defaultEnabled": false, "trusted": false }
+  ]
+}

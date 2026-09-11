@@ -1,0 +1,10 @@
+! Title: iuBlocker e2e test list
+! Compiled into the `e2e-test` ruleset only when IUB_E2E=1. Targets the local fixture server.
+||127.0.0.1/ads/^
+||127.0.0.1/track/^$image,ping,xmlhttprequest
+127.0.0.1##.ad-banner
+127.0.0.1###sponsored
+127.0.0.1#?#.card:has-text(Sponsored)
+127.0.0.1##+js(set-constant, adConfig, false)
+||127.0.0.1/ads/gpt.js$script,redirect=googletagservices_gpt.js
+$removeparam=utm_source

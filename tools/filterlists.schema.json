@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["lists"],
+  "properties": {
+    "lists": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "urls", "group", "defaultEnabled"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "title": { "type": "string" },
+          "urls": { "type": "array", "items": { "type": "string", "format": "uri" }, "minItems": 1 },
+          "group": { "enum": ["ads", "privacy", "malware", "annoyances", "regional", "custom", "test"] },
+          "lang": { "type": "array", "items": { "type": "string" } },
+          "defaultEnabled": { "type": "boolean" },
+          "trusted": { "type": "boolean" },
+          "homepage": { "type": "string" },
+          "license": { "type": "string" },
+          "format": { "enum": ["abp", "hosts"] },
+          "expires": { "type": "string" }
+        }
+      }
+    }
+  }
+}
