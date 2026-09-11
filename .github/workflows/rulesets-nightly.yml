@@ -44,6 +44,14 @@ jobs:
       - name: Compile rulesets
         run: pnpm rulesets:build
 
+      # Chrome validates every declared static ruleset when the extension loads, so a
+      # rule it refuses (or silently skips) must fail the nightly, not ship.
+      - name: Install Chromium for Playwright
+        run: pnpm --dir e2e exec playwright install chromium --with-deps
+
+      - name: Verify the real-list build loads in Chrome
+        run: pnpm verify:real
+
       - name: Read the ruleset version
         id: version
         run: echo "version=$(node -p "require('./packages/extension/rulesets/manifest.json').version")" >> "$GITHUB_OUTPUT"

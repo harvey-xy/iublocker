@@ -195,15 +195,29 @@ export function toASCIIHostname(host: string): string {
   }
 }
 
-/** Split `pattern$options` respecting escaped `$` and `/regex/` patterns. */
+/** First character of an option name (`script`, `~third-party`, `_`…). */
+const OPTION_NAME_START = /[A-Za-z~_]/;
+
+/**
+ * Split `pattern$options` respecting escaped `$` and `/regex/` patterns.
+ *
+ * For a regex pattern the boundary is the last unescaped `/` that is followed by `$` and
+ * a plausible option name — the closing slash is *not* necessarily the last character of
+ * the line, because option values carry slashes of their own
+ * (`/re/$script,uritransform=/a/b/`). Reading such a line as one bare regex silently
+ * smuggles the option text into `regexFilter`, where it compiles fine and matches nothing.
+ */
 export function splitPatternOptions(text: string): { pattern: string; options: string | null } {
   if (text.startsWith('/')) {
+    let bareRegex = false;
     for (let i = text.length - 1; i > 0; i -= 1) {
       if (text[i] !== '/' || text[i - 1] === '\\') continue;
-      if (i === text.length - 1) return { pattern: text, options: null };
-      if (text[i + 1] === '$') return { pattern: text.slice(0, i + 1), options: text.slice(i + 2) };
-      break;
+      if (text[i + 1] === '$' && OPTION_NAME_START.test(text[i + 2] ?? ''))
+        return { pattern: text.slice(0, i + 1), options: text.slice(i + 2) };
+      // Keep looking: the trailing `/` may belong to an option value, not to the regex.
+      if (i === text.length - 1) bareRegex = true;
     }
+    if (bareRegex) return { pattern: text, options: null };
   }
   for (let i = 0; i < text.length; i += 1) {
     if (text[i] !== '$' || (i > 0 && text[i - 1] === '\\')) continue;

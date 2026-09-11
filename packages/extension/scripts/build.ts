@@ -2,11 +2,13 @@
  * Extension build. docs/BUILD-AND-RELEASE.md "Extension build".
  *
  *   pnpm --filter @iublocker/extension build [-- --watch] [--minify] [--strict] [--out <dir>]
+ *                                                   [--rulesets <dir>]
  *
  * 1. clean dist/
  * 2. esbuild every entry point that exists (other workstreams may not have landed theirs
  *    yet — a missing entry is a warning, not an error)
- * 3. copy public/** and the compiler output rulesets/**
+ * 3. copy public/** and the compiler output rulesets/** (--rulesets <dir> to read it
+ *    from somewhere other than <package>/rulesets)
  * 4. generate manifest.json from src/manifest.ts + rulesets/manifest.json + the root
  *    package.json version
  * 5. write build-info.json
@@ -47,6 +49,8 @@ export interface BuildOptions {
   strict?: boolean;
   /** Do not copy rulesets/ at all. */
   skipRulesets?: boolean;
+  /** Compiler output to copy instead of `<package>/rulesets` (tools/verify-real-rulesets.ts). */
+  rulesetsDir?: string;
   /** Include the e2e-test ruleset (also set by IUB_E2E=1). */
   e2e?: boolean;
   silent?: boolean;
@@ -103,8 +107,12 @@ export function parseArgs(argv: readonly string[]): BuildOptions {
       case '--out':
         options.outDir = argv[++i];
         break;
+      case '--rulesets':
+        options.rulesetsDir = argv[++i];
+        break;
       default:
         if (arg?.startsWith('--out=')) options.outDir = arg.slice('--out='.length);
+        else if (arg?.startsWith('--rulesets=')) options.rulesetsDir = arg.slice('--rulesets='.length);
         else if (arg) console.warn(`[build] ignoring unknown flag ${arg}`);
     }
   }
@@ -245,7 +253,9 @@ export async function runBuild(options: BuildOptions = {}): Promise<BuildResult>
   else warn('public/ does not exist');
 
   let rulesetManifest: RulesetManifest | null = null;
-  const rulesetsSrc = path.join(packageDir, 'rulesets');
+  const rulesetsSrc = options.rulesetsDir
+    ? path.resolve(options.rulesetsDir)
+    : path.join(packageDir, 'rulesets');
   if (options.skipRulesets) {
     warn('--skip-rulesets: the build has no static rulesets');
   } else if (existsSync(rulesetsSrc)) {
@@ -253,7 +263,7 @@ export async function runBuild(options: BuildOptions = {}): Promise<BuildResult>
     rulesetManifest = await readJson<RulesetManifest>(path.join(outDir, 'rulesets', 'manifest.json'));
     if (!rulesetManifest) warn('rulesets/manifest.json is missing or malformed');
   } else {
-    const message = 'rulesets/ not found — run `pnpm rulesets:build` first';
+    const message = `${rulesetsSrc} not found — run \`pnpm rulesets:build\` first`;
     if (options.strict) throw new Error(message);
     warn(`${message}; continuing with an empty ruleset list`);
   }

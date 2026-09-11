@@ -29,6 +29,17 @@ describe('splitPatternOptions', () => {
     ['/ads/banner$image', '/ads/banner', 'image'],
     ['||example.com/a\\$b^$script', '||example.com/a\\$b^', 'script'],
     ['$removeparam=utm_source', '', 'removeparam=utm_source'],
+    // The closing slash of a regex pattern is not always the last character of the line:
+    // option values carry slashes too. Reading this as one bare regex used to smuggle
+    // "$script,domain=…" into regexFilter.
+    [
+      '/vjs\\.zencdn\\.net\\/[0-9]+(\\/video\\.min\\.js)$/$script,domain=a.com,uritransform=//$1b.com$2/',
+      '/vjs\\.zencdn\\.net\\/[0-9]+(\\/video\\.min\\.js)$/',
+      'script,domain=a.com,uritransform=//$1b.com$2/',
+    ],
+    // …but a trailing "/$" that is not followed by an option name stays part of the regex.
+    ['/foo/$/', '/foo/$/', null],
+    ['/^https:\\/\\/example\\.com\\/$/', '/^https:\\/\\/example\\.com\\/$/', null],
   ];
   for (const [input, pattern, options] of cases) {
     it(`splits ${input}`, () => {

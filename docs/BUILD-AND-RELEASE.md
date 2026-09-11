@@ -19,6 +19,7 @@
 | `pnpm e2e`                                   | Playwright with the unpacked extension                                                                                                                                                                                               |
 | `pnpm delta -- <oldDir> <newDir>`            | `tools/make-delta.ts`                                                                                                                                                                                                                |
 | `pnpm package`                               | zips `packages/extension/dist` → `artifacts/iublocker-<version>.zip`                                                                                                                                                                 |
+| `pnpm verify:real`                           | `tools/verify-real-rulesets.ts`: compiles `.cache/lists` and builds the extension in a temp dir, then has Chromium load it and reports what Chrome accepted (`docs/TESTING.md`)                                                      |
 
 ## Extension build (`packages/extension/scripts/build.ts`)
 
@@ -41,7 +42,9 @@
 6. Write `dist/build-info.json` (git sha, list snapshot version, entries built/skipped).
 
 Flags: `--watch`, `--minify`, `--strict`, `--skip-rulesets`, `--e2e`, `--out <dir>`
-(build somewhere other than `dist/`; used by the build's own smoke test).
+(build somewhere other than `dist/`; used by the build's own smoke test), `--rulesets <dir>`
+(take the compiler output from somewhere other than `packages/extension/rulesets`; used by
+`pnpm verify:real`).
 
 ## CI (`.github/workflows/ci.yml`)
 
@@ -52,12 +55,15 @@ with a **small cached snapshot** of lists checked in under `e2e/fixtures/lists/`
 
 ## Nightly rulesets (`.github/workflows/rulesets-nightly.yml`)
 
-See `docs/RULESETS.md` §6. Commits to the `rulesets` branch and updates the
+See `docs/RULESETS.md` §6. The fresh build is handed to Chromium (`pnpm verify:real`)
+before anything is published, so a list change that produces a rule Chrome refuses fails
+the nightly instead of shipping. Commits to the `rulesets` branch and updates the
 `rulesets-nightly` prerelease.
 
 ## Release (`.github/workflows/release.yml`)
 
-On tag `v*`: full fresh list fetch → build → package → GitHub Release with
+On tag `v*`: full fresh list fetch → build → `pnpm verify:real` (Chrome must accept the
+real-list build) → package → GitHub Release with
 `iublocker-<version>.zip`, `rulesets/manifest.json`, `report.json`. Chrome Web Store
 upload is a manual step until the store listing exists (`tools/cws-upload.ts` is
 provided, keyed by repository secrets).

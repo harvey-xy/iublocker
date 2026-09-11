@@ -39,6 +39,58 @@ validation, `report.json` is stable (snapshot).
 - Popup/dashboard smoke tests open `chrome-extension://<id>/popup.html` and assert the
   mode selector round‑trips through storage.
 
+## Real-list load verification (`pnpm verify:real`)
+
+Chrome parses **every static ruleset a manifest declares** when the extension loads —
+disabled ones included. One rule it refuses ("Rule with id N specifies an incorrect value
+for the urlFilter key") makes it refuse the whole extension, and one rule it _skips_
+(a `regexFilter` over its 2 KB compiled-memory budget) silently vanishes from the build.
+Unit tests check what the compiler _meant_ to emit; only Chrome can say what it accepted.
+
+`pnpm verify:real` (`tools/verify-real-rulesets.ts`) closes that gap:
+
+1. compiles `.cache/lists` (the live lists, `pnpm rulesets:fetch`) into a **temp**
+   directory — `packages/extension/rulesets` and `packages/extension/dist` are never
+   touched;
+2. builds the extension there (`scripts/build.ts --out <tmp>/dist --rulesets <tmp>/rulesets
+--strict`);
+3. runs `e2e/tests/real-rulesets.spec.ts` against it with `IUB_REAL_RULESETS_DIST` set;
+4. prints rules per list (declared vs what Chrome counted), bytes, registered content
+   scripts and the probe outcomes.
+
+The spec is **skipped unless `IUB_REAL_RULESETS_DIST` points at a built extension**, so
+plain `pnpm e2e` stays snapshot-based and fast. It overrides the `distPath` fixture option
+(`e2e/fixtures/extension.ts`) for its own file; everything else about the launch is the
+shared fixture. What it asserts:
+
+- the service worker starts and `chrome.runtime.getManifest()` answers — a build Chrome
+  rejects never gets this far — and every declared `rule_resources` path exists in `dist`;
+- `getEnabledRulesets()` equals the first-run default set computed from
+  `rulesets/manifest.json` for the browser UI language (`defaultEnabled` lists plus
+  regional lists matching `chrome.i18n.getUILanguage()`), mirroring
+  `background/rulesets/manager.defaultEnabledFor`;
+- `getAvailableStaticRuleCount()` clears the `330,000 − budget.staticRulesDefaultEnabled −
+1,000` floor **and** equals `330,000` minus exactly the rules the manifest attributes to
+  the enabled lists;
+- per ruleset: enabling it alone must cost exactly `counts.dnr` rules. This is the check
+  that catches rules Chrome silently skips — it found 11 over-budget regexes in the live
+  lists (see `MAX_REGEX_PROGRAM_SIZE` in `packages/compiler/src/dnr/re2.ts`);
+- no service-worker console error mentioning `Rule with id`, `rule_resources` or `Invalid`;
+- `testMatchOutcome` blocks well-known ad/tracker requests (adsbygoogle, gtm.js, gpt.js,
+  analytics.js, ad_status.js) with a `block`/`redirect` rule that really exists in the
+  shipped ruleset file, and does **not** block `https://example.com/` or a jQuery CDN URL.
+  Coverage of a given URL is list content, not a property of the build, so at least
+  `MIN_BLOCKED_PROBES` (3) of the five must be blocked and the summary names the rest;
+- `getRegisteredContentScripts()` matches what `scriptlets/registrar.buildDesired` would
+  register for the enabled lists (one script per group, split at 1,000 hosts), and every
+  `js` file it points at exists in `dist`;
+- the message router answers `debug:dumpState` from an extension page with the build's
+  ruleset version.
+
+CI runs it nightly (`rulesets-nightly.yml`, right after the fetch + compile) and on every
+release before packaging. `ci.yml` stays snapshot-only: it must not depend on the network
+or on what upstream lists happen to contain today.
+
 ## Manual checklist (release)
 
 `docs/MANUAL-QA.md` (kept short): top 20 sites by region, YouTube (with/without

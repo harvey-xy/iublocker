@@ -12,13 +12,18 @@
  * The extension id is read from the service worker URL, so every test that needs the
  * worker waits for `context.waitForEvent('serviceworker')` (or picks up an already
  * registered one).
+ *
+ * Which build is loaded is the `distPath` option: it defaults to the repo's
+ * `packages/extension/dist`, and a spec that drives another build (a real-list build, say)
+ * overrides it for its own file with `test.use({ distPath: '…' })`.
  */
+import { existsSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { test as base, chromium, expect } from '@playwright/test';
 import type { BrowserContext, Page, Worker } from '@playwright/test';
-import { EXTENSION_DIST, MISSING_DIST_MESSAGE, chromeExecutablePath, extensionDistExists } from './paths';
+import { EXTENSION_DIST, MISSING_DIST_MESSAGE, chromeExecutablePath } from './paths';
 import { startServer, type FixtureServer } from '../server';
 
 export interface LaunchExtensionOptions {
@@ -123,7 +128,18 @@ export interface ExtensionWorkerFixtures {
   server: FixtureServer;
 }
 
-export const test = base.extend<ExtensionFixtures, ExtensionWorkerFixtures>({
+export interface ExtensionOptions {
+  /**
+   * Unpacked extension to load. Defaults to `packages/extension/dist` (or
+   * IUB_EXTENSION_DIST); a spec that drives a different build overrides it per file with
+   * `test.use({ distPath })` — see e2e/tests/real-rulesets.spec.ts.
+   */
+  distPath: string;
+}
+
+export const test = base.extend<ExtensionOptions & ExtensionFixtures, ExtensionWorkerFixtures>({
+  distPath: [EXTENSION_DIST, { option: true }],
+
   server: [
     // Playwright requires the destructuring pattern even when there are no dependencies.
     // eslint-disable-next-line no-empty-pattern
@@ -135,10 +151,16 @@ export const test = base.extend<ExtensionFixtures, ExtensionWorkerFixtures>({
     { scope: 'worker' },
   ],
 
-  context: async ({ server }, use) => {
-    if (!extensionDistExists()) throw new Error(MISSING_DIST_MESSAGE);
+  context: async ({ server, distPath }, use) => {
+    if (!existsSync(path.join(distPath, 'manifest.json'))) {
+      throw new Error(
+        distPath === EXTENSION_DIST
+          ? MISSING_DIST_MESSAGE
+          : `no unpacked extension at ${distPath} (no manifest.json)`,
+      );
+    }
     server.resetHits();
-    const { context, userDataDir } = await launchExtensionContext(EXTENSION_DIST);
+    const { context, userDataDir } = await launchExtensionContext(distPath);
     try {
       await use(context);
     } finally {

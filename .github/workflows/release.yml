@@ -67,6 +67,14 @@ jobs:
       - name: Build the extension
         run: pnpm build
 
+      # Chrome must accept the real-list build before it is packaged
+      # (docs/TESTING.md, "Real-list load verification").
+      - name: Install Chromium for Playwright
+        run: pnpm --dir e2e exec playwright install chromium --with-deps
+
+      - name: Verify the real-list build loads in Chrome
+        run: pnpm verify:real
+
       - name: Package
         run: |
           set -euo pipefail
