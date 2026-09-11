@@ -42,6 +42,11 @@
       "urls": [
         "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext"
       ],
+      "mirrors": [
+        [
+          "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/thirdparties/pgl.yoyo.org/as/serverlist"
+        ]
+      ],
       "format": "hosts",
       "group": "privacy",
       "defaultEnabled": true
@@ -104,14 +109,6 @@
       "urls": ["https://raw.githubusercontent.com/k2jp/abp-japanese-filters/master/abpjf.txt"],
       "group": "regional",
       "lang": ["ja"],
-      "defaultEnabled": false
-    },
-    {
-      "id": "easylist-kr",
-      "title": "List-KR",
-      "urls": ["https://raw.githubusercontent.com/List-KR/List-KR/master/filter-uBlockOrigin.txt"],
-      "group": "regional",
-      "lang": ["ko"],
       "defaultEnabled": false
     },
     {
@@ -193,6 +190,19 @@
 Regional lists default‑enabled at runtime when `navigator.languages` matches `lang`
 (first run only). `!#include` directives are expanded by `tools/fetch-lists`. Each list
 has a unique static ruleset with the same `id`.
+
+`mirrors` is an optional list of **alternative source sets**, tried in order only after the
+primary `urls` have failed all their retries. Each set is a complete stand‑in for `urls`, so
+a list assembled from several part files can be mirrored by several part files; a set counts
+as usable only when every URL in it is fetched successfully, otherwise the fetcher moves on
+to the next set. The set that won is recorded as `mirror` in `<id>.meta.json` (`null` =
+primary) and printed per list plus in the run summary, so a build that silently drifted onto
+a fallback is visible. Mirrors exist for restricted networks and for dead primaries: most of
+them point at the upstream project's own GitHub repository (`raw.githubusercontent.com`),
+which is why several of them are the list's unconcatenated part files. Keep the primary URL
+first — it is what CI and releases normally use — and only add a mirror you have verified
+serves the same content, not a build template (repos whose root file is full of `%include%`
+directives need the part files instead, since `fetch-lists` only expands `!#include`).
 
 ## 2. Output layout (`packages/extension/dist/rulesets/`)
 

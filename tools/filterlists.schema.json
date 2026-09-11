@@ -12,6 +12,15 @@
           "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
           "title": { "type": "string" },
           "urls": { "type": "array", "items": { "type": "string", "format": "uri" }, "minItems": 1 },
+          "mirrors": {
+            "description": "Fallback source sets tried in order when `urls` fails. Each entry is a complete alternative to `urls` and only counts when every URL in it succeeds.",
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": { "type": "string", "format": "uri" },
+              "minItems": 1
+            }
+          },
           "group": { "enum": ["ads", "privacy", "malware", "annoyances", "regional", "custom", "test"] },
           "lang": { "type": "array", "items": { "type": "string" } },
           "defaultEnabled": { "type": "boolean" },

@@ -8,17 +8,17 @@
 
 ## Commands (root)
 
-| Command                                      | Does                                                                                                              |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `pnpm install`                               | install workspace                                                                                                 |
-| `pnpm lint` / `pnpm typecheck` / `pnpm test` | across all packages                                                                                               |
-| `pnpm rulesets:fetch`                        | `tools/fetch-lists.ts` → `.cache/lists/<id>.txt` (+ `.meta.json` with sha256/etag). Retries, follows `!#include`. |
-| `pnpm rulesets:build`                        | `packages/compiler` CLI → `packages/extension/dist/rulesets/*` + `report.json`                                    |
-| `pnpm build`                                 | builds `shared`, `scriptlets`, `compiler`, then `extension` (`packages/extension/scripts/build.ts`)               |
-| `pnpm build:e2e`                             | `IUB_E2E=1 pnpm build`: additionally bundles `e2e/fixtures/test-list.txt` as ruleset `e2e-test`                   |
-| `pnpm e2e`                                   | Playwright with the unpacked extension                                                                            |
-| `pnpm delta -- <oldDir> <newDir>`            | `tools/make-delta.ts`                                                                                             |
-| `pnpm package`                               | zips `packages/extension/dist` → `artifacts/iublocker-<version>.zip`                                              |
+| Command                                      | Does                                                                                                                                                                                                                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm install`                               | install workspace                                                                                                                                                                                                                    |
+| `pnpm lint` / `pnpm typecheck` / `pnpm test` | across all packages                                                                                                                                                                                                                  |
+| `pnpm rulesets:fetch`                        | `tools/fetch-lists.ts` → `.cache/lists/<id>.txt` (+ `.meta.json` with sha256/etag). Retries, follows `!#include`, falls back to the list’s `mirrors` (§1 of `docs/RULESETS.md`; the set used is logged and stored as `meta.mirror`). |
+| `pnpm rulesets:build`                        | `packages/compiler` CLI → `packages/extension/dist/rulesets/*` + `report.json`                                                                                                                                                       |
+| `pnpm build`                                 | builds `shared`, `scriptlets`, `compiler`, then `extension` (`packages/extension/scripts/build.ts`)                                                                                                                                  |
+| `pnpm build:e2e`                             | `IUB_E2E=1 pnpm build`: additionally bundles `e2e/fixtures/test-list.txt` as ruleset `e2e-test`                                                                                                                                      |
+| `pnpm e2e`                                   | Playwright with the unpacked extension                                                                                                                                                                                               |
+| `pnpm delta -- <oldDir> <newDir>`            | `tools/make-delta.ts`                                                                                                                                                                                                                |
+| `pnpm package`                               | zips `packages/extension/dist` → `artifacts/iublocker-<version>.zip`                                                                                                                                                                 |
 
 ## Extension build (`packages/extension/scripts/build.ts`)
 

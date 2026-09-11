@@ -9,7 +9,10 @@
  *
  * Output per list id:
  *   <cache>/<id>.txt        all sources concatenated, `!#include` expanded
- *   <cache>/<id>.meta.json  { id, sources: [{ url, sha256, fetchedAt, bytes }], fetchedAt }
+ *   <cache>/<id>.meta.json  { id, sources: [{ url, sha256, fetchedAt, bytes }], mirror, fetchedAt }
+ *
+ * When a list's primary `urls` cannot be fetched, each set in its optional `mirrors` is
+ * tried in order; `meta.mirror` records the index of the set that worked (null = primary).
  */
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -43,6 +46,8 @@ export interface SourceMeta {
 export interface ListMeta {
   id: string;
   sources: SourceMeta[];
+  /** Index into the list's `mirrors`, or null when the primary `urls` were used. */
+  mirror: number | null;
   fetchedAt: string;
 }
 
@@ -165,23 +170,78 @@ export async function expandIncludes(
 
 /* -------------------------------------------------------------- one list job */
 
-async function fetchList(list: FilterListSource): Promise<{ text: string; meta: ListMeta }> {
+export type Fetcher = (url: string) => Promise<string>;
+
+/** Fetch one complete set of URLs (primary or mirror). Rejects unless every URL succeeds. */
+async function fetchUrlSet(
+  urls: readonly string[],
+  fetcher: Fetcher,
+): Promise<{ text: string; sources: SourceMeta[] }> {
+  if (urls.length === 0) throw new Error('no URLs in source set');
   const chunks: string[] = [];
   const sources: SourceMeta[] = [];
-  for (const url of list.urls) {
-    const body = await fetchText(url);
+  for (const url of urls) {
+    const body = await fetcher(url);
     sources.push({
       url,
       sha256: sha256(body),
       fetchedAt: new Date().toISOString(),
       bytes: Buffer.byteLength(body),
     });
-    const expanded = await expandIncludes(body, url, (u) => fetchText(u), 0, new Set([url]));
+    const expanded = await expandIncludes(body, url, fetcher, 0, new Set([url]));
     sources.push(...expanded.sources);
     chunks.push(SEPARATOR(url), expanded.text);
   }
-  const text = `${chunks.join('\n')}\n`;
-  return { text, meta: { id: list.id, sources, fetchedAt: new Date().toISOString() } };
+  return { text: `${chunks.join('\n')}\n`, sources };
+}
+
+/** Label for a source set in logs and error messages. */
+function setLabel(mirror: number | null): string {
+  return mirror === null ? 'primary' : `mirror ${mirror}`;
+}
+
+/**
+ * Fetch a list from its primary `urls`, falling back to each set in `mirrors` in order.
+ * A mirror set is only used when every URL in it is fetched successfully; the index of
+ * the set that worked is recorded in `meta.mirror` (null for the primary).
+ */
+export async function fetchList(
+  list: FilterListSource,
+  fetcher: Fetcher = (url) => fetchText(url),
+): Promise<{ text: string; meta: ListMeta }> {
+  const attempts: { mirror: number | null; urls: readonly string[] }[] = [
+    { mirror: null, urls: list.urls },
+    ...(list.mirrors ?? []).map((urls, index) => ({ mirror: index, urls })),
+  ];
+
+  const errors: string[] = [];
+  for (const [index, attempt] of attempts.entries()) {
+    try {
+      const { text, sources } = await fetchUrlSet(attempt.urls, fetcher);
+      if (attempt.mirror !== null) {
+        console.warn(`  ~ ${list.id}: served by ${setLabel(attempt.mirror)}`);
+      }
+      return {
+        text,
+        meta: {
+          id: list.id,
+          sources,
+          mirror: attempt.mirror,
+          fetchedAt: new Date().toISOString(),
+        },
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      errors.push(`${setLabel(attempt.mirror)}: ${message}`);
+      const next = attempts[index + 1];
+      if (next !== undefined) {
+        console.warn(
+          `  ~ ${list.id}: ${setLabel(attempt.mirror)} failed (${message}), trying ${setLabel(next.mirror)}`,
+        );
+      }
+    }
+  }
+  throw new Error(errors.join('; '));
 }
 
 async function readMeta(cacheDir: string, id: string): Promise<ListMeta | null> {
@@ -219,18 +279,21 @@ async function copySnapshot(snapshotDir: string, cacheDir: string, list: FilterL
     return false;
   }
   const existing = await readMeta(snapshotDir, list.id);
-  const meta: ListMeta = existing ?? {
-    id: list.id,
-    sources: [
-      {
-        url: `snapshot:${list.id}.txt`,
-        sha256: sha256(text),
+  const meta: ListMeta = existing
+    ? { ...existing, mirror: existing.mirror ?? null }
+    : {
+        id: list.id,
+        sources: [
+          {
+            url: `snapshot:${list.id}.txt`,
+            sha256: sha256(text),
+            fetchedAt: '1970-01-01T00:00:00.000Z',
+            bytes: Buffer.byteLength(text),
+          },
+        ],
+        mirror: null,
         fetchedAt: '1970-01-01T00:00:00.000Z',
-        bytes: Buffer.byteLength(text),
-      },
-    ],
-    fetchedAt: '1970-01-01T00:00:00.000Z',
-  };
+      };
   await writeList(cacheDir, list.id, text, meta);
   return true;
 }
@@ -302,6 +365,7 @@ async function main(argv: string[]): Promise<number> {
   const skipped: string[] = [];
   let fetched = 0;
   let fresh = 0;
+  const mirrored: { id: string; mirror: number }[] = [];
 
   await pool(lists, snapshotDir ? 1 : CONCURRENCY, async (list) => {
     if (snapshotDir) {
@@ -324,8 +388,9 @@ async function main(argv: string[]): Promise<number> {
       const { text, meta } = await fetchList(list);
       await writeList(cacheDir, list.id, text, meta);
       fetched++;
+      if (meta.mirror !== null) mirrored.push({ id: list.id, mirror: meta.mirror });
       console.info(
-        `  ✓ ${list.id} (${meta.sources.length} source(s), ${(Buffer.byteLength(text) / 1024).toFixed(0)} KiB)`,
+        `  ✓ ${list.id} (${meta.sources.length} source(s), ${(Buffer.byteLength(text) / 1024).toFixed(0)} KiB, ${setLabel(meta.mirror)})`,
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -335,8 +400,12 @@ async function main(argv: string[]): Promise<number> {
   });
 
   console.info(
-    `fetch-lists: ${fetched} written, ${fresh} cached, ${skipped.length} skipped, ${failures.length} failed`,
+    `fetch-lists: ${fetched} written, ${fresh} cached, ${skipped.length} skipped, ${failures.length} failed, ${mirrored.length} via mirror`,
   );
+  if (mirrored.length > 0) {
+    console.warn('fetch-lists: the following lists came from a mirror, not their primary URLs:');
+    for (const m of mirrored) console.warn(`  - ${m.id}: mirror ${m.mirror}`);
+  }
   if (failures.length > 0) {
     console.error('fetch-lists: the following lists could not be fetched:');
     for (const f of failures) console.error(`  - ${f.id}: ${f.error}`);

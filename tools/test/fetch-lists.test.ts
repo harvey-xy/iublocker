@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
-import { expandIncludes, sha256 } from '../fetch-lists';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expandIncludes, fetchList, sha256 } from '../fetch-lists';
 import { boolFlag, listFlag, parseArgs, stringFlag } from '../lib/args';
+import type { FilterListSource } from '../../packages/shared/src/filterlists';
 
 const BASE = 'https://lists.example.com/filters/main.txt';
 
@@ -85,5 +86,145 @@ describe('parseArgs', () => {
     const args = parseArgs(['--cache', '.cache/lists', '--force']);
     expect(stringFlag(args, 'cache')).toBe('.cache/lists');
     expect(boolFlag(args, 'force')).toBe(true);
+  });
+});
+
+describe('fetchList mirrors', () => {
+  const base: Omit<FilterListSource, 'urls'> = {
+    id: 'demo',
+    title: 'Demo',
+    group: 'ads',
+    defaultEnabled: false,
+  };
+
+  function counting(files: Record<string, string>): {
+    fetcher: (url: string) => Promise<string>;
+    tried: string[];
+  } {
+    const tried: string[] = [];
+    return {
+      tried,
+      fetcher: async (url: string) => {
+        tried.push(url);
+        const body = files[url];
+        if (body === undefined) throw new Error(`HTTP 404 Not Found`);
+        return body;
+      },
+    };
+  }
+
+  beforeEach(() => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('uses the primary urls and records mirror: null', async () => {
+    const { fetcher, tried } = counting({ 'https://primary.example/a.txt': '||a.example^' });
+    const { text, meta } = await fetchList(
+      { ...base, urls: ['https://primary.example/a.txt'], mirrors: [['https://mirror.example/a.txt']] },
+      fetcher,
+    );
+    expect(meta.mirror).toBe(null);
+    expect(text).toContain('||a.example^');
+    expect(meta.sources.map((s) => s.url)).toEqual(['https://primary.example/a.txt']);
+    expect(tried).toEqual(['https://primary.example/a.txt']);
+  });
+
+  it('falls back to the first working mirror set and records its index', async () => {
+    const { fetcher, tried } = counting({
+      'https://mirror2.example/part1.txt': '||part1.example^',
+      'https://mirror2.example/part2.txt': '||part2.example^',
+    });
+    const { text, meta } = await fetchList(
+      {
+        ...base,
+        urls: ['https://dead.example/list.txt'],
+        mirrors: [
+          ['https://mirror1.example/list.txt'],
+          ['https://mirror2.example/part1.txt', 'https://mirror2.example/part2.txt'],
+        ],
+      },
+      fetcher,
+    );
+    expect(meta.mirror).toBe(1);
+    expect(text).toContain('||part1.example^');
+    expect(text).toContain('||part2.example^');
+    expect(meta.sources.map((s) => s.url)).toEqual([
+      'https://mirror2.example/part1.txt',
+      'https://mirror2.example/part2.txt',
+    ]);
+    expect(tried).toEqual([
+      'https://dead.example/list.txt',
+      'https://mirror1.example/list.txt',
+      'https://mirror2.example/part1.txt',
+      'https://mirror2.example/part2.txt',
+    ]);
+  });
+
+  it('rejects a mirror set when any of its urls fails, and moves to the next set', async () => {
+    const { fetcher, tried } = counting({
+      'https://mirror1.example/part1.txt': '||part1.example^',
+      // part2 of mirror 0 is missing, so the whole set is unusable
+      'https://mirror2.example/whole.txt': '||whole.example^',
+    });
+    const { text, meta } = await fetchList(
+      {
+        ...base,
+        urls: ['https://dead.example/list.txt'],
+        mirrors: [
+          ['https://mirror1.example/part1.txt', 'https://mirror1.example/part2.txt'],
+          ['https://mirror2.example/whole.txt'],
+        ],
+      },
+      fetcher,
+    );
+    expect(meta.mirror).toBe(1);
+    expect(text).toContain('||whole.example^');
+    expect(text).not.toContain('||part1.example^');
+    expect(meta.sources.map((s) => s.url)).toEqual(['https://mirror2.example/whole.txt']);
+    expect(tried).toContain('https://mirror1.example/part2.txt');
+  });
+
+  it('expands includes inside a mirror and attributes them to the mirror source', async () => {
+    const { fetcher } = counting({
+      'https://mirror.example/list.txt': '! head\n!#include extra.txt',
+      'https://mirror.example/extra.txt': '||extra.example^',
+    });
+    const { text, meta } = await fetchList(
+      { ...base, urls: ['https://dead.example/list.txt'], mirrors: [['https://mirror.example/list.txt']] },
+      fetcher,
+    );
+    expect(meta.mirror).toBe(0);
+    expect(text).toContain('||extra.example^');
+    expect(meta.sources.map((s) => s.url)).toEqual([
+      'https://mirror.example/list.txt',
+      'https://mirror.example/extra.txt',
+    ]);
+  });
+
+  it('throws with every attempt in the message when the primary and all mirrors fail', async () => {
+    const { fetcher } = counting({});
+    await expect(
+      fetchList(
+        {
+          ...base,
+          urls: ['https://dead.example/list.txt'],
+          mirrors: [['https://also-dead.example/list.txt']],
+        },
+        fetcher,
+      ),
+    ).rejects.toThrow(/primary: HTTP 404 Not Found; mirror 0: HTTP 404 Not Found/);
+  });
+
+  it('works for a list without mirrors', async () => {
+    const { fetcher } = counting({ 'https://primary.example/a.txt': '||a.example^' });
+    const { meta } = await fetchList({ ...base, urls: ['https://primary.example/a.txt'] }, fetcher);
+    expect(meta.mirror).toBe(null);
+    await expect(fetchList({ ...base, urls: ['https://gone.example/a.txt'] }, fetcher)).rejects.toThrow(
+      /primary: HTTP 404 Not Found/,
+    );
   });
 });
