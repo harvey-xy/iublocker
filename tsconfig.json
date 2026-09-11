@@ -1,10 +1,5 @@
 {
-  "files": [],
-  "references": [
-    { "path": "packages/shared" },
-    { "path": "packages/scriptlets" },
-    { "path": "packages/compiler" },
-    { "path": "packages/extension" },
-    { "path": "e2e" }
-  ]
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "noEmit": true, "types": ["node"] },
+  "include": ["tools", "eslint.config.js", "vitest.config.ts"]
 }

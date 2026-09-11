@@ -1,13 +1,16 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
-    "rootDir": "..",
-    "outDir": "dist-types",
-    "types": ["chrome", "node"],
+    "types": [
+      "chrome",
+      "node"
+    ],
     "jsx": "react-jsx",
     "jsxImportSource": "preact"
   },
-  "include": ["src", "scripts", "test"],
-  "references": [{ "path": "../shared" }, { "path": "../compiler" }, { "path": "../scriptlets" }]
+  "include": [
+    "src",
+    "scripts",
+    "test"
+  ]
 }
