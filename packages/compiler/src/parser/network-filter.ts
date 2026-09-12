@@ -466,6 +466,13 @@ export function parseNetworkFilter(
           break;
         case 'removeparam':
         case 'queryprune': {
+          // `@@…$removeparam` with no name cancels every `$removeparam` for the pattern
+          // (uBO). The empty list marks the filter so the exception is emitted with the
+          // resource types `$removeparam` rules use — navigations included.
+          if (value === '' && isException) {
+            f.removeParams = [];
+            break;
+          }
           if (value === '') return { ok: false, reason: '$removeparam without a name is unsupported' };
           if (negated) return { ok: false, reason: '$removeparam negation is unsupported' };
           if (value.startsWith('/')) return { ok: false, reason: '$removeparam regex is unsupported' };

@@ -208,7 +208,8 @@ describe('actions', () => {
 
   it('$header becomes a responseHeaders condition', () => {
     expect(onlyRule('||example.com^$header=content-type:text/html').condition.responseHeaders).toEqual([
-      { header: 'content-type', values: ['text/html'] },
+      // uBO matches the value unanchored, DNR's globs match the whole value (§2.2).
+      { header: 'content-type', values: ['*text/html*'] },
     ]);
     expect(onlyRule('||example.com^$~header=x-foo').condition.excludedResponseHeaders).toEqual([
       { header: 'x-foo' },

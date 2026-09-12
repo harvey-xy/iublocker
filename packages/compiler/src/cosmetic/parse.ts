@@ -7,6 +7,7 @@
  */
 import type { ProceduralFilter, ProceduralTask } from '@iublocker/shared';
 import { isValidHostname } from '@iublocker/shared';
+import { toASCIIHostname } from '../parser/network-filter';
 import { parseSelector } from './procedural';
 import { isEntity } from './entities';
 
@@ -46,7 +47,14 @@ export function splitCosmetic(raw: string): SplitCosmetic | null {
 
 export type ParseResult<T> = { ok: true; value: T } | { ok: false; reason: string };
 
-/** Parse a comma-separated domain list with `~` negations and `example.*` entities. */
+/**
+ * Parse a comma-separated domain list with `~` negations and `example.*` entities.
+ *
+ * A bare `*` means "every domain" (uBO/AdGuard): `*,~edu##.ad` is a *generic* filter with
+ * an exception, so the `*` contributes no include key. Non-ASCII names are punycoded —
+ * `location.hostname` is always punycode at lookup time, so a Unicode key could never
+ * match.
+ */
 export function parseDomainList(text: string): ParseResult<DomainList> {
   const include: string[] = [];
   const exclude: string[] = [];
@@ -64,11 +72,16 @@ export function parseDomainList(text: string): ParseResult<DomainList> {
     if (entry.charAt(0) === '/') {
       return { ok: false, reason: 'regex domains are not supported in cosmetic filters' };
     }
-    const host = isEntity(entry) ? entry.slice(0, -2) : entry;
+    if (entry === '*') {
+      if (negated) return { ok: false, reason: '"~*" excludes every domain' };
+      continue;
+    }
+    const base = isEntity(entry) ? entry.slice(0, -2) : entry;
+    const host = toASCIIHostname(base);
     if (host === '' || !isValidHostname(host)) {
       return { ok: false, reason: `invalid hostname "${entry}"` };
     }
-    (negated ? exclude : include).push(entry);
+    (negated ? exclude : include).push(isEntity(entry) ? `${host}.*` : host);
   }
   return { ok: true, value: { include, exclude } };
 }

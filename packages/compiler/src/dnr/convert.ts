@@ -158,6 +158,30 @@ function resolveRedirect(name: string, table: Record<string, string>): string | 
   return null;
 }
 
+/** A `/…/` value, which `$header=` allows but `responseHeaders.values` cannot express. */
+export function isRegexLiteral(value: string): boolean {
+  return value.length > 2 && value.startsWith('/') && value.lastIndexOf('/') > 0 && /\/[a-z]*$/.test(value);
+}
+
+/**
+ * `$header=name:value` → a `responseHeaders.values` pattern.
+ *
+ * uBO matches the value *unanchored* (`header=via:1.1 google` matches
+ * `Via: 1.1 google (GFE)`), while DNR's `values` are `*`/`?` globs matched against the
+ * whole header value. Wrapping in `*` is what makes the two agree; without it every
+ * `$header=` filter whose header carries any extra text silently stops matching.
+ *
+ * Returns `null` when the filter only tests for the header's presence.
+ */
+export function headerValuePattern(value: string | undefined): string | null {
+  if (value === undefined) return null;
+  const v = value.trim();
+  if (v === '') return null;
+  const prefix = v.startsWith('*') ? '' : '*';
+  const suffix = v.endsWith('*') ? '' : '*';
+  return `${prefix}${v}${suffix}`;
+}
+
 function buildResourceTypes(
   f: NetworkFilter,
   condition: DNRCondition,
@@ -268,10 +292,9 @@ function applyDomains(f: NetworkFilter, condition: DNRCondition, ctx: ConvertCon
   if (f.excludedMethods.length > 0) condition.excludedRequestMethods = [...new Set(f.excludedMethods)].sort();
   if (f.domainType !== undefined) condition.domainType = f.domainType;
   if (f.header !== undefined) {
+    const pattern = headerValuePattern(f.header.value);
     const info: DNRHeaderInfo =
-      f.header.value === undefined
-        ? { header: f.header.name }
-        : { header: f.header.name, values: [f.header.value] };
+      pattern === null ? { header: f.header.name } : { header: f.header.name, values: [pattern] };
     if (f.header.negated) condition.excludedResponseHeaders = [info];
     else condition.responseHeaders = [info];
   }
@@ -282,6 +305,14 @@ export function convertFilter(f: NetworkFilter, ctx: ConvertContext): ConvertRes
   const warnings: string[] = [...f.warnings];
 
   if (f.badfilter) return { ok: true, converted: [], warnings };
+
+  if (f.header?.value !== undefined && isRegexLiteral(f.header.value)) {
+    return {
+      ok: false,
+      reason: '$header= with a regular-expression value is not expressible in DNR',
+      warnings,
+    };
+  }
 
   const isCosmeticOnly =
     f.cosmeticOptions.length > 0 && !f.hasDocument && f.redirect === undefined && f.csp === undefined;
@@ -303,11 +334,25 @@ export function convertFilter(f: NetworkFilter, ctx: ConvertContext): ConvertRes
   if (f.isException) {
     if (f.hasDocument || f.isAll) {
       action = { type: 'allowAllRequests' };
-      priority = f.important ? ctx.tiers.important : ctx.tiers.documentAllow;
+      // `$important` must never *lower* an exception's priority below the document tier.
+      priority = f.important
+        ? Math.max(ctx.tiers.important, ctx.tiers.documentAllow)
+        : ctx.tiers.documentAllow;
       forceDocumentTypes = true;
     } else {
       action = { type: 'allow' };
       priority = f.important ? ctx.tiers.important : ctx.tiers.allow;
+      // An exception for a header modifier has to cover the resource types of the rules it
+      // cancels. `$csp`/`$permissions` rules are main_frame + sub_frame, so a default
+      // exception (everything *but* main_frame) would leave the injected header in place on
+      // exactly the navigations the filter is about.
+      if (
+        (f.csp !== undefined || f.permissions !== undefined) &&
+        f.resourceTypes.length === 0 &&
+        f.excludedResourceTypes.length === 0
+      ) {
+        forceDocumentTypes = true;
+      }
     }
     category = 'allow';
   } else if (f.redirect !== undefined) {
@@ -316,7 +361,7 @@ export function convertFilter(f: NetworkFilter, ctx: ConvertContext): ConvertRes
     action = { type: 'redirect', redirect: { extensionPath: toExtensionPath(file) } };
     priority = f.important ? ctx.tiers.importantRedirect : ctx.tiers.redirect;
     category = 'redirect';
-  } else if (f.removeParams !== undefined) {
+  } else if (f.removeParams !== undefined && f.removeParams.length > 0) {
     action = {
       type: 'redirect',
       redirect: { transform: { queryTransform: { removeParams: [...new Set(f.removeParams)].sort() } } },

@@ -297,7 +297,7 @@ describe('runCli', () => {
 
     const summary = logs.join('\n');
     expect(summary).toContain('sample');
-    expect(summary).toContain('version 2026.09.11.1');
+    expect(summary).toContain(`version ${manifest.version} · 2 lists`);
     expect(summary).toContain('no cached list at');
   });
 
