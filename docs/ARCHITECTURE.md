@@ -71,7 +71,7 @@ MV3 dictates the architecture. The relevant facts, with the Chrome version they 
 │   ├─ SiteModes        off / basic / optimal / complete per hostname        │
 │   ├─ Injector         webNavigation.onCommitted → insertCSS + executeScript│
 │   ├─ Updater          fetches delta.json, applies dynamic/static changes    │
-│   ├─ Stats            per‑tab counters via getMatchedRules + badge         │
+│   ├─ Stats            per‑tab counters + badge, quota‑aware (§4.5)         │
 │   └─ Messaging        single typed router (docs/MESSAGING.md)              │
 │                                                                           │
 │ Content scripts (ISOLATED world, document_start, all frames)              │

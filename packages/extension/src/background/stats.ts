@@ -78,11 +78,26 @@ function counterFor(tabId: number): TabCounters {
   return counter;
 }
 
+/** Fire-and-forget badge clear; the tab may be gone already. */
+function clearBadge(tabId: number): void {
+  try {
+    const pending = chrome.action.setBadgeText({ tabId, text: '' }) as unknown as
+      | Promise<void>
+      | undefined;
+    if (pending && typeof pending.catch === 'function') pending.catch(() => undefined);
+  } catch {
+    /* the tab closed between the commit and this call */
+  }
+}
+
 /** Called when a main frame commits: the tab starts counting from zero again. */
 export function resetTab(tabId: number, when: number = Date.now()): void {
   counters.set(tabId, { count: 0, reported: 0, lastRefresh: 0, lastForced: 0, since: when });
   blockedUrls.delete(tabId);
   matchedByTab.delete(tabId);
+  // The next refresh may be several seconds away (quota), so drop the previous document's
+  // count instead of showing it for the new page.
+  clearBadge(tabId);
 }
 
 export function forgetTab(tabId: number): void {

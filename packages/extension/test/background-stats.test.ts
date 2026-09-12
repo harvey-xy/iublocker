@@ -72,6 +72,15 @@ describe('stats: badge throttling', () => {
     expect(chromeMock._state.calls.getMatchedRules).toHaveLength(2);
   });
 
+  it('drops the previous document count from the badge on a main-frame commit', async () => {
+    const now = 5_000_000;
+    await stats.refreshBadge(7, { force: true, now });
+    expect(chromeMock._state.badge(7)).toBe('3');
+    stats.resetTab(7, now + 1);
+    // The next refresh can be seconds away (quota): the old number must not linger.
+    expect(chromeMock._state.badge(7)).toBe('');
+  });
+
   it('scopes the query to the current document after a main-frame commit', async () => {
     stats.resetTab(7, 5_000);
     await stats.refreshBadge(7, { force: true });

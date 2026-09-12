@@ -39,6 +39,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   void stats.refreshBadge(tabId).catch((err) => log.debug('badge refresh failed', err));
 });
 
+chrome.tabs.onActivated.addListener((info) => {
+  // A tab that finished loading in the background never got a badge (see above); refresh
+  // it when it becomes the tab the user is looking at.
+  void stats.refreshBadge(info.tabId).catch((err) => log.debug('badge refresh failed', err));
+});
+
 chrome.tabs.onRemoved.addListener((tabId) => {
   stats.forgetTab(tabId);
   injector.forgetTab(tabId);
