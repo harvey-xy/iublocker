@@ -62,6 +62,8 @@ export class Collapser {
     } catch {
       return 0;
     }
+    // `stop()` may have run while the round trip was in flight (mode change, teardown).
+    if (!this.started) return 0;
     if (!Array.isArray(urls) || urls.length === 0) return 0;
     const blocked = new Set<string>();
     for (const url of urls) {

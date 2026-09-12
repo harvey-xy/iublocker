@@ -76,4 +76,36 @@ describe('GenericHider', () => {
     hider.injectComplex();
     expect(style.cssText.match(/data-ad/g)?.length).toBe(1);
   });
+
+  it('ignores tokens that name an Object.prototype member', () => {
+    // `byId[id]` used to walk the prototype chain: `<div id="constructor">` yielded the
+    // `Object` constructor and threw "selectors is not iterable" out of the harvester,
+    // which killed generic hiding for the rest of the document.
+    document.body.innerHTML =
+      '<div id="constructor"></div><div class="toString"></div>' +
+      '<div id="__proto__" class="hasOwnProperty valueOf"></div><div class="ad"></div>';
+    expect(() => hider.harvestRoot(document.documentElement)).not.toThrow();
+    expect(hider.flush()).toBe(2);
+    const css = style.cssText;
+    expect(css).toContain('.ad');
+    expect(css).not.toContain('constructor');
+    expect(css).not.toContain('function');
+  });
+
+  it('harvests ids and classes through attributes, not clobberable properties', () => {
+    document.body.innerHTML = '<form id="banner" class="ad"><input name="id"></form>';
+    const form = document.querySelector('form') as Element;
+    const decoy = document.createElement('input');
+    // `HTMLFormElement`'s named getter shadows `.id`, `.classList` and even
+    // `.querySelectorAll` in a real browser.
+    Object.defineProperty(form, 'id', { value: decoy, configurable: true });
+    Object.defineProperty(form, 'classList', { value: decoy, configurable: true });
+    Object.defineProperty(form, 'querySelectorAll', { value: decoy, configurable: true });
+    hider.harvestNode(form);
+    expect(hider.flush()).toBe(3);
+    const css = style.cssText;
+    expect(css).toContain('#banner');
+    expect(css).toContain('.ad');
+    expect(css).toContain('.ad.top');
+  });
 });

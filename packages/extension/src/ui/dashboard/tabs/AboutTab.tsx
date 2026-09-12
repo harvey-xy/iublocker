@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import { sendRequest } from '@iublocker/shared';
 import { Button, Card, ErrorBox } from '../../lib/components';
 import { errorMessage, useRequest } from '../../lib/useRequest';
-import { LICENSE_URL, REPO_URL } from '../../lib/links';
+import { LICENSE_URL, REPO_URL, safeHttpUrl } from '../../lib/links';
 import { t } from '../../lib/i18n';
 
 function extensionVersion(): string {
@@ -46,6 +46,7 @@ export function AboutTab() {
     <div class="stack">
       <Card
         title={t('about_title')}
+        description={t('about_copy_diagnostics_note')}
         actions={
           <Button variant="primary" onClick={() => void copyDiagnostics()}>
             {t('about_copy_diagnostics')}
@@ -89,10 +90,10 @@ export function AboutTab() {
             {licensed.map((list) => (
               <li key={list.id}>
                 <span>{list.title}</span> — <span class="muted">{list.license}</span>
-                {list.homepage && (
+                {safeHttpUrl(list.homepage) && (
                   <>
                     {' · '}
-                    <a href={list.homepage} target="_blank" rel="noreferrer noopener">
+                    <a href={safeHttpUrl(list.homepage) ?? ''} target="_blank" rel="noreferrer noopener">
                       {t('lists_homepage')}
                     </a>
                   </>

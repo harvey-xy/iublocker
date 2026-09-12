@@ -113,7 +113,11 @@ export class CosmeticEngine {
     if (this.stopped) return;
     this.style.ensureAttached();
     const root = this.doc.documentElement;
-    if (this.generic && root) this.generic.harvestRoot(root);
+    try {
+      if (this.generic && root) this.generic.harvestRoot(root);
+    } catch {
+      // A hostile document must not stop the first pass from running.
+    }
     this.pass();
   }
 
@@ -148,19 +152,23 @@ export class CosmeticEngine {
   private onMutations(records: MutationRecord[]): void {
     if (this.stopped) return;
     const generic = this.generic;
-    for (const record of records) {
-      if (record.type === 'childList') {
-        if (generic) {
-          const added = record.addedNodes;
-          for (let i = 0; i < added.length; i++) {
-            const node = added[i];
-            if (node) generic.harvestNode(node);
+    try {
+      for (const record of records) {
+        if (record.type === 'childList') {
+          if (generic) {
+            const added = record.addedNodes;
+            for (let i = 0; i < added.length; i++) {
+              const node = added[i];
+              if (node) generic.harvestNode(node);
+            }
           }
+        } else if (record.type === 'attributes' && generic) {
+          const target = record.target;
+          if (target.nodeType === 1) generic.harvestElement(target as Element);
         }
-      } else if (record.type === 'attributes' && generic) {
-        const target = record.target;
-        if (target.nodeType === 1) generic.harvestElement(target as Element);
       }
+    } catch {
+      // Harvesting must never abort the batch: the pass below is what applies filters.
     }
     this.scheduler.schedule();
   }

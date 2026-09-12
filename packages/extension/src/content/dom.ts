@@ -12,9 +12,49 @@ const NEEDS_ESCAPE = /[^\w\u00a0-\uffff-]/g;
 export function cssEscape(value: string): string {
   const css = (globalThis as { CSS?: CssApi }).CSS;
   if (css && typeof css.escape === 'function') return css.escape(value);
-  let out = value.replace(NEEDS_ESCAPE, (c) => `\\${c}`);
+  // A control character has no `\<char>` form (`\<newline>` is not an escape at all):
+  // it must use the hex form or the whole selector fails to parse.
+  let out = value.replace(NEEDS_ESCAPE, (c) => {
+    const code = c.charCodeAt(0);
+    return code <= 0x1f || code === 0x7f ? `\\${code.toString(16)} ` : `\\${c}`;
+  });
   const first = value.charCodeAt(0);
   if (first >= 0x30 && first <= 0x39) out = `\\3${value[0] ?? ''} ${out.slice(1)}`;
+  return out;
+}
+
+/*
+ * Native DOM accessors, captured once. `HTMLFormElement` has a named-property getter
+ * that shadows properties *and* prototype methods, so on a page like
+ * `<form id=ad><input name=id><input name=getAttribute>` the expressions `el.id`,
+ * `el.classList` and `el.getAttribute` all return page-controlled elements
+ * ("DOM clobbering"). Everything that reads a token out of hostile DOM goes through
+ * these, so a page cannot hide its ids/classes from the harvester.
+ */
+const nativeGetAttribute = Element.prototype.getAttribute;
+const nativeElementQsa = Element.prototype.querySelectorAll;
+const nativeMatches = Element.prototype.matches;
+
+/** `getAttribute` through the native method; `null` when absent or unreadable. */
+export function attribute(el: Element, name: string): string | null {
+  try {
+    return nativeGetAttribute.call(el, name);
+  } catch {
+    return null;
+  }
+}
+
+/** The element's `id` attribute (clobber-proof), `''` when it has none. */
+export function elementId(el: Element): string {
+  return attribute(el, 'id') ?? '';
+}
+
+/** The element's class tokens (clobber-proof), split on ASCII whitespace. */
+export function classTokens(el: Element): string[] {
+  const raw = attribute(el, 'class');
+  if (!raw) return [];
+  const out: string[] = [];
+  for (const token of raw.split(/[\t\n\f\r ]+/)) if (token !== '') out.push(token);
   return out;
 }
 
@@ -27,17 +67,26 @@ export function qsa(root: ParentNode, selector: string): Element[] {
   }
 }
 
+/** `qsa` for an element, through the native method (clobber-proof). */
+export function qsaElement(el: Element, selector: string): Element[] {
+  try {
+    return Array.from(nativeElementQsa.call(el, selector));
+  } catch {
+    return [];
+  }
+}
+
 /** `querySelectorAll` relative to `el`; a leading combinator is scoped with `:scope`. */
 export function qsaScoped(el: Element, selector: string): Element[] {
   const s = selector.trim();
   const scoped = s.startsWith('>') || s.startsWith('+') || s.startsWith('~') ? `:scope ${s}` : s;
-  return qsa(el, scoped);
+  return qsaElement(el, scoped);
 }
 
-/** `Element.matches` that never throws. */
+/** `Element.matches` (native, clobber-proof) that never throws. */
 export function matchesSafe(el: Element, selector: string): boolean {
   try {
-    return el.matches(selector);
+    return nativeMatches.call(el, selector);
   } catch {
     return false;
   }

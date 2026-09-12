@@ -329,6 +329,9 @@
   "settings_cloud_base_url_desc": {
     "message": "只有在自行架設清單更新服務時才需要變更。"
   },
+  "settings_cloud_base_url_invalid": {
+    "message": "更新伺服器網址必須以 https:// 開頭。"
+  },
   "settings_theme": {
     "message": "主題"
   },
@@ -385,6 +388,9 @@
   },
   "about_copy_diagnostics": {
     "message": "複製診斷資訊"
+  },
+  "about_copy_diagnostics_note": {
+    "message": "診斷資訊包含你的設定與各網站模式清單（你曾自訂的網站）。分享前請先檢查。"
   },
   "about_copied": {
     "message": "診斷資訊已複製到剪貼簿。"

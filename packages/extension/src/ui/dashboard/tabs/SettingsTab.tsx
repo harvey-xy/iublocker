@@ -5,6 +5,7 @@ import { Card, ErrorBox, Field, Segmented, Spinner, Toggle } from '../../lib/com
 import { errorMessage, useRequest } from '../../lib/useRequest';
 import { modeOptions } from '../../lib/mode-options';
 import { applyTheme } from '../../lib/theme';
+import { isHttpsUrl } from '../../lib/links';
 import { t } from '../../lib/i18n';
 
 const CHANNELS: Settings['updateChannel'][] = ['stable', 'nightly'];
@@ -24,10 +25,23 @@ export function SettingsTab() {
       const next = await sendRequest({ type: 'settings:set', patch });
       settings.set(next);
       applyTheme(next.theme);
+      // The worker sanitises what it stores; show what was stored, not what was typed.
+      if (patch.cloudDeltaBaseUrl !== undefined) setUrlDraft(null);
       setNote(t('settings_saved'));
     } catch (err) {
       setError(t('settings_save_failed', [errorMessage(err)]));
     }
+  };
+
+  /** `settings:set` silently falls back to the default for anything but https. */
+  const saveCloudUrl = (raw: string) => {
+    const value = raw.trim();
+    if (!isHttpsUrl(value)) {
+      setNote(null);
+      setError(t('settings_cloud_base_url_invalid'));
+      return;
+    }
+    void save({ cloudDeltaBaseUrl: value });
   };
 
   if (settings.loading && !data) return <Spinner />;
@@ -157,9 +171,7 @@ export function SettingsTab() {
               data-testid="cloudDeltaBaseUrl"
               value={urlDraft ?? data.cloudDeltaBaseUrl}
               onInput={(e) => setUrlDraft((e.currentTarget as HTMLInputElement).value)}
-              onChange={(e) =>
-                void save({ cloudDeltaBaseUrl: (e.currentTarget as HTMLInputElement).value.trim() })
-              }
+              onChange={(e) => saveCloudUrl((e.currentTarget as HTMLInputElement).value)}
             />
           )}
         </Field>

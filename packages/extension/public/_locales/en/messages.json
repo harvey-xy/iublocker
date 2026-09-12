@@ -329,6 +329,9 @@
   "settings_cloud_base_url_desc": {
     "message": "Change this only if you self-host list updates."
   },
+  "settings_cloud_base_url_invalid": {
+    "message": "The update server URL must start with https://"
+  },
   "settings_theme": {
     "message": "Theme"
   },
@@ -385,6 +388,9 @@
   },
   "about_copy_diagnostics": {
     "message": "Copy diagnostics"
+  },
+  "about_copy_diagnostics_note": {
+    "message": "Diagnostics include your settings and your per-site mode list (the sites you customised). Review before sharing."
   },
   "about_copied": {
     "message": "Diagnostics copied to the clipboard."

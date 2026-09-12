@@ -8,6 +8,14 @@
 
 /** Selectors are joined into chunks so a single rule never grows unbounded. */
 const SELECTORS_PER_RULE = 1000;
+/**
+ * How many times the observer re-attaches the element before it gives up. A page that
+ * removes it in its own `MutationObserver` would otherwise ping-pong with us in an
+ * unbounded microtask loop that pegs the main thread. After the cap we stop observing;
+ * the engine still calls `ensureAttached()` once per pass (≥ 100 ms apart), so hiding
+ * recovers without the busy loop.
+ */
+const MAX_OBSERVED_REATTACH = 50;
 export const HIDE_DECLARATION = 'display:none!important;';
 
 export class StyleManager {
@@ -18,6 +26,7 @@ export class StyleManager {
   private observer: MutationObserver | null = null;
   private readonly injected = new Set<string>();
   private destroyed = false;
+  private reattached = 0;
 
   constructor(doc: Document, id = 'iub-cosmetic') {
     this.doc = doc;
@@ -47,7 +56,14 @@ export class StyleManager {
     if (this.destroyed || !el) return;
     const parent: Element | null = this.doc.head ?? this.doc.documentElement;
     if (!parent) return;
-    if (el.parentNode !== parent) parent.appendChild(el);
+    if (el.parentNode !== parent) {
+      parent.appendChild(el);
+      this.reattached += 1;
+      if (this.reattached > MAX_OBSERVED_REATTACH) {
+        this.observer?.disconnect();
+        this.observer = null;
+      }
+    }
     if (this.parent !== parent) {
       this.parent = parent;
       this.observeParent(parent);
@@ -107,6 +123,8 @@ export class StyleManager {
 
   private observeParent(parent: Element): void {
     this.observer?.disconnect();
+    this.observer = null;
+    if (this.reattached > MAX_OBSERVED_REATTACH) return;
     const Observer = this.doc.defaultView?.MutationObserver;
     if (!Observer) return;
     this.observer = new Observer(() => {

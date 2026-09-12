@@ -281,8 +281,14 @@ export class ElementPicker {
   async create(): Promise<void> {
     const selector = this.currentSelector;
     if (!selector) return;
-    const hostname = frameHostname(this.win) || this.win.location.hostname;
-    const line = filterFor(hostname, selector);
+    // No hostname (a `file://` page, an opaque origin) would yield `##selector`: a
+    // *generic* filter that hides this element on every site. Refuse instead.
+    const line = filterFor(frameHostname(this.win), selector);
+    if (line === null) {
+      this.statusEl.classList.add('error');
+      this.statusEl.textContent = 'This page has no hostname, so the filter cannot be scoped to it.';
+      return;
+    }
     this.createBtn.disabled = true;
     try {
       const res = await sendRequest({ type: 'filters:addUser', lines: [line] });

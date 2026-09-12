@@ -92,6 +92,19 @@ describe('Dashboard — Lists tab', () => {
     unmount(el);
   });
 
+  it('links a list homepage only when it is an http(s) URL', async () => {
+    const hostile = entry('hostile', 'custom', true);
+    // `homepage` can come from the list *text* (`! Homepage:`), so it is list-controlled.
+    hostile.homepage = 'javascript:alert(1)';
+    const evil = entry('evil', 'custom', true);
+    evil.homepage = 'data:text/html,<script>x</script>';
+    mockRouter({ 'lists:get': () => ({ ...response, lists: [hostile, evil, entry('ok', 'ads', true)] }) });
+    const el = await mount(h(ListsTab, {}));
+    const hrefs = [...el.querySelectorAll('a')].map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(['https://example.org/ok']);
+    unmount(el);
+  });
+
   it('surfaces a router error with a retry affordance', async () => {
     mockRouter({});
     const el = await mount(h(ListsTab, {}));

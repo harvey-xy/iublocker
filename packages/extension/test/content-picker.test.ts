@@ -1,6 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Request } from '@iublocker/shared';
 import { ElementPicker } from '../src/content/picker-ui';
+import type * as DomModule from '../src/content/dom';
+
+/** Lets one test pretend the frame has no hostname (a `file://` page, opaque origin). */
+const hostname = vi.hoisted(() => ({ override: null as string | null }));
+vi.mock('../src/content/dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof DomModule>();
+  return {
+    ...actual,
+    frameHostname: (win: Window) => hostname.override ?? actual.frameHostname(win),
+  };
+});
 
 type PickerWindow = Window & { __iub_picker?: { destroy(): void } };
 
@@ -26,6 +37,7 @@ function hover(el: Element): void {
 let picker: ElementPicker | null = null;
 
 beforeEach(() => {
+  hostname.override = null;
   sent.length = 0;
   mockWorker();
   (window as PickerWindow).__iub_picker?.destroy();
@@ -117,6 +129,17 @@ describe('element picker', () => {
     expect(document.querySelector('iub-picker')).toBeNull();
     const applied = document.getElementById('iub-picker-applied');
     expect(applied?.textContent).toContain('span.label');
+  });
+
+  it('refuses to create a filter when the page has no hostname', async () => {
+    hostname.override = '';
+    picker = new ElementPicker(window);
+    picker.start();
+    click(document.querySelector('.label') as Element);
+    await picker.create();
+    // `##span.label` would hide that element on every site the user visits.
+    expect(sent.filter((msg) => msg.type === 'filters:addUser')).toEqual([]);
+    expect(document.querySelector('iub-picker')).not.toBeNull();
   });
 
   it('the entry script mounts one picker, and a second injection replaces it', async () => {

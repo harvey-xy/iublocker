@@ -15,6 +15,7 @@ import {
   pathSelector,
   stableClasses,
 } from '../src/content/selector';
+import { elementId, matchesSafe } from '../src/content/dom';
 
 function html(markup: string): void {
   document.body.innerHTML = markup;
@@ -175,5 +176,44 @@ describe('ladder (broaden / narrow)', () => {
 
   it('formats the filter line', () => {
     expect(filterFor('example.com', '#ad')).toBe(`example.com##${'#ad'}`);
+  });
+
+  it('refuses to build a filter line without a hostname (that would be generic)', () => {
+    expect(filterFor('', '#ad')).toBeNull();
+    expect(filterFor('example.com', '')).toBeNull();
+  });
+});
+
+describe('hostile DOM', () => {
+  it('reads id and class through attributes, not clobberable properties', () => {
+    html('<form id="ad-box" class="promo card"><input name="id"><input name="classList"></form>');
+    const form = pick('form');
+    // What `HTMLFormElement`'s named-property getter does in a real browser: the
+    // `<input name=id>` shadows `.id`, and `<input name=classList>` shadows `.classList`.
+    const decoy = document.createElement('input');
+    Object.defineProperty(form, 'id', { value: decoy, configurable: true });
+    Object.defineProperty(form, 'classList', { value: decoy, configurable: true });
+    expect(elementId(form)).toBe('ad-box');
+    expect(stableClasses(form)).toEqual(['promo', 'card']);
+  });
+
+  it('escapes quotes and brackets in class and id tokens', () => {
+    html('<div id="a&quot;b[c]"><span class="x&quot;y">t</span></div>');
+    const span = pick('span');
+    const selector = generateSelector(span);
+    expect(selector).toContain('\\"');
+    expect(matchesSafe(span, selector)).toBe(true);
+    expect(matchesSafe(pick('div'), generateSelector(pick('div')))).toBe(true);
+  });
+
+  it('falls back to the bare attribute form for values with control characters', () => {
+    html('<div data-x="ok"></div>');
+    const el = pick('div');
+    el.setAttribute('data-x', 'a\u2028b');
+    expect(attributeSelector(el)).toBe('div[data-x]');
+    el.setAttribute('data-x', 'a\nb');
+    expect(attributeSelector(el)).toBe('div[data-x]');
+    el.setAttribute('data-x', 'plain');
+    expect(attributeSelector(el)).toBe('div[data-x="plain"]');
   });
 });

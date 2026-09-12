@@ -64,6 +64,24 @@ describe('StyleManager', () => {
     sm.destroy();
   });
 
+  it('stops the observer when a page removes the element in a loop, and still recovers', async () => {
+    const sm = new StyleManager(document);
+    sm.hide(['.ad']);
+    const el = document.getElementById('iub-cosmetic') as HTMLElement;
+    // A page fighting us in its own observer would ping-pong forever; after the cap we
+    // stop re-appending from the observer.
+    for (let i = 0; i < 60; i++) {
+      el.remove();
+      await tick();
+    }
+    expect(document.getElementById('iub-cosmetic')).toBeNull();
+    // The engine calls ensureAttached() once per pass, which still brings it back.
+    sm.ensureAttached();
+    expect(document.getElementById('iub-cosmetic')).toBe(el);
+    expect(el.textContent).toContain('.ad');
+    sm.destroy();
+  });
+
   it('destroy() removes the element and stops re-appending', async () => {
     const sm = new StyleManager(document);
     sm.hide(['.ad']);

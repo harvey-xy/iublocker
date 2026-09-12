@@ -5,6 +5,7 @@ import { Button, Card, ErrorBox, Meter, Spinner, Toggle } from '../../lib/compon
 import { errorMessage, useExtensionEvent, useRequest } from '../../lib/useRequest';
 import { formatCount, formatTime } from '../../lib/format';
 import { LIST_GROUP_ORDER, listGroupTitle } from '../../lib/mode-options';
+import { safeHttpUrl } from '../../lib/links';
 import { t } from '../../lib/i18n';
 
 type ListEntry = ListsGetResponse['lists'][number];
@@ -151,10 +152,10 @@ export function ListsTab() {
                           formatCount(list.counts.scriptlets),
                         ])}
                       </span>
-                      {list.homepage && (
+                      {safeHttpUrl(list.homepage) && (
                         <>
                           {' · '}
-                          <a href={list.homepage} target="_blank" rel="noreferrer noopener">
+                          <a href={safeHttpUrl(list.homepage) ?? ''} target="_blank" rel="noreferrer noopener">
                             {t('lists_homepage')}
                           </a>
                         </>

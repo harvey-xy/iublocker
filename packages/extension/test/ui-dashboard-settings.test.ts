@@ -90,6 +90,31 @@ describe('Dashboard — Settings tab', () => {
     unmount(el);
   });
 
+  it('rejects a non-https update server URL before sending it', async () => {
+    const ctx = settingsRouter();
+    const el = await mount(h(SettingsTab, {}));
+    await setValue(el.querySelector('[data-testid="cloudDeltaBaseUrl"]'), 'http://evil.example/delta');
+
+    expect(ctx.router.sent('settings:set')).toEqual([]);
+    expect(el.querySelector('.errorbox')?.textContent).toContain('settings_cloud_base_url_invalid');
+    unmount(el);
+  });
+
+  it('shows the stored URL after a save, not the rejected draft', async () => {
+    const ctx = settingsRouter();
+    const el = await mount(h(SettingsTab, {}));
+    // The worker sanitises: it keeps the default for anything it does not accept.
+    await setValue(el.querySelector('[data-testid="cloudDeltaBaseUrl"]'), 'https://mirror.example/x');
+    expect(ctx.router.last('settings:set')).toEqual({
+      type: 'settings:set',
+      patch: { cloudDeltaBaseUrl: 'https://mirror.example/x' },
+    });
+    expect(el.querySelector<HTMLInputElement>('[data-testid="cloudDeltaBaseUrl"]')?.value).toBe(
+      ctx.current.cloudDeltaBaseUrl,
+    );
+    unmount(el);
+  });
+
   it('changes the default mode from the segmented control', async () => {
     const ctx = settingsRouter();
     const el = await mount(h(SettingsTab, {}));

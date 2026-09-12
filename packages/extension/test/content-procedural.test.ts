@@ -168,6 +168,40 @@ describe('ProceduralExecutor — actions', () => {
     expect(a.hasAttribute(MARKER_ATTR)).toBe(false);
   });
 
+  it('re-hides an element whose inline display the page cleared', () => {
+    html('<div id="a" class="box">Sponsored</div>');
+    const x = new ProceduralExecutor(env(), [filter(['css', '.box'], ['has-text', 'Sponsored'])]);
+    x.run();
+    const a = document.getElementById('a') as HTMLElement;
+    // A page that fights back: drop the inline style we set.
+    a.style.removeProperty('display');
+    a.removeAttribute(MARKER_ATTR);
+    x.run();
+    expect(a.style.display).toBe('none');
+    expect(a.style.getPropertyPriority('display')).toBe('important');
+    expect(a.getAttribute(MARKER_ATTR)).toBe('hidden');
+    // The original (empty) inline value is still what reset() puts back.
+    x.reset();
+    expect(a.style.display).toBe('');
+  });
+
+  it('keeps an element hidden when one of two filters stops matching it', () => {
+    html('<div id="a" class="box">Sponsored</div>');
+    const x = new ProceduralExecutor(env(), [
+      filter(['css', '.box'], ['has-text', 'Sponsored']),
+      filter(['css', '#a']),
+    ]);
+    x.run();
+    const a = document.getElementById('a') as HTMLElement;
+    expect(a.style.display).toBe('none');
+    a.textContent = 'News';
+    x.run();
+    // The first filter stopped matching and restored what it recorded, but the second
+    // one still matches, so the element must not become visible again.
+    x.run();
+    expect(a.style.display).toBe('none');
+  });
+
   it('restores the inline display the page had set', () => {
     html('<div id="a" class="box" style="display:flex">Sponsored</div>');
     const x = new ProceduralExecutor(env(), [filter(['css', '.box'], ['has-text', 'Sponsored'])]);
@@ -175,6 +209,19 @@ describe('ProceduralExecutor — actions', () => {
     expect((document.getElementById('a') as HTMLElement).style.display).toBe('none');
     x.reset();
     expect((document.getElementById('a') as HTMLElement).style.display).toBe('flex');
+  });
+
+  it('keeps applying later filters when an action throws on hostile DOM', () => {
+    html('<form id="a" class="box">Sponsored</form><div id="b" class="box">Sponsored</div>');
+    const form = document.getElementById('a') as HTMLElement;
+    // `<form><input name=remove>` makes `el.remove` a page-controlled non-function.
+    Object.defineProperty(form, 'remove', { value: 'clobbered', configurable: true });
+    const x = new ProceduralExecutor(env(), [
+      filter(['css', 'form'], ['remove']),
+      filter(['css', 'div.box'], ['has-text', 'Sponsored']),
+    ]);
+    expect(() => x.run()).not.toThrow();
+    expect((document.getElementById('b') as HTMLElement).style.display).toBe('none');
   });
 
   it('remove() detaches the matched elements', () => {

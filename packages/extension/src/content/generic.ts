@@ -8,7 +8,20 @@
  */
 
 import type { CosmeticGeneric } from '@iublocker/shared';
+import { classTokens, elementId, qsaElement } from './dom';
 import type { StyleManager } from './style';
+
+/**
+ * Own-property lookup. The key is a page-controlled id/class token, so a plain
+ * `table[key]` would walk `Object.prototype`: `<div id="constructor">` returned the
+ * `Object` constructor and threw "selectors is not iterable" out of the harvester,
+ * killing generic hiding for the whole document.
+ */
+function lookup(table: Record<string, string[]>, key: string): string[] | undefined {
+  if (!Object.prototype.hasOwnProperty.call(table, key)) return undefined;
+  const value = table[key];
+  return Array.isArray(value) ? value : undefined;
+}
 
 export class GenericHider {
   private readonly generic: CosmeticGeneric;
@@ -41,14 +54,20 @@ export class GenericHider {
   /** Incremental scan of an added node and its subtree. */
   harvestNode(node: Node): void {
     if (node.nodeType !== 1 && node.nodeType !== 9 && node.nodeType !== 11) return;
-    if (node.nodeType === 1) this.harvestElement(node as Element);
-    const parent = node as ParentNode;
-    if (typeof parent.querySelectorAll !== 'function') return;
-    let matches: ArrayLike<Element>;
-    try {
-      matches = parent.querySelectorAll('[id],[class]');
-    } catch {
-      return;
+    let matches: Element[];
+    if (node.nodeType === 1) {
+      const el = node as Element;
+      this.harvestElement(el);
+      // Native `querySelectorAll`: a `<form>` can shadow the method (DOM clobbering).
+      matches = qsaElement(el, '[id],[class]');
+    } else {
+      const parent = node as ParentNode;
+      if (typeof parent.querySelectorAll !== 'function') return;
+      try {
+        matches = Array.from(parent.querySelectorAll('[id],[class]'));
+      } catch {
+        return;
+      }
     }
     for (let i = 0; i < matches.length; i++) {
       const el = matches[i];
@@ -58,17 +77,15 @@ export class GenericHider {
 
   /** Harvests one element's id and class tokens. */
   harvestElement(el: Element): void {
-    const id = el.id;
+    const id = elementId(el);
     if (id && !this.seenIds.has(id)) {
       this.seenIds.add(id);
-      this.collect(this.generic.byId[id]);
+      this.collect(lookup(this.generic.byId, id));
     }
-    const classes = el.classList;
-    for (let i = 0; i < classes.length; i++) {
-      const token = classes[i];
-      if (!token || this.seenClasses.has(token)) continue;
+    for (const token of classTokens(el)) {
+      if (this.seenClasses.has(token)) continue;
       this.seenClasses.add(token);
-      this.collect(this.generic.byClass[token]);
+      this.collect(lookup(this.generic.byClass, token));
     }
   }
 

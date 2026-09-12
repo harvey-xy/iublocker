@@ -329,6 +329,9 @@
   "settings_cloud_base_url_desc": {
     "message": "仅在自建列表更新服务时才需要修改。"
   },
+  "settings_cloud_base_url_invalid": {
+    "message": "更新服务器地址必须以 https:// 开头。"
+  },
   "settings_theme": {
     "message": "主题"
   },
@@ -385,6 +388,9 @@
   },
   "about_copy_diagnostics": {
     "message": "复制诊断信息"
+  },
+  "about_copy_diagnostics_note": {
+    "message": "诊断信息包含你的设置与各网站模式列表（你曾自定义的网站）。分享前请先检查。"
   },
   "about_copied": {
     "message": "诊断信息已复制到剪贴板。"

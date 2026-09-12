@@ -172,26 +172,36 @@ export class ProceduralExecutor {
       } catch {
         continue;
       }
-      if (state.action === 'remove') {
-        for (const el of matched) {
-          if (!el.isConnected) continue;
-          el.remove();
-          stats.removed += 1;
-        }
-        continue;
+      try {
+        this.apply(state, matched, stats);
+      } catch {
+        // Hostile DOM can make any of these throw — `<form><input name=remove>` turns
+        // `el.remove()` into a page-controlled non-function. One filter failing must not
+        // stop the filters after it from being applied on this pass.
       }
-      if (state.action === 'style') {
-        stats.styled += this.applyStyle(state, matched);
-        continue;
-      }
-      if (state.action === 'strip') {
-        stats.stripped += this.strip(state, matched);
-        continue;
-      }
-      stats.hidden += this.hide(state, matched);
-      stats.unhidden += this.unhideStale(state, matched);
     }
     return stats;
+  }
+
+  private apply(state: FilterState, matched: Element[], stats: ProceduralPassStats): void {
+    if (state.action === 'remove') {
+      for (const el of matched) {
+        if (!el.isConnected) continue;
+        el.remove();
+        stats.removed += 1;
+      }
+      return;
+    }
+    if (state.action === 'style') {
+      stats.styled += this.applyStyle(state, matched);
+      return;
+    }
+    if (state.action === 'strip') {
+      stats.stripped += this.strip(state, matched);
+      return;
+    }
+    stats.hidden += this.hide(state, matched);
+    stats.unhidden += this.unhideStale(state, matched);
   }
 
   /** Reverts every inline change this executor made (teardown / mode change). */
@@ -393,7 +403,17 @@ export class ProceduralExecutor {
   private hide(state: FilterState, matched: Element[]): number {
     let count = 0;
     for (const el of matched) {
-      if (state.hidden.has(el)) continue;
+      if (state.hidden.has(el)) {
+        // Still matching, but the inline `display` we set can be gone: the page may have
+        // cleared it, or another filter that also hid this element restored its own
+        // recorded value. Re-apply (not a new hide, so it is not counted).
+        const style = inlineStyle(el);
+        if (style && style.getPropertyValue('display') !== 'none') {
+          this.setProperty(state, el, 'display', 'none', 'important');
+          el.setAttribute(MARKER_ATTR, 'hidden');
+        }
+        continue;
+      }
       this.setProperty(state, el, 'display', 'none', 'important');
       el.setAttribute(MARKER_ATTR, 'hidden');
       state.hidden.add(el);

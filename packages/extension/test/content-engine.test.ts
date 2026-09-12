@@ -109,6 +109,21 @@ describe('cosmetic engine generic hiding', () => {
     expect(css).not.toContain('#banner');
   });
 
+  it('keeps working when a page uses Object.prototype names as id/class', async () => {
+    document.body.innerHTML = '<div id="constructor"></div>';
+    mockWorker(() =>
+      response({ mode: 'complete', generic: { byId: {}, byClass: { late: ['.late'] }, complex: [] } }),
+    );
+    engine = await startEngine(window);
+    expect(engine).not.toBeNull();
+    const node = document.createElement('div');
+    node.innerHTML = '<span class="toString"></span><span class="late"></span>';
+    document.body.appendChild(node);
+    await tick();
+    engine?.pass();
+    expect(engine?.cssText).toContain('.late');
+  });
+
   it('harvests nodes added later', async () => {
     mockWorker(() =>
       response({ mode: 'complete', generic: { byId: {}, byClass: { late: ['.late'] }, complex: [] } }),

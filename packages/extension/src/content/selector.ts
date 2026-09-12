@@ -7,7 +7,7 @@
  * capped at depth 6. Classes and ids that look machine-generated are dropped.
  */
 
-import { cssEscape, matchesSafe, qsa } from './dom';
+import { classTokens, cssEscape, elementId, matchesSafe, qsa } from './dom';
 
 /** CSS-in-JS prefixes with a hashed suffix: `css-1x2y3z`, `sc-bdVaJa`, `jss42`. */
 const GENERATED_PREFIX =
@@ -22,6 +22,19 @@ export const MAX_PATH_DEPTH = 6;
 /** Attributes worth using as a selector anchor when there is no usable class. */
 const ATTR_CANDIDATES = /^(?:data-[\w-]+|aria-label|role|name|type|alt|title)$/;
 const MAX_ATTR_VALUE = 40;
+
+/**
+ * A control character or line separator cannot go inside a CSS string (the selector
+ * would not parse) and must never reach a one-line filter, so such values fall back to
+ * the bare `[attr]` form.
+ */
+function hasUnsafeChar(value: string): boolean {
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code <= 0x1f || code === 0x7f || code === 0x2028 || code === 0x2029) return true;
+  }
+  return false;
+}
 
 /** True when a class/id token looks machine-generated (hash, CSS-in-JS, random). */
 export function isGeneratedToken(token: string): boolean {
@@ -54,10 +67,9 @@ export function isUsableId(id: string | null | undefined): boolean {
 /** The element's classes with generated-looking ones removed (capped). */
 export function stableClasses(el: Element): string[] {
   const out: string[] = [];
-  const list = el.classList;
-  for (let i = 0; i < list.length && out.length < MAX_CLASSES; i++) {
-    const token = list[i];
-    if (!token || isGeneratedToken(token)) continue;
+  for (const token of classTokens(el)) {
+    if (out.length >= MAX_CLASSES) break;
+    if (isGeneratedToken(token)) continue;
     out.push(token);
   }
   return out;
@@ -68,8 +80,9 @@ export function countMatches(doc: Document, selector: string): number {
 }
 
 function idSelector(el: Element): string | null {
-  if (!isUsableId(el.id)) return null;
-  const selector = `#${cssEscape(el.id)}`;
+  const id = elementId(el);
+  if (!isUsableId(id)) return null;
+  const selector = `#${cssEscape(id)}`;
   const doc = el.ownerDocument;
   if (doc && countMatches(doc, selector) !== 1) return null;
   return selector;
@@ -89,7 +102,9 @@ export function attributeSelector(el: Element): string | null {
     if (value.length === 0 || value.length > MAX_ATTR_VALUE) {
       return `${el.localName}[${attr.name}]`;
     }
-    if (isGeneratedToken(value)) return `${el.localName}[${attr.name}]`;
+    if (isGeneratedToken(value) || hasUnsafeChar(value)) {
+      return `${el.localName}[${attr.name}]`;
+    }
     return `${el.localName}[${attr.name}="${value.replace(/["\\]/g, '\\$&')}"]`;
   }
   return null;
@@ -218,7 +233,12 @@ export function narrowIndex(index: number): number {
   return Math.max(index - 1, 0);
 }
 
-/** `hostname##selector`, the cosmetic filter the picker creates. */
-export function filterFor(hostname: string, selector: string): string {
+/**
+ * `hostname##selector`, the cosmetic filter the picker creates — or `null` when either
+ * half is missing. Without a hostname the line would be `##selector`, a *generic*
+ * filter that hides the element on every site the user visits, so this fails closed.
+ */
+export function filterFor(hostname: string, selector: string): string | null {
+  if (hostname === '' || selector === '') return null;
   return `${hostname}##${selector}`;
 }
