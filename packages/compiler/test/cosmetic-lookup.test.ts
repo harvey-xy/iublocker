@@ -233,3 +233,35 @@ sub.example.*##.sub-entity
     expect(found.procedural).toHaveLength(1);
   });
 });
+
+describe('hostname keys that collide with Object.prototype', () => {
+  it('stores and finds them as real own keys', () => {
+    const list = db(`
+__proto__##.a
+constructor##.b
+__proto__##.c:style(color:red)
+constructor##.d:has-text(x)
+    `);
+    expect(Object.keys(list.specific).sort()).toEqual(['__proto__', 'constructor']);
+    expect(lookupCosmetic([list], '__proto__').selectors).toEqual(['.a']);
+    expect(lookupCosmetic([list], '__proto__').styles).toEqual([['.c', 'color:red']]);
+    expect(lookupCosmetic([list], 'constructor').selectors).toEqual(['.b']);
+    expect(lookupCosmetic([list], 'constructor').procedural.map((p) => p.raw)).toEqual(['.d:has-text(x)']);
+  });
+
+  it('never hands a prototype member to a page whose hostname is one', () => {
+    const empty = emptyCosmeticDB('empty');
+    for (const host of ['constructor', 'toString', '__proto__', 'valueOf']) {
+      const found = lookupCosmetic([empty], host);
+      expect(found.selectors, host).toEqual([]);
+      expect(found.styles, host).toEqual([]);
+      expect(found.procedural, host).toEqual([]);
+      expect(found.excluded, host).toEqual([]);
+    }
+  });
+
+  it('survives a JSON round trip', () => {
+    const round = JSON.parse(JSON.stringify(db('__proto__##.a'))) as ReturnType<typeof db>;
+    expect(lookupCosmetic([round], '__proto__').selectors).toEqual(['.a']);
+  });
+});

@@ -82,24 +82,29 @@ export function findCosmeticSeparator(line: string): CosmeticSeparatorMatch | nu
   return null;
 }
 
-const META_KEYS: Record<string, keyof ListMeta> = {
-  title: 'title',
-  version: 'version',
-  expires: 'expires',
-  homepage: 'homepage',
-  'last modified': 'lastModified',
-  'last-modified': 'lastModified',
-  lastmodified: 'lastModified',
-  'last updated': 'lastModified',
-  license: 'license',
-  licence: 'license',
-};
+/**
+ * A `Map`, not an object literal: the key comes from the list (`! constructor: x`), and an
+ * object lookup would hand back an `Object.prototype` member and write a junk field into
+ * `ListMeta`.
+ */
+const META_KEYS: ReadonlyMap<string, keyof ListMeta> = new Map([
+  ['title', 'title'],
+  ['version', 'version'],
+  ['expires', 'expires'],
+  ['homepage', 'homepage'],
+  ['last modified', 'lastModified'],
+  ['last-modified', 'lastModified'],
+  ['lastmodified', 'lastModified'],
+  ['last updated', 'lastModified'],
+  ['license', 'license'],
+  ['licence', 'license'],
+]);
 
 function captureMeta(meta: ListMeta, comment: string): void {
   const colon = comment.indexOf(':');
   if (colon <= 0) return;
   const key = comment.slice(0, colon).trim().toLowerCase();
-  const field = META_KEYS[key];
+  const field = META_KEYS.get(key);
   if (field === undefined) return;
   const value = comment.slice(colon + 1).trim();
   if (value !== '' && meta[field] === undefined) meta[field] = value;

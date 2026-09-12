@@ -8,6 +8,7 @@
 import type { CosmeticDB, CosmeticLookup, ProceduralFilter } from '@iublocker/shared';
 import { hostnameWalk } from '@iublocker/shared';
 import { entityKeysFor } from '../psl';
+import { getEntry } from '../record';
 import { GENERIC_HOST_KEY } from './compile';
 
 /**
@@ -71,7 +72,7 @@ export function lookupCosmetic(dbs: CosmeticDB[], hostname: string): CosmeticLoo
   for (const db of dbs) {
     const index = hideIndex(db);
     for (const host of walk) {
-      const list = db.exceptions.selectors[host];
+      const list = getEntry(db.exceptions.selectors, host);
       if (list !== undefined) for (const sel of list) excludedSet.add(sel);
       if (!elemhide && index.elemhide.has(host)) elemhide = true;
       if (!generichide && index.generichide.has(host)) generichide = true;
@@ -88,7 +89,7 @@ export function lookupCosmetic(dbs: CosmeticDB[], hostname: string): CosmeticLoo
 
   for (const db of dbs) {
     for (const host of walk) {
-      const list = db.specific[host];
+      const list = getEntry(db.specific, host);
       if (list === undefined) continue;
       for (const sel of list) {
         if (excludedSet.has(sel) || seenSelectors.has(sel)) continue;
@@ -122,7 +123,7 @@ function collectStyles(
   seen: Set<string>,
   out: [string, string][],
 ): void {
-  const list = db.styles[host];
+  const list = getEntry(db.styles, host);
   if (list === undefined) return;
   for (const entry of list) {
     if (excluded.has(entry[0])) continue;
@@ -140,7 +141,7 @@ function collectProcedural(
   seen: Set<string>,
   out: ProceduralFilter[],
 ): void {
-  const list = db.procedural[host];
+  const list = getEntry(db.procedural, host);
   if (list === undefined) return;
   for (const filter of list) {
     if (excluded.has(filter.raw)) continue;

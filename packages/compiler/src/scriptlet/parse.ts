@@ -122,10 +122,7 @@ function splitScriptletArgsRaw(text: string): ParseResult<RawArg[]> {
  * A quoted argument starting at `start`, or `null` when the quote does not delimit one
  * (unterminated, or followed by text that is not an argument separator).
  */
-function readQuotedArg(
-  text: string,
-  start: number,
-): { value: string; next: number; last: boolean } | null {
+function readQuotedArg(text: string, start: number): { value: string; next: number; last: boolean } | null {
   const quote = at(text, start);
   const n = text.length;
   let value = '';

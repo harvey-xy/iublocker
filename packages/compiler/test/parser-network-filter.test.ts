@@ -386,3 +386,56 @@ describe('||* patterns (DNR rejects a urlFilter starting with "||*")', () => {
     expect(f?.hostname).toBe('example.com');
   });
 });
+
+describe('regressions from the compiler review', () => {
+  it('splits a regex pattern from a $1p/$3p option list', () => {
+    expect(splitPatternOptions('/\\.xyz\\//$3p,~media,domain=a.com')).toEqual({
+      pattern: '/\\.xyz\\//',
+      options: '3p,~media,domain=a.com',
+    });
+    // …but a `$1` back-reference in an option value is not the start of an option list.
+    expect(splitPatternOptions('/(a)(b)/$script,uritransform=//$1b.com$2/')).toEqual({
+      pattern: '/(a)(b)/',
+      options: 'script,uritransform=//$1b.com$2/',
+    });
+  });
+
+  it('names $top and $requestheader as unsupported, not unknown', () => {
+    for (const raw of ['||a.com^$top=pro|to', '||a.com^$requestheader=Cookie:*x*']) {
+      const res = parseNetworkFilter(raw, 1);
+      expect(res.ok, raw).toBe(false);
+      if (!res.ok) expect(res.reason, raw).toContain('unsupported option');
+    }
+  });
+
+  it('never resolves an option name through Object.prototype', () => {
+    for (const raw of ['||a.com^$constructor', '||a.com^$__proto__', '||a.com^$toString']) {
+      const res = parseNetworkFilter(raw, 1);
+      expect(res.ok, raw).toBe(false);
+    }
+  });
+
+  it('rejects a pattern that is only anchors', () => {
+    for (const raw of ['@@||$domain=a.com', '@@|$domain=a.com']) {
+      const res = parseNetworkFilter(raw, 1);
+      expect(res.ok, raw).toBe(false);
+      if (!res.ok) expect(res.reason, raw).toContain('nothing but anchors');
+    }
+    // An option-only filter (no pattern at all) is still fine.
+    expect(parseNetworkFilter('$removeparam=utm_source', 1).ok).toBe(true);
+  });
+
+  it('accepts @@…$redirect-rule with no value', () => {
+    const res = parseNetworkFilter('@@||a.com/gpt.js$script,redirect-rule', 1);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.filter.redirect).toBeUndefined();
+    expect(parseNetworkFilter('||a.com/gpt.js$script,redirect-rule', 1).ok).toBe(false);
+  });
+
+  it('accepts @@…$removeparam with no name', () => {
+    const res = parseNetworkFilter('@@||a.com^$removeparam', 1);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.filter.removeParams).toEqual([]);
+    expect(parseNetworkFilter('||a.com^$removeparam', 1).ok).toBe(false);
+  });
+});

@@ -6,6 +6,7 @@
  * to be evaluated by the content script as a chain of `ProceduralTask`s).
  */
 import type { ProceduralFilter, ProceduralTask } from '@iublocker/shared';
+import { unsafeValuePatternReason } from '../regex-safety';
 import { scanSelector } from './selector';
 import type { PseudoRef } from './selector';
 
@@ -310,6 +311,32 @@ function isDigits(s: string): boolean {
 
 const MAX_UPWARD = 256;
 
+/**
+ * Operators whose argument is a `key: value` / `key=value` pair the runtime compiles as two
+ * separate value patterns (`docs/COSMETIC-FILTERING.md` §3).
+ */
+const KEY_VALUE_OPS: ReadonlySet<string> = new Set([
+  'matches-css',
+  'matches-css-before',
+  'matches-css-after',
+  'matches-attr',
+]);
+
+/**
+ * Why an operator's `/…/` argument is unsafe to run on a page, or null.
+ *
+ * These regexes are evaluated by the content script on every mutation pass with no
+ * timeout, so a catastrophically backtracking one hangs the tab (see `../regex-safety`).
+ */
+function unsafeMatcherArgument(op: string, arg: string): string | null {
+  if (!KEY_VALUE_OPS.has(op)) return unsafeValuePatternReason(arg);
+  const colon = arg.indexOf(':');
+  const equals = arg.indexOf('=');
+  const at = colon === -1 ? equals : equals === -1 ? colon : Math.min(colon, equals);
+  if (at === -1) return unsafeValuePatternReason(arg);
+  return unsafeValuePatternReason(arg, arg.slice(0, at), arg.slice(at + 1));
+}
+
 function buildTask(op: string, p: PseudoRef): Result<ProceduralTask> {
   const arg = p.arg.trim();
   switch (op) {
@@ -321,6 +348,8 @@ function buildTask(op: string, p: PseudoRef): Result<ProceduralTask> {
     case 'remove-attr':
     case 'remove-class': {
       if (arg === '') return { ok: false, reason: `":${op}()" requires an argument` };
+      const unsafe = unsafeMatcherArgument(op, arg);
+      if (unsafe !== null) return { ok: false, reason: `":${op}()": ${unsafe}` };
       return { ok: true, value: [op, arg] as ProceduralTask };
     }
 
@@ -335,6 +364,8 @@ function buildTask(op: string, p: PseudoRef): Result<ProceduralTask> {
     case 'watch-attr':
     case 'style': {
       if (arg === '') return { ok: false, reason: `":${op}()" requires an argument` };
+      const unsafe = unsafeMatcherArgument(op, arg);
+      if (unsafe !== null) return { ok: false, reason: `":${op}()": ${unsafe}` };
       return { ok: true, value: [op, arg] as ProceduralTask };
     }
 

@@ -527,3 +527,115 @@ describe('urlFilterProblem — rules Chrome would refuse to load', () => {
     }
   });
 });
+
+/**
+ * Regressions from the adversarial compiler review. Each case emitted a rule that did not
+ * mean what the filter meant.
+ */
+describe('pattern → condition regressions', () => {
+  it('keeps a host *prefix* anchor as a urlFilter instead of a dead requestDomains entry', () => {
+    // `requestDomains` matches a domain and its subdomains; `||adservice.google.` is a
+    // prefix of a hostname, so as a requestDomains entry it matched nothing at all.
+    for (const [raw, urlFilter] of [
+      ['||adservice.google.', '||adservice.google.'],
+      ['||ad120m.', '||ad120m.'],
+      ['||e-zpass.com-', '||e-zpass.com-'],
+      ['||142.91.159.', '||142.91.159.'],
+      ['||.dev', '||.dev'],
+    ] as const) {
+      const rule = onlyRule(raw);
+      expect(rule.condition.urlFilter, raw).toBe(urlFilter);
+      expect(rule.condition.requestDomains, raw).toBeUndefined();
+    }
+  });
+
+  it('still prefers requestDomains for a real host anchor', () => {
+    expect(onlyRule('||ads.example.co.uk^').condition).toEqual({
+      requestDomains: ['ads.example.co.uk'],
+      excludedResourceTypes: ['main_frame'],
+    });
+    // A single label is a legitimate `$to=` value but never a `||` host anchor.
+    expect(onlyRule('||googleads').condition.urlFilter).toBe('||googleads');
+    expect(onlyRule('*$script,to=com').condition.requestDomains).toEqual(['com']);
+  });
+
+  it('rejects a pattern that is nothing but anchors', () => {
+    // `@@||$domain=x` used to compile to `urlFilter: "||"` — an unbounded allow.
+    for (const raw of ['@@||$domain=example.com', '@@|$domain=example.com']) {
+      const result = compile([raw]);
+      expect(result.rules, raw).toEqual([]);
+      expect(result.dropped[0]?.reason, raw).toContain('nothing but anchors');
+    }
+  });
+
+  it('honours $match-case on a regex filter', () => {
+    expect(onlyRule('/Ads/$match-case').condition.isUrlFilterCaseSensitive).toBe(true);
+    expect(onlyRule('/Ads/').condition.isUrlFilterCaseSensitive).toBeUndefined();
+  });
+});
+
+describe('exception regressions', () => {
+  it('@@…$redirect-rule with no value is an exception, not a parse error', () => {
+    const rule = onlyRule('@@||g.doubleclick.net/tag/js/gpt.js$script,redirect-rule,domain=golf.com');
+    expect(rule.action).toEqual({ type: 'allow' });
+    expect(rule.priority).toBe(PRIORITY.ALLOW);
+    expect(rule.condition.initiatorDomains).toEqual(['golf.com']);
+    expect(onlyRule('@@||example.com^$redirect').action).toEqual({ type: 'allow' });
+    // A block filter still needs a resource name.
+    expect(compile(['||example.com^$redirect-rule']).dropped[0]?.reason).toContain('has no value');
+  });
+
+  it('@@…$csp covers the documents the $csp rules apply to', () => {
+    // The `$csp` rules are main_frame + sub_frame; an exception that excluded main_frame
+    // could never cancel them on a navigation.
+    expect(onlyRule('@@||site.com^$csp').condition.resourceTypes).toEqual(['main_frame', 'sub_frame']);
+    expect(onlyRule('@@||site.com^$permissions').condition.resourceTypes).toEqual([
+      'main_frame',
+      'sub_frame',
+    ]);
+    // An explicit type option still wins.
+    expect(onlyRule('@@||site.com^$csp,subdocument').condition.resourceTypes).toEqual(['sub_frame']);
+  });
+
+  it('@@…$removeparam covers every type, like the rules it cancels', () => {
+    expect(onlyRule('@@||web.archive.org/*/http$removeparam').condition.resourceTypes).toEqual(
+      DNR_RESOURCE_TYPES,
+    );
+    expect(onlyRule('@@||che168.com^$removeparam=s_cid,xhr').condition.resourceTypes).toEqual([
+      'xmlhttprequest',
+    ]);
+  });
+
+  it('$important never lowers a document exception below the document tier', () => {
+    expect(onlyRule('@@||site.com^$document').priority).toBe(PRIORITY.DOCUMENT_ALLOW);
+    expect(onlyRule('@@||site.com^$document,important').priority).toBe(
+      Math.max(PRIORITY.IMPORTANT, PRIORITY.DOCUMENT_ALLOW),
+    );
+  });
+});
+
+describe('$header value semantics', () => {
+  it('matches the value unanchored, as uBO does', () => {
+    expect(onlyRule('||a.com^$header=via:1.1 google').condition.responseHeaders).toEqual([
+      { header: 'via', values: ['*1.1 google*'] },
+    ]);
+    expect(onlyRule('||a.com^$header=link:*adsco.re*').condition.responseHeaders).toEqual([
+      { header: 'link', values: ['*adsco.re*'] },
+    ]);
+  });
+
+  it('tests only for presence when there is no value', () => {
+    expect(onlyRule('||a.com^$header=popads-node').condition.responseHeaders).toEqual([
+      { header: 'popads-node' },
+    ]);
+    expect(onlyRule('||a.com^$header=popads-node:').condition.responseHeaders).toEqual([
+      { header: 'popads-node' },
+    ]);
+  });
+
+  it('drops a regex value rather than emitting a rule that never matches', () => {
+    const result = compile(['||a.com^$header=server:/^openresty\\//']);
+    expect(result.rules).toEqual([]);
+    expect(result.dropped[0]?.reason).toContain('regular-expression value');
+  });
+});

@@ -11,6 +11,8 @@ import { emptyScriptletDB, hostnameWalk } from '@iublocker/shared';
 import { resolveScriptlet } from '@iublocker/scriptlets';
 import type { CompileOptions, CompileScriptletResult, RawLine } from '../types';
 import { entityKeysFor } from '../psl';
+import { getEntry, setEntry } from '../record';
+import { unsafeValuePatternReason } from '../regex-safety';
 import { parseScriptletFilter, stripJsSuffix } from './parse';
 
 /** Hostname key for scriptlets that apply everywhere (`##+js(...)` with no domains). */
@@ -128,6 +130,19 @@ export function compileScriptlets(lines: RawLine[], opts: ScriptletCompileOption
       continue;
     }
 
+    // `/…/` arguments become `RegExp`s in the page with nothing to interrupt them, so a
+    // catastrophically backtracking one would hang the tab (see ../regex-safety).
+    const unsafe = unsafeValuePatternReason(...parsed.args);
+    if (unsafe !== null) {
+      dropped.push({
+        listId: opts.listId,
+        line: line.line,
+        raw: line.raw,
+        reason: `scriptlet "${meta.name}" argument: ${unsafe}`,
+      });
+      continue;
+    }
+
     const call: ScriptletCall = { name: meta.name, args: parsed.args };
     const hosts = parsed.domains.include;
     pending.push({ hosts: hosts.length === 0 ? [SCRIPTLET_GENERIC_HOST_KEY] : hosts, call });
@@ -152,11 +167,11 @@ export function compileScriptlets(lines: RawLine[], opts: ScriptletCompileOption
   const db = emptyScriptletDB(opts.listId);
   for (const [host, calls] of byHost) {
     if (calls.size === 0) continue;
-    db.byHost[host] = [...calls.values()];
+    setEntry(db.byHost, host, [...calls.values()]);
   }
   for (const [host, names] of exceptions) {
     if (names.size === 0) continue;
-    db.exceptions[host] = [...names];
+    setEntry(db.exceptions, host, [...names]);
   }
   return { db, dropped, warnings };
 }
@@ -173,11 +188,15 @@ function unionInto(target: string[], source: readonly string[]): void {
 /** Deep, deduplicating union of `source` into `target`. Returns `target`. */
 export function mergeScriptletDB(target: ScriptletDB, source: ScriptletDB): ScriptletDB {
   for (const host of Object.keys(source.byHost)) {
-    const calls = source.byHost[host];
+    const calls = getEntry(source.byHost, host);
     if (calls === undefined) continue;
-    const existing = target.byHost[host];
+    const existing = getEntry(target.byHost, host);
     if (existing === undefined) {
-      target.byHost[host] = calls.map((c) => ({ name: c.name, args: [...c.args] }));
+      setEntry(
+        target.byHost,
+        host,
+        calls.map((c) => ({ name: c.name, args: [...c.args] })),
+      );
       continue;
     }
     const seen = new Set(existing.map(callId));
@@ -189,10 +208,10 @@ export function mergeScriptletDB(target: ScriptletDB, source: ScriptletDB): Scri
     }
   }
   for (const host of Object.keys(source.exceptions)) {
-    const names = source.exceptions[host];
+    const names = getEntry(source.exceptions, host);
     if (names === undefined) continue;
-    const existing = target.exceptions[host];
-    if (existing === undefined) target.exceptions[host] = [...names];
+    const existing = getEntry(target.exceptions, host);
+    if (existing === undefined) setEntry(target.exceptions, host, [...names]);
     else unionInto(existing, names);
   }
   return target;
@@ -249,11 +268,11 @@ export function lookupScriptletsDetailed(dbs: ScriptletDB[], hostname: string): 
   const excluded = new Set<string>();
   for (const db of dbs) {
     for (const key of concreteKeys) {
-      const names = db.exceptions[key];
+      const names = getEntry(db.exceptions, key);
       if (names !== undefined) for (const name of names) excluded.add(name);
     }
     for (const key of entityKeys) {
-      const names = db.exceptions[key];
+      const names = getEntry(db.exceptions, key);
       if (names !== undefined) for (const name of names) excluded.add(name);
     }
   }
@@ -263,7 +282,7 @@ export function lookupScriptletsDetailed(dbs: ScriptletDB[], hostname: string): 
   const collect = (keys: readonly string[], out: ScriptletCall[]): void => {
     for (const db of dbs) {
       for (const key of keys) {
-        const calls = db.byHost[key];
+        const calls = getEntry(db.byHost, key);
         if (calls === undefined) continue;
         for (const call of calls) {
           if (excluded.has(call.name)) continue;

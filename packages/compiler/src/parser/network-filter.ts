@@ -80,31 +80,36 @@ export interface NetworkFilter {
 
 export type NetworkParseResult = { ok: true; filter: NetworkFilter } | { ok: false; reason: string };
 
-const TYPE_ALIASES: Record<string, DNRResourceType> = {
-  script: 'script',
-  image: 'image',
-  img: 'image',
-  stylesheet: 'stylesheet',
-  css: 'stylesheet',
-  object: 'object',
-  'object-subrequest': 'object',
-  xmlhttprequest: 'xmlhttprequest',
-  xhr: 'xmlhttprequest',
-  subdocument: 'sub_frame',
-  frame: 'sub_frame',
-  ping: 'ping',
-  beacon: 'ping',
-  websocket: 'websocket',
-  media: 'media',
-  font: 'font',
-  other: 'other',
-  webtransport: 'webtransport',
-  webbundle: 'webbundle',
-  csp_report: 'csp_report',
-  'csp-report': 'csp_report',
-  document: 'main_frame',
-  doc: 'main_frame',
-};
+/**
+ * A `Map`: the option name comes from the list, and `TYPE_ALIASES['constructor']` on an
+ * object literal would report a resource type that does not exist (and make an unknown
+ * option look supported).
+ */
+const TYPE_ALIASES: ReadonlyMap<string, DNRResourceType> = new Map([
+  ['script', 'script'],
+  ['image', 'image'],
+  ['img', 'image'],
+  ['stylesheet', 'stylesheet'],
+  ['css', 'stylesheet'],
+  ['object', 'object'],
+  ['object-subrequest', 'object'],
+  ['xmlhttprequest', 'xmlhttprequest'],
+  ['xhr', 'xmlhttprequest'],
+  ['subdocument', 'sub_frame'],
+  ['frame', 'sub_frame'],
+  ['ping', 'ping'],
+  ['beacon', 'ping'],
+  ['websocket', 'websocket'],
+  ['media', 'media'],
+  ['font', 'font'],
+  ['other', 'other'],
+  ['webtransport', 'webtransport'],
+  ['webbundle', 'webbundle'],
+  ['csp_report', 'csp_report'],
+  ['csp-report', 'csp_report'],
+  ['document', 'main_frame'],
+  ['doc', 'main_frame'],
+]);
 
 const METHODS = new Set<string>([
   'connect',
@@ -366,7 +371,7 @@ export function parseNetworkFilter(
       const value = eq === -1 ? '' : body.slice(eq + 1);
       canonical.push(negated ? `~${name}${eq === -1 ? '' : `=${value}`}` : body);
 
-      const type = TYPE_ALIASES[name];
+      const type = TYPE_ALIASES.get(name);
       if (type !== undefined) {
         if (name === 'document' || name === 'doc') f.hasDocument = true;
         if (negated) excludedTypes.add(type);
@@ -576,6 +581,13 @@ function parsePattern(f: NetworkFilter, hostsFormat: boolean): { ok: true } | { 
   if (p.endsWith('|') && !p.endsWith('\\|')) {
     f.rightAnchored = true;
     p = p.slice(0, -1);
+  }
+
+  // Nothing but anchors. `@@||$domain=x` occurs in the wild and used to compile to
+  // `urlFilter: "||"` — an unbounded allow that switches blocking off for the whole site
+  // (and a `urlFilter` Chrome may refuse outright).
+  if (p === '' || p === '|' || p === '||') {
+    return { ok: false, reason: 'pattern is nothing but anchors and matches everything' };
   }
 
   if (p.startsWith('||')) {

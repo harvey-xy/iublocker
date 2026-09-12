@@ -376,3 +376,41 @@ describe('loadBundle', () => {
     await expect(loadBundle(dir)).rejects.toThrow(/manifest\.json/);
   });
 });
+
+describe('hostname keys that collide with Object.prototype', () => {
+  /** `Object.fromEntries`-style own property, the way the compiler emits these DBs. */
+  function withHost<T>(host: string, value: T): Record<string, T> {
+    const out: Record<string, T> = {};
+    Object.defineProperty(out, host, { value, writable: true, enumerable: true, configurable: true });
+    return out;
+  }
+
+  it('diffs a "__proto__" hostname instead of pushing onto Object.prototype', () => {
+    const oldDb = emptyCosmeticDB('old');
+    const newDb = emptyCosmeticDB('new');
+    newDb.specific = withHost('__proto__', ['.a']);
+    newDb.procedural = withHost('constructor', [{ raw: '.b:has-text(x)', tasks: [['css', '.b']] }]);
+    const delta = computeCosmeticDelta(oldDb, newDb);
+    expect(delta.add.specific['__proto__']).toEqual(['.a']);
+    expect(Object.keys(delta.add.procedural)).toEqual(['constructor']);
+    expect(delta.stats.addedSelectors).toBe(1);
+  });
+
+  it('merges such keys across lists', () => {
+    const a = emptyScriptletDB('a');
+    a.byHost = withHost('__proto__', [{ name: 'set-constant', args: ['x', '1'] }]);
+    const b = emptyScriptletDB('b');
+    b.byHost = withHost('__proto__', [{ name: 'set-constant', args: ['y', '2'] }]);
+    const merged = mergeScriptletDBs([a, b]);
+    expect(merged.byHost['__proto__']).toHaveLength(2);
+    expect(Object.keys(merged.byHost)).toEqual(['__proto__']);
+  });
+
+  it('removes them too', () => {
+    const oldDb = emptyScriptletDB('old');
+    oldDb.byHost = withHost('__proto__', [{ name: 'set-constant', args: ['x', '1'] }]);
+    const delta = computeScriptletDelta(oldDb, emptyScriptletDB('new'));
+    expect(delta.remove['__proto__']).toHaveLength(1);
+    expect(delta.stats.removed).toBe(1);
+  });
+});

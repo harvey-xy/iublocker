@@ -15,6 +15,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { boolFlag, parseArgs, stringFlag } from './lib/args';
+import { getEntry, setEntry } from '../packages/compiler/src/record';
 import { BUILD_BUDGET, DNR_LIMITS, ID_RANGE } from '../packages/shared/src/dnr';
 import { emptyCosmeticDB } from '../packages/shared/src/cosmetic';
 import { emptyScriptletDB } from '../packages/shared/src/scriptlets';
@@ -91,9 +92,9 @@ function canonicalValue(value: unknown): unknown {
     const source = value as Record<string, unknown>;
     const out: Record<string, unknown> = {};
     for (const key of Object.keys(source).sort()) {
-      const v = source[key];
+      const v = getEntry(source, key);
       if (v === undefined) continue;
-      out[key] = canonicalValue(v);
+      setEntry(out, key, canonicalValue(v));
     }
     return out;
   }
@@ -211,8 +212,14 @@ export function computeDnrDelta(
 /* ------------------------------------------------------------- cosmetic diff */
 
 function unionInto(target: Record<string, string[]>, source: Record<string, string[]> | undefined): void {
+  // Keys are list-controlled hostnames: `target[key] ??= []` would read `Object.prototype`
+  // for `__proto__`/`constructor` and push onto it.
   for (const [key, values] of Object.entries(source ?? {})) {
-    const bucket = (target[key] ??= []);
+    let bucket = getEntry(target, key);
+    if (bucket === undefined) {
+      bucket = [];
+      setEntry(target, key, bucket);
+    }
     for (const value of values) if (!bucket.includes(value)) bucket.push(value);
   }
 }
@@ -231,12 +238,20 @@ export function mergeCosmeticDBs(dbs: readonly CosmeticDB[], listId = DELTA_LIST
     unionArray(out.generic.complex, db.generic?.complex);
     unionInto(out.specific, db.specific);
     for (const [host, pairs] of Object.entries(db.styles ?? {})) {
-      const bucket = (out.styles[host] ??= []);
+      let bucket = getEntry(out.styles, host);
+      if (bucket === undefined) {
+        bucket = [];
+        setEntry(out.styles, host, bucket);
+      }
       for (const pair of pairs)
         if (!bucket.some((p) => p[0] === pair[0] && p[1] === pair[1])) bucket.push(pair);
     }
     for (const [host, filters] of Object.entries(db.procedural ?? {})) {
-      const bucket = (out.procedural[host] ??= []);
+      let bucket = getEntry(out.procedural, host);
+      if (bucket === undefined) {
+        bucket = [];
+        setEntry(out.procedural, host, bucket);
+      }
       for (const filter of filters) if (!bucket.some((f) => f.raw === filter.raw)) bucket.push(filter);
     }
     unionInto(out.exceptions.selectors, db.exceptions?.selectors);
@@ -250,9 +265,9 @@ export function mergeCosmeticDBs(dbs: readonly CosmeticDB[], listId = DELTA_LIST
 function diffMap(next: Record<string, string[]>, prev: Record<string, string[]>): Record<string, string[]> {
   const out: Record<string, string[]> = {};
   for (const [key, values] of Object.entries(next)) {
-    const before = new Set(prev[key] ?? []);
+    const before = new Set(getEntry(prev, key) ?? []);
     const added = values.filter((v) => !before.has(v));
-    if (added.length > 0) out[key] = added;
+    if (added.length > 0) setEntry(out, key, added);
   }
   return out;
 }
@@ -276,17 +291,17 @@ export function computeCosmeticDelta(oldDb: CosmeticDB, newDb: CosmeticDB): Cosm
   add.specific = diffMap(newDb.specific, oldDb.specific);
 
   for (const [host, pairs] of Object.entries(newDb.styles)) {
-    const before = new Set((oldDb.styles[host] ?? []).map((p) => JSON.stringify(p)));
+    const before = new Set((getEntry(oldDb.styles, host) ?? []).map((p) => JSON.stringify(p)));
     const added = pairs.filter((p) => !before.has(JSON.stringify(p)));
-    if (added.length > 0) add.styles[host] = added;
+    if (added.length > 0) setEntry(add.styles, host, added);
   }
 
   let addedProcedural = 0;
   for (const [host, filters] of Object.entries(newDb.procedural)) {
-    const before = new Set((oldDb.procedural[host] ?? []).map((f: ProceduralFilter) => f.raw));
+    const before = new Set((getEntry(oldDb.procedural, host) ?? []).map((f: ProceduralFilter) => f.raw));
     const added = filters.filter((f) => !before.has(f.raw));
     if (added.length > 0) {
-      add.procedural[host] = added;
+      setEntry(add.procedural, host, added);
       addedProcedural += added.length;
     }
   }
@@ -321,7 +336,11 @@ export function mergeScriptletDBs(dbs: readonly ScriptletDB[], listId = DELTA_LI
   for (const db of dbs) {
     if (!db) continue;
     for (const [host, calls] of Object.entries(db.byHost ?? {})) {
-      const bucket = (out.byHost[host] ??= []);
+      let bucket = getEntry(out.byHost, host);
+      if (bucket === undefined) {
+        bucket = [];
+        setEntry(out.byHost, host, bucket);
+      }
       const seen = new Set(bucket.map(callKey));
       for (const call of calls) {
         if (seen.has(callKey(call))) continue;
@@ -346,9 +365,9 @@ function diffCalls(
 ): Record<string, ScriptletCall[]> {
   const out: Record<string, ScriptletCall[]> = {};
   for (const [host, calls] of Object.entries(next)) {
-    const before = new Set((prev[host] ?? []).map(callKey));
+    const before = new Set((getEntry(prev, host) ?? []).map(callKey));
     const added = calls.filter((call) => !before.has(callKey(call)));
-    if (added.length > 0) out[host] = added;
+    if (added.length > 0) setEntry(out, host, added);
   }
   return out;
 }

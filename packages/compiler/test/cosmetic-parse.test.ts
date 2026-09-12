@@ -543,3 +543,76 @@ describe('parseCosmeticFilter — style injection', () => {
     expect(err('example.com#$#abort-on-property-read foo')).toContain('selector { declarations }');
   });
 });
+
+/**
+ * Regressions from the adversarial compiler review.
+ *
+ * The runtime injects specific selectors as one `sel1,sel2,…{display:none!important}` rule
+ * per 1,000 selectors, and the CSS parser discards a selector list *whole* when one member
+ * is invalid. A single Chrome-invalid selector therefore used to destroy every other hiding
+ * selector for that hostname (187 selectors across 19 real sites).
+ */
+describe('CSS-invalid selectors never reach the plain path', () => {
+  const nested = [
+    '.sliderItem.active:has(span.news-item:has(img[alt="Anzeige"]))',
+    'div:has(> div:has(> .adsbygoogle))',
+    '.elementor-hidden-desktop:has(> div.e-con-inner:only-child:not(:has(*)))',
+    'a:not(b:has(c:has(d)))',
+    // `:if()` is the legacy spelling of `:has()`, so this nests too.
+    '.a:has(.b:if(.c))',
+  ];
+  for (const selector of nested) {
+    it(`evaluates ${selector} procedurally`, () => {
+      const value = ok(`example.com##${selector}`);
+      expect(value.body.form).toBe('procedural');
+    });
+  }
+
+  it('leaves valid :has() nesting on the native path', () => {
+    expect(plain('example.com##.a:has(.b)')).toBe('.a:has(.b)');
+    expect(plain('example.com##.a:not(:has(.b))')).toBe('.a:not(:has(.b))');
+    expect(plain('example.com##.a:has(.b) .c:has(.d)')).toBe('.a:has(.b) .c:has(.d)');
+    // `:is()` / `:where()` take a forgiving list, so a `:has()` inside one is not invalid.
+    expect(plain('example.com##a:has(:is(b:has(c)))')).toBe('a:has(:is(b:has(c)))');
+  });
+
+  it('keeps the nested argument valid on its own', () => {
+    expect(tasks('example.com##li:has(a:has(.sponsored-prefix))')).toEqual([
+      ['css', 'li'],
+      ['has', { raw: 'a:has(.sponsored-prefix)', tasks: [['css', 'a:has(.sponsored-prefix)']] }],
+    ]);
+  });
+});
+
+describe('domain lists', () => {
+  it('treats a bare "*" as "every domain"', () => {
+    expect(parseDomainList('*')).toEqual({ ok: true, value: { include: [], exclude: [] } });
+    const value = ok('~bing.com,*##iframe[id]');
+    expect(value.domains).toEqual({ include: [], exclude: ['bing.com'] });
+  });
+
+  it('punycodes non-ASCII names, which is what location.hostname reports', () => {
+    expect(parseDomainList('пример.рф,fanserial.*')).toEqual({
+      ok: true,
+      value: { include: ['xn--e1afmkfd.xn--p1ai', 'fanserial.*'], exclude: [] },
+    });
+  });
+
+  it('rejects "~*"', () => {
+    expect(err('~*##.ad')).toContain('excludes every domain');
+  });
+});
+
+describe('page-evaluated regex arguments', () => {
+  it('drops a procedural matcher that can backtrack catastrophically', () => {
+    expect(err('example.com##.a:has-text(/(\\s*\\S*)*x/)')).toContain('catastrophic backtracking');
+    expect(err('example.com##.a:matches-attr(data-x=/(a+)+/)')).toContain('catastrophic backtracking');
+    expect(err('example.com##div:remove-class(/(x|xy)+/)')).toContain('catastrophic backtracking');
+  });
+
+  it('keeps the regexes real lists actually use', () => {
+    expect(tasks('example.com##.a:has-text(/Sponsor(ed|isé)/)')).toHaveLength(2);
+    expect(tasks('example.com##div:remove-class(/^ad-/)')).toHaveLength(2);
+    expect(tasks('example.com##.a:matches-css(width: /^[0-9]{3}px$/)')).toHaveLength(2);
+  });
+});

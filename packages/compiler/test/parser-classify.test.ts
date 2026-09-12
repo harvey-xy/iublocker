@@ -252,3 +252,13 @@ describe('AdGuard platform tokens', () => {
     }
   });
 });
+
+describe('list-controlled metadata keys', () => {
+  it('ignores `Object.prototype` names instead of writing a junk field', () => {
+    // `META_KEYS['constructor']` on an object literal is a function, not `undefined`.
+    const result = classifyLines(
+      ['! constructor: boom', '! __proto__: boom', '! toString: boom', '! Title: Real'].join('\n'),
+    );
+    expect(result.meta).toEqual({ title: 'Real' });
+  });
+});

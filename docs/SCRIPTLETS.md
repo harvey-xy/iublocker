@@ -294,7 +294,13 @@ filters go through the same validation before being stored.
 Argument syntax follows uBO: comma separated with surrounding whitespace trimmed, `\,` for
 a literal comma, single/double quoted arguments (quotes stripped, `\'`/`\"`/`\\`
 unescaped), and an argument starting with `/` that closes with `/` plus optional flags is
-kept verbatim as a regex literal (commas inside it do not split). Names are resolved through
+kept verbatim as a regex literal (commas inside it do not split). A quote that does _not_
+delimit the whole argument is ordinary text, exactly as in uBO — `+js(nostif, '0x)` and
+`+js(rpnt, script, "enabled":true, "enabled":false)` keep their quotes instead of being
+rejected. A `/…/` argument is additionally checked for catastrophic backtracking
+(`src/regex-safety.ts`, docs/COSMETIC-FILTERING.md §1): it becomes a `RegExp` in the page
+with nothing to interrupt it, so `+js(set-constant, /(a+)+/, 1)` is dropped with that
+reason. Names are resolved through
 the registry after stripping a trailing `.js`, so aliases are stored canonically and an
 exception written against an alias cancels the call. Unknown names, too few/too many
 arguments, and `trusted-*` from an untrusted list all drop the filter with a reason in

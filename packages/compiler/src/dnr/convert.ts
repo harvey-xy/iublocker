@@ -13,6 +13,7 @@ import { DNR_RESOURCE_TYPES, PRIORITY, isValidHostname } from '@iublocker/shared
 import { resolveScriptlet } from '@iublocker/scriptlets';
 import type { NetworkFilter } from '../parser/network-filter';
 import { expandDomains } from '../psl';
+import { getEntry } from '../record';
 import { checkRe2 } from './re2';
 
 /** A rule before IDs are assigned. */
@@ -146,11 +147,13 @@ export function cosmeticExceptionHostnames(f: NetworkFilter): string[] {
 }
 
 function resolveRedirect(name: string, table: Record<string, string>): string | null {
-  const direct = table[name];
+  // The name comes from the list, so every lookup is prototype-safe (`$redirect=constructor`
+  // must not resolve to `Object.prototype.constructor`).
+  const direct = getEntry(table, name);
   if (direct !== undefined) return direct;
-  const withJs = table[`${name}.js`];
+  const withJs = getEntry(table, `${name}.js`);
   if (withJs !== undefined) return withJs;
-  const noJs = name.endsWith('.js') ? table[name.slice(0, -3)] : undefined;
+  const noJs = name.endsWith('.js') ? getEntry(table, name.slice(0, -3)) : undefined;
   if (noJs !== undefined) return noJs;
   // Surrogates are also scriptlets; the registry knows their alias → file mapping.
   const meta = resolveScriptlet(name);

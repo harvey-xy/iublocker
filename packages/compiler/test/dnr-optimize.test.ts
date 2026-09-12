@@ -225,3 +225,36 @@ describe('optimize', () => {
     expect(result.rules).toHaveLength(2);
   });
 });
+
+describe('shadow removal only drops provably redundant rules', () => {
+  it('keeps a rule whose pattern continues inside the hostname', () => {
+    // `||a.com*/ads` and `||a.com` also match `a.company.com`, which `||a.com^` does not
+    // cover, so the broad rule does not shadow them.
+    const broad = entry('||a.com^', block(['a.com']));
+    const wildcard = entry('||a.com*/ads$script', {
+      priority: PRIORITY.BLOCK,
+      action: { type: 'block' },
+      condition: { urlFilter: '||a.com*/ads', resourceTypes: ['script'] },
+    });
+    const prefix = entry('||a.com$script', {
+      priority: PRIORITY.BLOCK,
+      action: { type: 'block' },
+      condition: { urlFilter: '||a.com', resourceTypes: ['script'] },
+    });
+    const result = optimize([broad, wildcard, prefix], { firstRuleId: 1, maxRegexRules: 10 });
+    expect(result.savings.shadowed).toBe(0);
+    expect(result.rules).toHaveLength(3);
+  });
+
+  it('still drops a path rule under a broader domain block', () => {
+    const broad = entry('||a.com^', block(['a.com']));
+    const path = entry('||a.com/x$script', {
+      priority: PRIORITY.BLOCK,
+      action: { type: 'block' },
+      condition: { urlFilter: '||a.com/x', resourceTypes: ['script'] },
+    });
+    const result = optimize([broad, path], { firstRuleId: 1, maxRegexRules: 10 });
+    expect(result.savings.shadowed).toBe(1);
+    expect(result.rules).toHaveLength(1);
+  });
+});

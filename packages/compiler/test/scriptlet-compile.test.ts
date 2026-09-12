@@ -387,3 +387,38 @@ example.com##+js(set, a, 1)
     expect(lookupScriptletsDetailed([off], 'example.com')).toEqual({ concrete: [], entity: [] });
   });
 });
+
+describe('regressions from the compiler review', () => {
+  it('drops a /…/ argument that can backtrack catastrophically', () => {
+    // Scriptlet regex arguments become `RegExp`s in the page with nothing to interrupt them.
+    const { db, dropped } = compile('example.com##+js(set-constant, /(a+)+/, 1)');
+    expect(db.byHost).toEqual({});
+    expect(dropped[0]?.reason).toContain('catastrophic backtracking');
+  });
+
+  it('keeps ordinary regex arguments', () => {
+    const { db, dropped } = compile('example.com##+js(set-constant, /^ad[0-9]+$/, 1)');
+    expect(dropped).toEqual([]);
+    expect(db.byHost['example.com']).toEqual([{ name: 'set-constant', args: ['/^ad[0-9]+$/', '1'] }]);
+  });
+
+  it('stores a hostname that collides with Object.prototype as a real own key', () => {
+    // `db.byHost['__proto__'] = …` would replace the prototype and lose the entry.
+    const { db } = compile(
+      ['__proto__##+js(set-constant, a, 1)', 'constructor##+js(set-constant, b, 2)'].join('\n'),
+    );
+    expect(Object.keys(db.byHost).sort()).toEqual(['__proto__', 'constructor']);
+    expect(lookupScriptlets([db], '__proto__')).toEqual([{ name: 'set-constant', args: ['a', '1'] }]);
+    expect(lookupScriptlets([db], 'constructor')).toEqual([{ name: 'set-constant', args: ['b', '2'] }]);
+    // And a hostname with no entry of its own must not inherit one from the prototype.
+    expect(lookupScriptlets([emptyScriptletDB('x')], 'constructor')).toEqual([]);
+    expect(lookupScriptlets([emptyScriptletDB('x')], 'toString')).toEqual([]);
+  });
+
+  it('survives a round trip through JSON and mergeScriptletDB', () => {
+    const { db } = compile('__proto__##+js(set-constant, a, 1)');
+    const round = JSON.parse(JSON.stringify(db)) as typeof db;
+    const merged = mergeScriptletDB(emptyScriptletDB('merged'), round);
+    expect(lookupScriptlets([merged], '__proto__')).toEqual([{ name: 'set-constant', args: ['a', '1'] }]);
+  });
+});

@@ -25,6 +25,26 @@ Selectors are validated with a permissive CSS selector parser at compile time. N
 CSS (`:has()`, `:is()`, `:not()`, `:nth-child`) stays native; only uBO procedural
 pseudo‑classes force the content‑script path.
 
+**A CSS‑invalid selector must never reach the native path.** The worker injects specific
+selectors as one `sel1,sel2,…{display:none!important}` rule per 1,000 selectors, and the
+CSS parser discards a selector list _whole_ when a single member is invalid — so one bad
+selector silently destroys every other hiding selector for that hostname. The one shape
+real lists produce is a `:has()` nested inside another `:has()` (`.a:has(.b:has(.c))`,
+`div:has(> div:has(> .ads))`, `.a:has(.b:not(:has(*)))`), which Chrome rejects outright;
+`:if()` counts, since it normalises to `:has()`. Those compile to a **procedural** filter
+instead (as they do in uBO), where each `:has()` argument is evaluated on its own and is
+valid CSS again. `:is()` and `:where()` take a forgiving selector list, so a `:has()`
+inside one is not invalid and stays native.
+
+**Regex arguments are checked for catastrophic backtracking.** `:has-text(/…/)`,
+`:matches-css(prop: /…/)`, `:matches-attr(k=/…/)`, `:matches-path(/…/)`,
+`:remove-attr(/…/)` and `:remove-class(/…/)` become `RegExp`s that the content script runs
+on every mutation pass with no timeout, so a blow-up is an unkillable tab hang. The
+compiler rejects the two shapes that need exponential time — a nested unbounded quantifier
+(`(a+)+`, `(.*)*`) and an overlapping alternation under a quantifier (`(a|ab)+`,
+`(\d|\w)+`) — and drops the filter with that reason (`src/regex-safety.ts`). Disjoint
+alternations such as `(\s|\S)*` and `(foo|bar)+` are accepted.
+
 Supported procedural operators (uBO names): `:has-text()`, `:matches-css()`,
 `:matches-css-before()`, `:matches-css-after()`, `:matches-attr()`, `:matches-path()`,
 `:min-text-length()`, `:upward()`, `:xpath()`, `:watch-attr()`, `:others()`, `:remove()`,
@@ -107,6 +127,15 @@ overwhelming majority named hostnames that do not exist.
 
 Negations of concrete hostnames are unchanged: `example.com,~sub.example.com##.ad` stores
 the selector under `example.com` and an exception under `sub.example.com`.
+
+A bare `*` in the domain list means "every domain", so `*,~edu##.ad` is a _generic_ filter
+with an exception rather than a filter for a host called `*`. Non-ASCII names are punycoded
+(`пример.рф` → `xn--e1afmkfd.xn--p1ai`): `location.hostname` is always punycode at lookup
+time, so a Unicode key could never match. Every one of these records is keyed by
+list-controlled text, so they are read and written through `src/record.ts` — a plain
+`db.specific[host]` lookup returns an `Object.prototype` member for a hostname like
+`constructor`, and `db.specific['__proto__'] = …` would replace the prototype instead of
+storing the entry.
 
 **Lookup.** `lookupCosmetic(dbs, hostname)` matches a hostname against two key sets:
 

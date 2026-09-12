@@ -13,6 +13,7 @@ import { emptyCosmeticDB } from '@iublocker/shared';
 import type { CompileCosmeticResult, CompileOptions, CosmeticNetworkExceptions, RawLine } from '../types';
 import type { CosmeticForm, ParsedCosmetic } from './parse';
 import { parseCosmeticFilter } from './parse';
+import { getEntry, setEntry } from '../record';
 import { genericKey } from './selector';
 
 /** Hostname key used for filters that apply everywhere (generic `:style()` / procedural). */
@@ -39,9 +40,11 @@ function push<K, V>(map: Map<K, Set<V>>, key: K, value: V): void {
 
 function toRecord(map: Map<string, Set<string>>): Record<string, string[]> {
   const out: Record<string, string[]> = {};
+  // Keys are hostnames and id/class tokens straight out of the list: `setEntry`, because
+  // `out['__proto__'] = …` would replace the prototype instead of storing the entry.
   for (const [key, set] of map) {
     if (set.size === 0) continue;
-    out[key] = [...set];
+    setEntry(out, key, [...set]);
   }
   return out;
 }
@@ -178,11 +181,11 @@ export function compileCosmetic(lines: RawLine[], opts: CosmeticCompileOptions):
       const idx = entry.indexOf(NUL);
       out.push([entry.slice(0, idx), entry.slice(idx + 1)]);
     }
-    if (out.length > 0) db.styles[host] = out;
+    if (out.length > 0) setEntry(db.styles, host, out);
   }
   for (const [host, map] of procedural) {
     if (map.size === 0) continue;
-    db.procedural[host] = [...map.values()];
+    setEntry(db.procedural, host, [...map.values()]);
   }
   db.exceptions.selectors = toRecord(hostExceptions);
 
@@ -206,10 +209,10 @@ function unionInto(target: string[], source: readonly string[]): string[] {
 
 function unionRecord(target: Record<string, string[]>, source: Record<string, string[]>): void {
   for (const key of Object.keys(source)) {
-    const values = source[key];
+    const values = getEntry(source, key);
     if (values === undefined) continue;
-    const existing = target[key];
-    if (existing === undefined) target[key] = [...values];
+    const existing = getEntry(target, key);
+    if (existing === undefined) setEntry(target, key, [...values]);
     else unionInto(existing, values);
   }
 }
@@ -230,11 +233,15 @@ export function mergeCosmeticDB(target: CosmeticDB, source: CosmeticDB): Cosmeti
   unionRecord(target.specific, source.specific);
 
   for (const host of Object.keys(source.styles)) {
-    const entries = source.styles[host];
+    const entries = getEntry(source.styles, host);
     if (entries === undefined) continue;
-    const existing = target.styles[host];
+    const existing = getEntry(target.styles, host);
     if (existing === undefined) {
-      target.styles[host] = entries.map((e) => [e[0], e[1]] as [string, string]);
+      setEntry(
+        target.styles,
+        host,
+        entries.map((e) => [e[0], e[1]] as [string, string]),
+      );
       continue;
     }
     const seen = new Set(existing.map((e) => `${e[0]}${NUL}${e[1]}`));
@@ -247,11 +254,15 @@ export function mergeCosmeticDB(target: CosmeticDB, source: CosmeticDB): Cosmeti
   }
 
   for (const host of Object.keys(source.procedural)) {
-    const filters = source.procedural[host];
+    const filters = getEntry(source.procedural, host);
     if (filters === undefined) continue;
-    const existing = target.procedural[host];
+    const existing = getEntry(target.procedural, host);
     if (existing === undefined) {
-      target.procedural[host] = filters.map((f) => ({ raw: f.raw, tasks: f.tasks }));
+      setEntry(
+        target.procedural,
+        host,
+        filters.map((f) => ({ raw: f.raw, tasks: f.tasks })),
+      );
       continue;
     }
     const seen = new Set(existing.map((f) => JSON.stringify(f)));

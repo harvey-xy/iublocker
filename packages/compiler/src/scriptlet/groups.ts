@@ -22,6 +22,7 @@ import type { ScriptletCall, ScriptletDB, ScriptletGroup } from '@iublocker/shar
 import { hostnameWalk } from '@iublocker/shared';
 import { registry, serializeScriptletFn } from '@iublocker/scriptlets';
 import { isEntity } from '../psl';
+import { getEntry, setEntry } from '../record';
 import { ALL_SCRIPTLETS, SCRIPTLET_GENERIC_HOST_KEY, lookupScriptletsDetailed } from './compile';
 import { shortHash } from './hash';
 import { stripJsSuffix } from './parse';
@@ -226,7 +227,7 @@ function maskAt(
 ): number {
   let mask = 0;
   for (let i = 0; i < dbs.length; i++) {
-    const calls = (dbs[i] as { db: ScriptletDB }).db.byHost[host];
+    const calls = getEntry((dbs[i] as { db: ScriptletDB }).db.byHost, host);
     if (calls === undefined) continue;
     if (calls.some((call) => canonical(call.name)?.name === name)) mask |= 1 << i;
   }
@@ -239,7 +240,7 @@ function noteLists(draft: Draft, dbs: { listId: string; db: ScriptletDB }[], key
   for (const { listId, db } of dbs) {
     if (draft.listIds.includes(listId)) continue;
     for (const key of keys) {
-      const calls = db.byHost[key];
+      const calls = getEntry(db.byHost, key);
       if (calls !== undefined && calls.some((call) => call.name === draft.name)) {
         draft.listIds.push(listId);
         break;
@@ -265,7 +266,7 @@ function collectExclusions(
       // Entity keys have no literal match pattern (the group never registers on them alone)
       // and the generic key is already applied when the DBs are compiled.
       if (key === SCRIPTLET_GENERIC_HOST_KEY || isEntity(key)) continue;
-      for (const raw of db.exceptions[key] ?? []) {
+      for (const raw of getEntry(db.exceptions, key) ?? []) {
         if (raw === ALL_SCRIPTLETS) {
           all.add(key);
           continue;
@@ -329,7 +330,8 @@ function finishDraft(
   const renumber = (row: readonly number[]): number[] => row.map((index) => remap.get(index) as number);
 
   const hostArgs: Record<string, number[]> = {};
-  for (const host of [...deltas.keys()].sort()) hostArgs[host] = renumber(deltas.get(host) as number[]);
+  for (const host of [...deltas.keys()].sort())
+    setEntry(hostArgs, host, renumber(deltas.get(host) as number[]));
 
   // A generic call runs everywhere, so the concrete hosts need no match pattern of their own
   // (their rows stay in the table) and the one `"*"` entry answers for every list.
@@ -421,7 +423,9 @@ export type ScriptletSourceResolver = (nameOrAlias: string) => ScriptletSource |
 
 function defaultSourceResolver(nameOrAlias: string): ScriptletSource | undefined {
   const name = stripJsSuffix(nameOrAlias);
-  const direct = registry[name];
+  // `getEntry`: the name comes from a filter, and `registry['constructor']` would otherwise
+  // hand back `Object.prototype.constructor` as if it were a scriptlet.
+  const direct = getEntry(registry, name);
   if (direct !== undefined) return direct;
   for (const def of Object.values(registry)) if (def.aliases.includes(name)) return def;
   return undefined;
@@ -478,13 +482,13 @@ export function emitScriptletLib(
 export function emitScriptletGroupBundle(group: ScriptletGroupBuild): string {
   const name = jsLiteral(group.name);
   const exclude: Record<string, 1> = {};
-  for (const host of group.exclude) exclude[host] = 1;
+  for (const host of group.exclude) setEntry(exclude, host, 1);
   // One index is by far the common case; an array is only spent where a host really calls
   // the same scriptlet more than once.
   const rows: Record<string, number | number[]> = {};
   for (const host of Object.keys(group.hostArgs)) {
-    const row = group.hostArgs[host] as number[];
-    rows[host] = row.length === 1 ? (row[0] as number) : row;
+    const row = getEntry(group.hostArgs, host) as number[];
+    setEntry(rows, host, row.length === 1 ? (row[0] as number) : row);
   }
 
   return (
