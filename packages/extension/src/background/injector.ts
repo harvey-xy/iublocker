@@ -62,13 +62,24 @@ export function buildCssChunks(
     out.push(`${unique.slice(i, i + chunkSize).join(',')}{display:none!important;}`);
   }
   const byStyle = new Map<string, string[]>();
+  const styleCss: string[] = [];
+  const seenAtRules = new Set<string>();
   for (const [selector, style] of styles) {
     if (!selector || !style) continue;
+    // AdGuard `#$#` filters can carry an at-rule (`@media (…) { … }`) in the selector slot.
+    // Those cannot share a selector list, so each becomes its own rule.
+    if (selector.startsWith('@')) {
+      const rule = `${selector}{${style}}`;
+      if (!seenAtRules.has(rule)) {
+        seenAtRules.add(rule);
+        styleCss.push(rule);
+      }
+      continue;
+    }
     const list = byStyle.get(style) ?? [];
     if (!list.includes(selector)) list.push(selector);
     byStyle.set(style, list);
   }
-  const styleCss: string[] = [];
   for (const [style, sels] of byStyle) styleCss.push(`${sels.join(',')}{${style}}`);
   if (styleCss.length) out.push(styleCss.join('\n'));
   return out;

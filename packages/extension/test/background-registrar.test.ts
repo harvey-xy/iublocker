@@ -201,9 +201,7 @@ describe('registrar: reconcile', () => {
     // would re-register the same ids and Chrome rejects the whole batch.
     const real = chromeMock.scripting.registerContentScripts;
     chromeMock.scripting.registerContentScripts = (async (scripts: { id: string }[]) => {
-      const existing = new Set(
-        (await chromeMock.scripting.getRegisteredContentScripts()).map((s) => s.id),
-      );
+      const existing = new Set((await chromeMock.scripting.getRegisteredContentScripts()).map((s) => s.id));
       for (const script of scripts) {
         if (existing.has(script.id)) throw new Error(`Duplicate script ID '${script.id}'`);
       }

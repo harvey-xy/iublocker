@@ -155,7 +155,11 @@ export function ListsTab() {
                       {safeHttpUrl(list.homepage) && (
                         <>
                           {' · '}
-                          <a href={safeHttpUrl(list.homepage) ?? ''} target="_blank" rel="noreferrer noopener">
+                          <a
+                            href={safeHttpUrl(list.homepage) ?? ''}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
                             {t('lists_homepage')}
                           </a>
                         </>

@@ -172,10 +172,7 @@ describe('stats: onRuleMatchedDebug feed (unpacked installs)', () => {
     expect(chromeMock._state.badge(7)).toBe('2');
     expect((await stats.getStats()).blockedTotal).toBe(2);
     expect((await store.session.getTab(7))?.blocked).toBe(2);
-    expect(stats.getBlockedUrls(7)).toEqual([
-      'https://ads.example/a.js',
-      'https://ads.example/b.js',
-    ]);
+    expect(stats.getBlockedUrls(7)).toEqual(['https://ads.example/a.js', 'https://ads.example/b.js']);
     expect((await stats.getMatchedForTab(7)).map((m) => m.url)).toEqual([
       'https://ads.example/a.js',
       'https://ads.example/b.js',

@@ -170,3 +170,23 @@ describe('injector: onCommitted', () => {
     await vi.waitFor(() => expect(injector.wasInjected(7, 0, 'example.com')).toBe(false));
   });
 });
+
+describe('buildCssChunks at-rules', () => {
+  it('keeps @media style entries as standalone rules', () => {
+    const chunks = injector.buildCssChunks(
+      [],
+      [
+        ['@media (max-width: 600px)', '.a{display:none}'],
+        ['@media (min-width: 900px)', '.a{display:none}'],
+        ['.b', 'opacity:0.5'],
+        ['.c', 'opacity:0.5'],
+      ],
+    );
+    expect(chunks).toHaveLength(1);
+    const css = chunks[0] ?? '';
+    expect(css).toContain('@media (max-width: 600px){.a{display:none}}');
+    expect(css).toContain('@media (min-width: 900px){.a{display:none}}');
+    expect(css).toContain('.b,.c{opacity:0.5}');
+    expect(css).not.toContain('@media (max-width: 600px),');
+  });
+});

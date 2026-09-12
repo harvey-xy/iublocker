@@ -167,9 +167,7 @@ describe('lifecycle: onInstalled', () => {
     };
     await lifecycle.onInstalled({ reason: 'update' } as chrome.runtime.InstalledDetails);
     expect(chromeMock._state.sessionRules[0].condition.requestDomains).toEqual(['off.test']);
-    expect((await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id)).toEqual([
-      'sl-noop-0',
-    ]);
+    expect((await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id)).toEqual(['sl-noop-0']);
   });
 });
 

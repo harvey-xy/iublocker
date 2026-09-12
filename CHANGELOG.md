@@ -17,3 +17,9 @@ All notable changes are recorded here. Format: [Keep a Changelog](https://keepac
 - Scale fixes from real lists: per-ruleset rule IDs, chunked domain merging, entity keys
   (`example.*`) resolved at lookup time, one scriptlet group file per scriptlet name, RE2
   program-size estimator calibrated against Chrome, 98 scriptlets and 136 `$redirect` names.
+- Hardening from adversarial review: `getMatchedRules` quota budgeting (badge/stats no longer
+  stall), serialised reconcile / dynamic-rule rewrites / storage updates, resilient ruleset
+  enabling, delta redirects restricted to bundled resources, cosmetic engine resistant to
+  prototype-key and DOM-clobbering attacks, nested `:has()` compiled as procedural (no more
+  poisoned CSS chunks), `||host-` prefix anchors, `@@…$redirect-rule` exceptions, `$header`
+  globs, prototype-safe list-controlled keys, catastrophic-regex rejection.

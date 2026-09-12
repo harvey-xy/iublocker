@@ -81,9 +81,7 @@ function counterFor(tabId: number): TabCounters {
 /** Fire-and-forget badge clear; the tab may be gone already. */
 function clearBadge(tabId: number): void {
   try {
-    const pending = chrome.action.setBadgeText({ tabId, text: '' }) as unknown as
-      | Promise<void>
-      | undefined;
+    const pending = chrome.action.setBadgeText({ tabId, text: '' }) as unknown as Promise<void> | undefined;
     if (pending && typeof pending.catch === 'function') pending.catch(() => undefined);
   } catch {
     /* the tab closed between the commit and this call */

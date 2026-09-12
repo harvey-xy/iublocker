@@ -12,7 +12,12 @@ rule IDs, chunked domain merge, entity keys resolved at lookup, per‑scriptlet�
 (95 registrations for 19 lists, ~6 s), RE2 program‑size model calibrated against Chrome on a
 412‑regex corpus, 98 scriptlets / 136 redirect names, GitHub mirror sets for lists, and a
 real‑list load verification (`pnpm verify:real`) that Chrome 141 passes with all 19 lists.
-Unit suite 1,896 tests; e2e 25/25 + 6 real‑list checks.
+Three adversarial review passes (worker, content/UI, compiler) fixed 33 bugs.
+Unit suite 2,015 tests; e2e 25/25 + 6 real‑list checks in Chrome 141.
+
+Open follow‑ups: per‑selector CSS validation at runtime, picker i18n + `isTrusted` filtering,
+uBO‑style `$badfilter` domain subtraction, `trusted-rpfr`/`prevent-navigation` scriptlets,
+delta version ordering, Chrome Web Store listing.
 
 ## T1 — Compiler: network filters → DNR (`packages/compiler/src/{parser,network,dnr,cli}`) 🔴
 

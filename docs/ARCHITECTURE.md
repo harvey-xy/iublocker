@@ -132,7 +132,7 @@ The compiler must therefore be isomorphic: no Node built‑ins in `src/` except 
      the active tab only**, spaced so the background refreshes can never exhaust the bucket;
    - when the quota is spent the last known count is kept (re-read from `storage.session`
      after a worker restart) instead of resetting the badge.
-   The spent-call log lives in `storage.session` because Chrome's bucket outlives the worker.
+     The spent-call log lives in `storage.session` because Chrome's bucket outlives the worker.
 
 ## 5. Site modes
 

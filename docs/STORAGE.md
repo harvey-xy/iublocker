@@ -35,10 +35,10 @@ interface Settings {
 
 ## `chrome.storage.session`
 
-| Key                    | Type                                                                                     |
-| ---------------------- | ---------------------------------------------------------------------------------------- |
-| `tab:<tabId>`          | `{ hostname: string; blocked: number; lastUrl: string; matched?: MatchedRuleSummary[] }` |
-| `pickerActive:<tabId>` | `true`                                                                                   |
+| Key                       | Type                                                                                                                                                                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tab:<tabId>`             | `{ hostname: string; blocked: number; lastUrl: string; matched?: MatchedRuleSummary[] }`                                                                                                                             |
+| `pickerActive:<tabId>`    | `true`                                                                                                                                                                                                               |
 | `dnrGetMatchedRulesCalls` | `number[]` — timestamps of the `getMatchedRules` calls already spent in the current quota interval (`docs/ARCHITECTURE.md` §4.5); Chrome's quota bucket outlives the worker, so the log cannot live in worker memory |
 
 ## Access layer
