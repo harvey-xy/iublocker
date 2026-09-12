@@ -139,6 +139,10 @@ const UNSUPPORTED_OPTIONS = new Set([
   'extension',
   'jsonprune',
   'hls',
+  // uBO conditions DNR cannot express: `$top=` needs the top-level document's domain (DNR
+  // only knows the *initiator*), `$requestheader=` needs a request-header condition.
+  'top',
+  'requestheader',
 ]);
 
 /**
@@ -199,6 +203,20 @@ export function toASCIIHostname(host: string): string {
 const OPTION_NAME_START = /[A-Za-z~_]/;
 
 /**
+ * Whether `text` can be the option list that follows a `/regex/` pattern.
+ *
+ * Almost every option name starts with a letter, `~` or `_`; the exceptions are `$1p` and
+ * `$3p`, which is why a leading digit is accepted only in exactly that shape. Accepting any
+ * digit would misread `/re/$script,uritransform=//$1b.com$2/` (the `$1` back-reference
+ * inside the option value looks like the start of an option list).
+ */
+function looksLikeOptionList(text: string): boolean {
+  if (OPTION_NAME_START.test(text.charAt(0))) return true;
+  const c = text.charAt(0);
+  return (c === '1' || c === '3') && text.charAt(1) === 'p' && (text.length === 2 || text.charAt(2) === ',');
+}
+
+/**
  * Split `pattern$options` respecting escaped `$` and `/regex/` patterns.
  *
  * For a regex pattern the boundary is the last unescaped `/` that is followed by `$` and
@@ -212,7 +230,7 @@ export function splitPatternOptions(text: string): { pattern: string; options: s
     let bareRegex = false;
     for (let i = text.length - 1; i > 0; i -= 1) {
       if (text[i] !== '/' || text[i - 1] === '\\') continue;
-      if (text[i + 1] === '$' && OPTION_NAME_START.test(text[i + 2] ?? ''))
+      if (text[i + 1] === '$' && looksLikeOptionList(text.slice(i + 2)))
         return { pattern: text.slice(0, i + 1), options: text.slice(i + 2) };
       // Keep looking: the trailing `/` may belong to an option value, not to the regex.
       if (i === text.length - 1) bareRegex = true;
@@ -417,7 +435,13 @@ export function parseNetworkFilter(
           if (v.startsWith('abp-resource:')) v = v.slice('abp-resource:'.length);
           const priorityAt = v.indexOf(':');
           if (priorityAt !== -1) v = v.slice(0, priorityAt);
-          if (v === '') return { ok: false, reason: '$redirect has no value' };
+          // `@@…$redirect` / `@@…$redirect-rule` with no value cancels redirects for the
+          // pattern; the filter is then a plain exception (uBO). Only a *block* filter
+          // needs a resource name.
+          if (v === '') {
+            if (!isException) return { ok: false, reason: '$redirect has no value' };
+            break;
+          }
           f.redirect = v;
           break;
         }
@@ -425,7 +449,10 @@ export function parseNetworkFilter(
           let v = value;
           const priorityAt = v.indexOf(':');
           if (priorityAt !== -1) v = v.slice(0, priorityAt);
-          if (v === '') return { ok: false, reason: '$redirect-rule has no value' };
+          if (v === '') {
+            if (!isException) return { ok: false, reason: '$redirect-rule has no value' };
+            break;
+          }
           f.redirect = v;
           f.redirectRule = true;
           break;

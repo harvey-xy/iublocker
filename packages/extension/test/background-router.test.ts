@@ -286,6 +286,17 @@ describe('router: UI requests', () => {
     expect(reset.blockedTotal).toBe(0);
   });
 
+  it('does not let a content script force a quota-limited stats refresh', async () => {
+    chromeMock._state.setMatchedRules([
+      { rule: { ruleId: 1, rulesetId: 'easylist' }, tabId: 7, timeStamp: Date.now() },
+    ]);
+    await ok(handle({ type: 'stats:get' }, tabSender(7)));
+    expect(chromeMock._state.calls.getMatchedRules).toHaveLength(1);
+    // A second request from the page is throttled instead of spending another call.
+    await ok(handle({ type: 'stats:get' }, tabSender(7)));
+    expect(chromeMock._state.calls.getMatchedRules).toHaveLength(1);
+  });
+
   it('logger:get returns matched rules for a tab', async () => {
     chromeMock._state.setMatchedRules([
       { rule: { ruleId: 5, rulesetId: 'easylist' }, tabId: 7, timeStamp: 1 },

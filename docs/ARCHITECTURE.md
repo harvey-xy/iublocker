@@ -46,6 +46,7 @@ MV3 dictates the architecture. The relevant facts, with the Chrome version they 
 | Service worker lifetime                             | ~30 s idle, killed under memory pressure                                 | All state must be in `chrome.storage`; every event handler must be re‑entrant.                        |
 | No remote code (CWS policy)                         | —                                                                        | Scriptlet _code_ is bundled; list updates are pure data (rules, selectors, scriptlet _names + args_). |
 | `insertCSS` from the worker                         | `origin: 'USER'`                                                         | Element hiding CSS beats page `!important` rules and needs no content script.                         |
+| `getMatchedRules` quota                             | 20 calls per 10 min per extension, exempt only with a user gesture       | The badge cannot be refreshed per page load; see §4.5.                                                |
 
 ## 3. Components
 
@@ -121,8 +122,17 @@ The compiler must therefore be isomorphic: no Node built‑ins in `src/` except 
    harvests DOM ids/classes, applies matching generic selectors, evaluates procedural
    filters, and keeps watching via a throttled `MutationObserver`.
 5. **Stats.** `declarativeNetRequest.getMatchedRules({tabId})` (requires the
-   `declarativeNetRequestFeedback` permission) updates the badge lazily, on popup open
-   and on `tabs.onUpdated` (`status === 'complete'`), never per request.
+   `declarativeNetRequestFeedback` permission) updates the badge lazily, never per request —
+   but it is quota-limited (§2: 20 calls / 10 min for the whole extension, and a worker
+   never has the user gesture that would exempt a call), so:
+   - unpacked installs get `onRuleMatchedDebug`; once one event has arrived the counters and
+     the logger are fed from it and `getMatchedRules` is not called at all;
+   - otherwise the badge is refreshed on popup/logger requests (from the reserved part of
+     the quota, coalesced over 2 s) and on `tabs.onUpdated` (`status === 'complete'`) **for
+     the active tab only**, spaced so the background refreshes can never exhaust the bucket;
+   - when the quota is spent the last known count is kept (re-read from `storage.session`
+     after a worker restart) instead of resetting the badge.
+   The spent-call log lives in `storage.session` because Chrome's bucket outlives the worker.
 
 ## 5. Site modes
 

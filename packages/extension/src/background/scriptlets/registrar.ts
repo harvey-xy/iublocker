@@ -178,11 +178,29 @@ export interface ReconcileResult {
   failed: number;
 }
 
+/** Reconciles never overlap: see `reconcile()`. */
+let queue: Promise<unknown> = Promise.resolve();
+
 /**
  * Bring `scripting.getRegisteredContentScripts()` in line with the desired set.
  * Called on install, on startup, on list toggles and whenever a site mode changes.
+ *
+ * Serialised: two overlapping runs read the same "already registered" snapshot, so the
+ * second one re-registers ids the first one just created and Chrome rejects the whole
+ * batch ("Duplicate script ID") — which silently leaves those scriptlet groups
+ * unregistered until something reconciles again. `onInstalled` + `onStartup` fire together
+ * on an update after a browser restart, and a list toggle can land while a delta applies.
  */
-export async function reconcile(): Promise<ReconcileResult> {
+export function reconcile(): Promise<ReconcileResult> {
+  const result = queue.then(doReconcile, doReconcile);
+  queue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
+
+async function doReconcile(): Promise<ReconcileResult> {
   const result: ReconcileResult = { registered: 0, updated: 0, removed: 0, failed: 0 };
   const [manifest, enabled, below] = await Promise.all([
     getManifest(),

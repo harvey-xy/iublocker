@@ -127,15 +127,37 @@ export async function set(patch: Partial<LocalStorageSchema>): Promise<void> {
   }
 }
 
-/** Read-modify-write a single key. */
-export async function update<K extends StoreKey>(
+/**
+ * Serialises the read-modify-write chain per key. Two `update()` calls that overlap would
+ * otherwise both read the pre-write value and the second write would silently drop the
+ * first one (blocked counters from two tabs finishing at once, two site-mode toggles…).
+ */
+const updateQueues = new Map<StoreKey, Promise<unknown>>();
+
+/** Read-modify-write a single key. Concurrent updates of the same key are serialised. */
+export function update<K extends StoreKey>(
   key: K,
   fn: (current: LocalStorageSchema[K]) => LocalStorageSchema[K],
 ): Promise<LocalStorageSchema[K]> {
-  const current = await get(key);
-  const next = fn(current);
-  await set({ [key]: next } as Partial<LocalStorageSchema>);
-  return next;
+  const run = async (): Promise<LocalStorageSchema[K]> => {
+    const current = await get(key);
+    const next = fn(current);
+    // Returning the value it was given is how an updater says "nothing to write".
+    if (next === current) return current;
+    await set({ [key]: next } as Partial<LocalStorageSchema>);
+    return next;
+  };
+  const previous = updateQueues.get(key) ?? Promise.resolve();
+  const result = previous.then(run, run);
+  // A rejected update must not break the chain for the next caller.
+  updateQueues.set(
+    key,
+    result.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  return result;
 }
 
 function notify<K extends StoreKey>(
@@ -207,6 +229,36 @@ export const raw = {
 
 /* ------------------------------------------------------------------ session ---- */
 
+/**
+ * Timestamps of the `declarativeNetRequest.getMatchedRules()` calls we already spent.
+ * Chrome's quota lives in the browser process and survives worker restarts, so the log
+ * has to live in session storage rather than in worker memory (see `stats.ts`).
+ */
+const MATCHED_RULE_CALLS_KEY = 'dnrGetMatchedRulesCalls';
+
+/**
+ * Per-tab serialisation of the session read-modify-writes. `patchTab` is called from the
+ * injector (main-frame commit) and from the stats refresh at the same time; unserialised,
+ * one of them reads the pre-write record and writes a mix of old and new fields back — a
+ * stale `hostname` there makes every sub-frame of the new page resolve the *previous*
+ * page's site mode. Keeping `dropTab` in the same queue also stops a late patch from
+ * resurrecting a closed tab's record.
+ */
+const tabWrites = new Map<number, Promise<unknown>>();
+
+function withTabLock<T>(tabId: number, run: () => Promise<T>): Promise<T> {
+  const previous = tabWrites.get(tabId) ?? Promise.resolve();
+  const result = previous.then(run, run);
+  tabWrites.set(
+    tabId,
+    result.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  return result;
+}
+
 export const session = {
   async getTab(tabId: number): Promise<TabSessionState | null> {
     const key = tabSessionKey(tabId);
@@ -216,14 +268,19 @@ export const session = {
   async setTab(tabId: number, state: TabSessionState): Promise<void> {
     await chrome.storage.session.set({ [tabSessionKey(tabId)]: state });
   },
-  async patchTab(tabId: number, patch: Partial<TabSessionState>): Promise<TabSessionState> {
-    const current = (await session.getTab(tabId)) ?? { hostname: '', blocked: 0, lastUrl: '' };
-    const next = { ...current, ...patch };
-    await session.setTab(tabId, next);
-    return next;
+  patchTab(tabId: number, patch: Partial<TabSessionState>): Promise<TabSessionState> {
+    return withTabLock(tabId, async () => {
+      const current = (await session.getTab(tabId)) ?? { hostname: '', blocked: 0, lastUrl: '' };
+      const next = { ...current, ...patch };
+      await session.setTab(tabId, next);
+      return next;
+    });
   },
-  async dropTab(tabId: number): Promise<void> {
-    await chrome.storage.session.remove([tabSessionKey(tabId), pickerActiveKey(tabId)]);
+  dropTab(tabId: number): Promise<void> {
+    return withTabLock(tabId, async () => {
+      await chrome.storage.session.remove([tabSessionKey(tabId), pickerActiveKey(tabId)]);
+      tabWrites.delete(tabId);
+    });
   },
   async setPickerActive(tabId: number, active: boolean): Promise<void> {
     const key = pickerActiveKey(tabId);
@@ -235,6 +292,15 @@ export const session = {
     const got = (await chrome.storage.session.get(key)) as Record<string, boolean | undefined>;
     return got[key] === true;
   },
+  async getMatchedRuleCalls(): Promise<number[]> {
+    const got = (await chrome.storage.session.get(MATCHED_RULE_CALLS_KEY)) as Record<string, unknown>;
+    const value = got[MATCHED_RULE_CALLS_KEY];
+    if (!Array.isArray(value)) return [];
+    return value.filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
+  },
+  async setMatchedRuleCalls(times: readonly number[]): Promise<void> {
+    await chrome.storage.session.set({ [MATCHED_RULE_CALLS_KEY]: [...times] });
+  },
 };
 
 /** Test helper: drop all module-level state. */
@@ -243,4 +309,6 @@ export function __resetForTests(): void {
   hydration = null;
   listeners.clear();
   selfWrites.clear();
+  updateQueues.clear();
+  tabWrites.clear();
 }

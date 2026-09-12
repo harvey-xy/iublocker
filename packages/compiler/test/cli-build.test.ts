@@ -232,7 +232,12 @@ describe('runCli', () => {
     expect(runCli(['--lists', lists, '--cache', cache, '--out', out])).toBe(0);
 
     const manifest = JSON.parse(readFileSync(join(out, 'manifest.json'), 'utf8')) as RulesetManifest;
-    expect(manifest.version).toBe('2026.09.11.1');
+    // `hosts-sample` ships no meta.json, so its `fetchedAt` is "now" and it is the newest
+    // source: the version tracks today's date, not the fixture's.
+    expect(manifest.version).toMatch(/^\d{4}\.\d{2}\.\d{2}\.1$/);
+    expect(rulesetVersion([{ url: '', sha256: '', fetchedAt: '2026-09-11T09:00:00.000Z' }])).toBe(
+      '2026.09.11.1',
+    );
     expect(new Date(manifest.builtAt).toString()).not.toBe('Invalid Date');
     expect(manifest.lists.map((l) => l.id)).toEqual(['sample', 'hosts-sample']);
 

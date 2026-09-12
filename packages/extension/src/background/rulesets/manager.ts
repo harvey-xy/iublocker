@@ -121,15 +121,15 @@ export async function enabledListIds(): Promise<string[]> {
 export async function applyFirstRunDefaults(): Promise<Record<string, { enabled: boolean }>> {
   const [manifest, stored] = await Promise.all([getManifest(), store.get('lists')]);
   const languages = uiLanguages();
-  const next: Record<string, { enabled: boolean }> = { ...stored };
-  let changed = false;
-  for (const entry of manifest.lists) {
-    if (next[entry.id]) continue;
-    next[entry.id] = { enabled: defaultEnabledFor(entry, languages) };
-    changed = true;
-  }
-  if (changed) await store.set({ lists: next });
-  return next;
+  if (!manifest.lists.some((entry) => !stored[entry.id])) return { ...stored };
+  return store.update('lists', (current) => {
+    const next = { ...current };
+    for (const entry of manifest.lists) {
+      if (next[entry.id]) continue;
+      next[entry.id] = { enabled: defaultEnabledFor(entry, languages) };
+    }
+    return next;
+  });
 }
 
 export interface Budget {
@@ -151,12 +151,61 @@ export async function getBudget(): Promise<Budget> {
   return { used, available, total: DNR_LIMITS.GLOBAL_STATIC_RULES };
 }
 
+/**
+ * Ruleset ids the *extension* manifest declares, i.e. the only ids
+ * `updateEnabledRulesets` accepts. `rulesets/manifest.json` can list more: the build drops
+ * a list whose `dnr/<id>.json` was not produced from `declarative_net_request`
+ * (scripts/build.ts) but copies the ruleset manifest verbatim. `null` = the manifest
+ * declares none, so there is nothing to check against.
+ */
+function declaredRulesetIds(): Set<string> | null {
+  try {
+    const declared = (
+      chrome.runtime.getManifest() as {
+        declarative_net_request?: { rule_resources?: { id?: string }[] };
+      }
+    ).declarative_net_request?.rule_resources;
+    if (!Array.isArray(declared) || declared.length === 0) return null;
+    const ids = declared.map((entry) => entry?.id).filter((id): id is string => typeof id === 'string');
+    return ids.length ? new Set(ids) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Enable/disable one ruleset at a time so a single bad id cannot take the rest down. */
+async function applyRulesetsOneByOne(enableIds: string[], disableIds: string[]): Promise<void> {
+  // Disable first: that frees static rule budget the enables may need.
+  for (const rulesetId of disableIds) {
+    try {
+      await chrome.declarativeNetRequest.updateEnabledRulesets({ disableRulesetIds: [rulesetId] });
+    } catch (err) {
+      log.warn(`could not disable ruleset ${rulesetId}`, err);
+    }
+  }
+  for (const rulesetId of enableIds) {
+    try {
+      await chrome.declarativeNetRequest.updateEnabledRulesets({ enableRulesetIds: [rulesetId] });
+    } catch (err) {
+      log.warn(`could not enable ruleset ${rulesetId}`, err);
+    }
+  }
+}
+
 /** Reconcile Chrome's enabled rulesets with storage. Returns the ids now enabled. */
 export async function applyEnabledRulesets(): Promise<string[]> {
   const [manifest, states] = await Promise.all([getManifest(), getListStates()]);
   const known = new Set(manifest.lists.map((entry) => entry.id));
+  const declared = declaredRulesetIds();
   const desired = new Set(
-    manifest.lists.filter((entry) => states[entry.id]?.enabled).map((entry) => entry.id),
+    manifest.lists
+      .filter((entry) => states[entry.id]?.enabled)
+      .filter((entry) => {
+        if (!declared || declared.has(entry.id)) return true;
+        log.warn(`list ${entry.id} has no ruleset in the extension manifest; not enabling it`);
+        return false;
+      })
+      .map((entry) => entry.id),
   );
   if (desired.size > DNR_LIMITS.MAX_ENABLED_STATIC_RULESETS) {
     log.warn(`too many enabled rulesets (${desired.size}); Chrome allows ${DNR_LIMITS.MAX_ENABLED_STATIC_RULESETS}`);
@@ -173,8 +222,16 @@ export async function applyEnabledRulesets(): Promise<string[]> {
     try {
       await chrome.declarativeNetRequest.updateEnabledRulesets({ enableRulesetIds, disableRulesetIds });
     } catch (err) {
-      log.error('updateEnabledRulesets failed', err);
-      throw err;
+      // The call is all-or-nothing: one unknown id or one list over the static budget would
+      // otherwise leave *every* list in its previous state (on a fresh profile: no blocking
+      // at all). Retry per ruleset so the healthy ones still land.
+      log.error('updateEnabledRulesets failed; retrying one ruleset at a time', err);
+      await applyRulesetsOneByOne(enableRulesetIds, disableRulesetIds);
+      try {
+        return await chrome.declarativeNetRequest.getEnabledRulesets();
+      } catch {
+        return [...desired];
+      }
     }
     log.debug('rulesets enabled', enableRulesetIds, 'disabled', disableRulesetIds);
   }
@@ -200,8 +257,7 @@ export async function setListEnabled(listId: string, enabled: boolean): Promise<
       throw new Error(`not enough static rule budget for "${entry.title}" (needs ${entry.counts?.dnr}, ${budget.available} left)`);
     }
   }
-  const stored = await store.get('lists');
-  await store.set({ lists: { ...stored, [listId]: { enabled } } });
+  await store.update('lists', (stored) => ({ ...stored, [listId]: { enabled } }));
   await applyEnabledRulesets();
   await applyDisabledStaticRules();
   return { enabled, budget: await getBudget() };

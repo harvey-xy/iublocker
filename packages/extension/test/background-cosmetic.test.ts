@@ -120,6 +120,18 @@ describe('CosmeticIndex', () => {
     expect((await cosmeticIndex.lookup('example.com')).selectors).toContain('.cookie-wall');
   });
 
+  it('does not publish a load that a concurrent invalidation superseded', async () => {
+    // A list toggle (invalidate) while the DBs are still loading must win: otherwise the
+    // in-flight load writes the old enabled set into the cache and keeps filtering with it.
+    const first = cosmeticIndex.getDbs();
+    await store.set({ lists: { easylist: { enabled: false }, annoy: { enabled: true } } });
+    cosmeticIndex.invalidate();
+    await first;
+    const dbs = await cosmeticIndex.getDbs();
+    expect(dbs.map((db) => db.listId)).toEqual(['annoy']);
+    expect((await cosmeticIndex.lookup('example.com')).selectors).toEqual(['.cookie-wall']);
+  });
+
   it('includes user and delta DBs', async () => {
     await store.set({
       userCompiled: {

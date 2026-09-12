@@ -94,6 +94,24 @@ describe('updater: validation', () => {
     ).toBe(true);
   });
 
+  it('refuses redirects that can leave the extension bundle', () => {
+    const rule = (redirect: unknown) => ({
+      id: 1,
+      action: { type: 'redirect', redirect },
+      condition: { urlFilter: 'a' },
+    });
+    // A regex substitution or a URL transform can point anywhere; only a bundled
+    // resource is acceptable (docs/RULESETS.md §6).
+    expect(updater.isSafeDeltaRule(rule({ regexSubstitution: 'https://evil.example/\\1' }))).toBe(false);
+    expect(updater.isSafeDeltaRule(rule({ transform: { host: 'evil.example' } }))).toBe(false);
+    expect(
+      updater.isSafeDeltaRule(rule({ extensionPath: '/resources/noop.js', transform: { host: 'x' } })),
+    ).toBe(false);
+    expect(updater.isSafeDeltaRule(rule({ extensionPath: 'resources/noop.js' }))).toBe(false);
+    expect(updater.isSafeDeltaRule(rule({}))).toBe(false);
+    expect(updater.isSafeDeltaRule(rule({ extensionPath: '/resources/noop.js' }))).toBe(true);
+  });
+
   it('builds the documented delta URL', () => {
     expect(updater.deltaUrl(DEFAULT_SETTINGS.cloudDeltaBaseUrl, '1.2.3')).toBe(
       `${DEFAULT_SETTINGS.cloudDeltaBaseUrl}/delta/1.2.3.json`,
@@ -210,6 +228,17 @@ describe('updater: failures', () => {
     const result = await updater.runUpdate({ force: true });
     expect(result.ok).toBe(false);
     expect((await store.get('updater')).lastError).toMatch(/malformed/);
+    expect(await store.get('delta')).toBeNull();
+  });
+
+  it('refuses to fetch the delta over plain http', async () => {
+    setup({ [DELTA_PATH]: makeDelta() });
+    const settings = await store.get('settings');
+    // A value stored before `sanitiseSettings` validated the scheme.
+    await store.set({ settings: { ...settings, cloudDeltaBaseUrl: 'http://insecure.example' } });
+    const result = await updater.runUpdate({ force: true });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/insecure delta URL/);
     expect(await store.get('delta')).toBeNull();
   });
 

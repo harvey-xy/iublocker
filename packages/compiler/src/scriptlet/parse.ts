@@ -62,38 +62,17 @@ function splitScriptletArgsRaw(text: string): ParseResult<RawArg[]> {
 
     const c = at(text, i);
     if (c === '"' || c === "'" || c === '`') {
-      const quote = c;
-      let value = '';
-      let j = i + 1;
-      let closed = false;
-      for (; j < n; j++) {
-        const d = at(text, j);
-        if (d === '\\') {
-          const e = at(text, j + 1);
-          if (e === '\\' || e === quote) {
-            value += e;
-            j++;
-            continue;
-          }
-          value += d;
-          continue;
-        }
-        if (d === quote) {
-          closed = true;
-          break;
-        }
-        value += d;
+      const quoted = readQuotedArg(text, i);
+      if (quoted !== null) {
+        args.push({ value: quoted.value, quoted: true });
+        i = quoted.next;
+        if (quoted.last) break;
+        continue;
       }
-      if (!closed) return { ok: false, reason: 'unterminated quoted scriptlet argument' };
-      args.push({ value, quoted: true });
-      i = j + 1;
-      while (i < n && isWs(at(text, i))) i++;
-      if (i < n && at(text, i) !== ',') {
-        return { ok: false, reason: 'unexpected text after a quoted scriptlet argument' };
-      }
-      if (i >= n) break;
-      i++;
-      continue;
+      // A quote that does not delimit the whole argument is ordinary text: uBO strips
+      // quotes only when an argument both starts *and* ends with them, so
+      // `+js(rpnt, script, "a":1, "a":0)` and `+js(nostif, '0x)` keep their quotes and
+      // must not be rejected. Fall through to plain parsing from the same position.
     }
 
     if (c === '/') {
@@ -137,6 +116,45 @@ function splitScriptletArgsRaw(text: string): ParseResult<RawArg[]> {
   }
 
   return { ok: true, value: args };
+}
+
+/**
+ * A quoted argument starting at `start`, or `null` when the quote does not delimit one
+ * (unterminated, or followed by text that is not an argument separator).
+ */
+function readQuotedArg(
+  text: string,
+  start: number,
+): { value: string; next: number; last: boolean } | null {
+  const quote = at(text, start);
+  const n = text.length;
+  let value = '';
+  let j = start + 1;
+  let closed = false;
+  for (; j < n; j++) {
+    const d = at(text, j);
+    if (d === '\\') {
+      const e = at(text, j + 1);
+      if (e === '\\' || e === quote) {
+        value += e;
+        j++;
+        continue;
+      }
+      value += d;
+      continue;
+    }
+    if (d === quote) {
+      closed = true;
+      break;
+    }
+    value += d;
+  }
+  if (!closed) return null;
+  let k = j + 1;
+  while (k < n && isWs(at(text, k))) k++;
+  if (k >= n) return { value, next: k, last: true };
+  if (at(text, k) !== ',') return null;
+  return { value, next: k + 1, last: false };
 }
 
 /** Index of the closing `/` of a regex literal starting at `start`, or -1. */

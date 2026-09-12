@@ -9,7 +9,7 @@ import type {
   DNRResourceType,
   DNRRule,
 } from '@iublocker/shared';
-import { DNR_RESOURCE_TYPES, PRIORITY } from '@iublocker/shared';
+import { DNR_RESOURCE_TYPES, PRIORITY, isValidHostname } from '@iublocker/shared';
 import { resolveScriptlet } from '@iublocker/scriptlets';
 import type { NetworkFilter } from '../parser/network-filter';
 import { expandDomains } from '../psl';
@@ -188,6 +188,20 @@ function buildResourceTypes(
   condition.excludedResourceTypes = ['main_frame'];
 }
 
+/**
+ * Whether `||<host>…` may be rewritten as `requestDomains: [host]`.
+ *
+ * `requestDomains` matches a **domain or one of its subdomains**, so it only means the same
+ * thing as the `||` anchor when the anchored text really is a hostname. Lists are full of
+ * `||` patterns that are host *prefixes* instead — `||adservice.google.` (every Google ad
+ * ccTLD), `||ad120m.`, `||e-zpass.com-` (phishing hosts), `||142.91.159.` — and for those
+ * `requestDomains` matches nothing at all, silently dropping the filter. DNR's own `||`
+ * anchor has exactly the ABP meaning, so those keep their `urlFilter`.
+ */
+function isDomainAnchor(host: string): boolean {
+  return host.includes('.') && isValidHostname(host);
+}
+
 function applyPattern(
   f: NetworkFilter,
   condition: DNRCondition,
@@ -197,13 +211,22 @@ function applyPattern(
     const check = checkRe2(source);
     if (!check.ok) return { ok: false, reason: check.reason };
     condition.regexFilter = source;
+    if (f.matchCase) condition.isUrlFilterCaseSensitive = true;
     return { ok: true };
   }
 
   const hasRequestDomains = f.request.included.length > 0;
 
   if (f.kind === 'hostname' && f.hostname !== undefined && !hasRequestDomains) {
-    condition.requestDomains = [f.hostname];
+    if (isDomainAnchor(f.hostname)) {
+      condition.requestDomains = [f.hostname];
+      return { ok: true };
+    }
+    // A hosts-file entry means `||host^`; as a bare `urlFilter` it would be a substring.
+    const urlFilter = `||${f.hostname}^`;
+    const problem = urlFilterProblem(urlFilter);
+    if (problem !== null) return { ok: false, reason: problem };
+    condition.urlFilter = urlFilter;
     return { ok: true };
   }
 
@@ -212,7 +235,8 @@ function applyPattern(
     f.hostname !== undefined &&
     !hasRequestDomains &&
     !f.rightAnchored &&
-    (f.hostRest === '' || f.hostRest === '^')
+    (f.hostRest === '' || f.hostRest === '^') &&
+    isDomainAnchor(f.hostname)
   ) {
     // Preferred form: cheaper to evaluate and merges well (docs/FILTER-SYNTAX.md §5.3).
     condition.requestDomains = [f.hostname];

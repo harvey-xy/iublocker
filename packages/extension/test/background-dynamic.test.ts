@@ -74,6 +74,36 @@ describe('dynamic rules: ranges', () => {
     expect(user.map((rule) => rule.id)).toEqual([ID_RANGE.USER.start, ID_RANGE.USER.start + 1]);
   });
 
+  it('serialises two rewrites of the same range', async () => {
+    // Both calls read the pre-write rule set; without serialisation the second one asks
+    // Chrome to add ids the first one has just created and the whole call is rejected.
+    const seen: { removeRuleIds?: number[]; addRules?: { id: number }[] }[] = [];
+    const real = chromeMock.declarativeNetRequest.updateDynamicRules;
+    chromeMock.declarativeNetRequest.updateDynamicRules = (async (o: {
+      removeRuleIds?: number[];
+      addRules?: { id: number }[];
+    }) => {
+      seen.push(o);
+      const existing = new Set((chromeMock._state.dynamicRules as DNRRule[]).map((r) => r.id));
+      for (const rule of o.addRules ?? []) {
+        if (existing.has(rule.id) && !(o.removeRuleIds ?? []).includes(rule.id)) {
+          throw new Error(`Rule with id ${rule.id} does not have a unique ID`);
+        }
+      }
+      return real(o as never);
+    }) as typeof chromeMock.declarativeNetRequest.updateDynamicRules;
+
+    await Promise.all([
+      dynamic.rewriteRange(dynamic.RANGES.user, [block(0, 'first.com')]),
+      dynamic.rewriteRange(dynamic.RANGES.user, [block(0, 'second.com'), block(0, 'third.com')]),
+    ]);
+    chromeMock.declarativeNetRequest.updateDynamicRules = real;
+
+    expect(seen).toHaveLength(2);
+    const user = await dynamic.getRulesInRange(dynamic.RANGES.user);
+    expect(user.map((rule) => rule.condition.requestDomains?.[0])).toEqual(['second.com', 'third.com']);
+  });
+
   it('clears a range', async () => {
     await dynamic.rewriteRange(dynamic.RANGES.user, [block(0, 'a.com')]);
     expect(await dynamic.clearRange(dynamic.RANGES.user)).toBe(1);

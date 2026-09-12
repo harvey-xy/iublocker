@@ -77,6 +77,54 @@ describe('store', () => {
     expect((await store.get('stats')).blockedTotal).toBe(5);
   });
 
+  it('serialises concurrent updates of the same key instead of losing one', async () => {
+    await Promise.all([
+      store.update('stats', (stats) => ({ ...stats, blockedTotal: stats.blockedTotal + 2 })),
+      store.update('stats', (stats) => ({ ...stats, blockedTotal: stats.blockedTotal + 3 })),
+      store.update('stats', (stats) => ({ ...stats, blockedTotal: stats.blockedTotal + 4 })),
+    ]);
+    expect((await store.get('stats')).blockedTotal).toBe(9);
+  });
+
+  it('keeps the update chain alive after a failed write', async () => {
+    await store.get('siteModes');
+    const original = chrome.storage.local.set.bind(chrome.storage.local);
+    let fail = true;
+    chrome.storage.local.set = (async (patch: Record<string, unknown>) => {
+      if (fail) throw new Error('quota');
+      return original(patch);
+    }) as typeof chrome.storage.local.set;
+    await expect(store.update('siteModes', () => ({ 'a.com': 'off' }) as never)).rejects.toThrow('quota');
+    fail = false;
+    await store.update('siteModes', (modes) => ({ ...modes, 'b.com': 'off' }) as never);
+    expect(await store.get('siteModes')).toEqual({ 'b.com': 'off' });
+    chrome.storage.local.set = original;
+  });
+
+  it('serialises per-tab session writes so no field is lost', async () => {
+    await Promise.all([
+      store.session.patchTab(3, { hostname: 'new.example', lastUrl: 'https://new.example/', blocked: 0 }),
+      store.session.patchTab(3, { blocked: 7 }),
+    ]);
+    const state = await store.session.getTab(3);
+    expect(state?.hostname).toBe('new.example');
+    expect(state?.blocked).toBe(7);
+  });
+
+  it('does not resurrect a closed tab with a late patch', async () => {
+    await store.session.patchTab(4, { hostname: 'example.com' });
+    await Promise.all([store.session.patchTab(4, { blocked: 2 }), store.session.dropTab(4)]);
+    expect(await store.session.getTab(4)).toBeNull();
+  });
+
+  it('logs the getMatchedRules calls it spent in session storage', async () => {
+    expect(await store.session.getMatchedRuleCalls()).toEqual([]);
+    await store.session.setMatchedRuleCalls([1, 2, 3]);
+    expect(await store.session.getMatchedRuleCalls()).toEqual([1, 2, 3]);
+    await chrome.storage.session.set({ dnrGetMatchedRulesCalls: 'nonsense' });
+    expect(await store.session.getMatchedRuleCalls()).toEqual([]);
+  });
+
   it('keeps per-tab session state', async () => {
     await store.session.patchTab(3, { hostname: 'example.com', lastUrl: 'https://example.com/' });
     await store.session.patchTab(3, { blocked: 4 });

@@ -132,6 +132,48 @@ export const PROCEDURAL_OPS: ReadonlySet<string> = new Set([
 /** Operators that are procedural only when their argument is procedural. */
 const CONDITIONAL_OPS: ReadonlySet<string> = new Set(['has', 'not']);
 
+/**
+ * True when `sel` carries a `:has()` the CSS parser will see.
+ *
+ * `:is()` / `:where()` take a *forgiving* selector list, so a `:has()` inside one is
+ * dropped by the parser instead of invalidating the selector around it. `:not()` is not
+ * forgiving, so a `:has()` inside it still reaches the parser.
+ */
+function carriesHas(sel: string): boolean {
+  const res = scanSelector(sel);
+  if (!res.ok) return false;
+  for (const p of res.scan.pseudos) {
+    const name = canonicalPseudo(p.name);
+    if (name === 'has') return true;
+    if (name === 'not' && p.hasArg && carriesHas(p.arg)) return true;
+  }
+  return false;
+}
+
+/**
+ * True when the selector nests `:has()` inside `:has()` — which is **invalid CSS**.
+ *
+ * This matters far beyond one filter: the runtime injects specific selectors as one
+ * `sel1,sel2,…{display:none!important}` rule per 1,000 selectors, and a selector list with
+ * one invalid member is discarded *whole* by the CSS parser. Emitting `a:has(b:has(c))` as
+ * a plain selector therefore silently destroys every other hiding selector for that
+ * hostname. {@link parseSelector} routes these through the procedural path instead (which
+ * is also what uBO does), where each `:has()` argument is evaluated on its own and is
+ * valid CSS again.
+ */
+export function hasInvalidHasNesting(sel: string): boolean {
+  const res = scanSelector(sel);
+  if (!res.ok) return false;
+  for (const p of res.scan.pseudos) {
+    if (!p.hasArg) continue;
+    const name = canonicalPseudo(p.name);
+    if (name === 'has' && carriesHas(p.arg)) return true;
+    // Only the non-forgiving pseudos can carry the invalidity outwards.
+    if ((name === 'has' || name === 'not') && hasInvalidHasNesting(p.arg)) return true;
+  }
+  return false;
+}
+
 export function canonicalPseudo(name: string): string {
   return PSEUDO_ALIASES.get(name) ?? name;
 }
@@ -207,6 +249,10 @@ export function parseSelector(sel: string): Result<ParsedSelector> {
     const name = canonicalPseudo(p.name);
     if (PROCEDURAL_OPS.has(name)) steps.push(p);
     else if (CONDITIONAL_OPS.has(name) && p.hasArg && isProceduralSelector(p.arg)) steps.push(p);
+    // `:has(… :has(…) …)` is invalid CSS; evaluating the outer operator procedurally makes
+    // every remaining piece valid again (see `hasInvalidHasNesting`).
+    else if (name === 'has' && p.hasArg && carriesHas(p.arg)) steps.push(p);
+    else if (name === 'not' && p.hasArg && hasInvalidHasNesting(p.arg)) steps.push(p);
   }
 
   if (steps.length === 0) {

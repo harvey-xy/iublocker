@@ -147,6 +147,21 @@ describe('ScriptletIndex: user and delta scriptlets still reach the dynamic path
     expect(names(await scriptlets.lookupDynamic('example.com'))).toEqual(['entity-one', 'user-one']);
   });
 
+  it('does not cache a lookup that a concurrent invalidation superseded', async () => {
+    const pending = scriptlets.lookupDynamic('example.com');
+    await store.set({
+      userCompiled: {
+        dnr: [],
+        cosmetic: null,
+        scriptlets: makeScriptletDB('user', { byHost: { 'example.com': [{ name: 'user-one', args: [] }] } }),
+        warnings: [],
+      } as never,
+    });
+    scriptlets.invalidate();
+    await pending;
+    expect(names(await scriptlets.lookupDynamic('example.com'))).toEqual(['entity-one', 'user-one']);
+  });
+
   it('does not repeat a user call that a group already runs', async () => {
     await store.set({
       userCompiled: {

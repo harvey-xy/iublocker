@@ -9,6 +9,7 @@ import {
   DNR_LIMITS,
   ID_RANGE,
   PRIORITY,
+  SITE_MODES,
   SITE_MODE_LEVEL,
   hostnameWalk,
   isValidHostname,
@@ -63,10 +64,17 @@ export async function resolveMode(hostname: string): Promise<SiteMode> {
 export async function setMode(hostname: string, mode: SiteMode | null): Promise<SiteMode> {
   const host = normaliseHostname(hostname);
   if (!host || !isValidHostname(host)) throw new Error(`invalid hostname: ${hostname}`);
-  const modes = { ...(await getSiteModes()) };
-  if (mode === null) delete modes[host];
-  else modes[host] = mode;
-  await store.set({ siteModes: modes });
+  // An unknown mode would silently resolve to "no cosmetics, no scriptlets" everywhere
+  // below this hostname (`modeAtLeast` compares against SITE_MODE_LEVEL).
+  if (mode !== null && !SITE_MODES.includes(mode)) throw new Error(`invalid mode: ${String(mode)}`);
+  // Read-modify-write through `store.update`: two toggles in flight at once (popup and
+  // dashboard, or a double click) would otherwise lose one of them.
+  const modes = await store.update('siteModes', (current) => {
+    const next = { ...current };
+    if (mode === null) delete next[host];
+    else next[host] = mode;
+    return next;
+  });
   await syncSessionRules();
   const settings = await getSettings();
   return resolveModeFrom(host, modes, settings.defaultMode);

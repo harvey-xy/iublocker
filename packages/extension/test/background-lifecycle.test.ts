@@ -157,6 +157,56 @@ describe('lifecycle: onInstalled', () => {
       lifecycle.onInstalled({ reason: 'install' } as chrome.runtime.InstalledDetails),
     ).resolves.toBeUndefined();
   });
+
+  it('still syncs session rules and scriptlet groups when enabling rulesets fails', async () => {
+    // The four reconciliation steps are independent: a Chrome error in the first one must
+    // not leave `off` sites blocked and every scriptlet group unregistered.
+    await store.set({ siteModes: { 'off.test': 'off' } });
+    chromeMock.declarativeNetRequest.updateEnabledRulesets = async () => {
+      throw new Error('boom');
+    };
+    await lifecycle.onInstalled({ reason: 'update' } as chrome.runtime.InstalledDetails);
+    expect(chromeMock._state.sessionRules[0].condition.requestDomains).toEqual(['off.test']);
+    expect((await chrome.scripting.getRegisteredContentScripts()).map((s) => s.id)).toEqual([
+      'sl-noop-0',
+    ]);
+  });
+});
+
+describe('manager: enabling rulesets Chrome may refuse', () => {
+  beforeEach(() => setup('de'));
+
+  it('retries one ruleset at a time when the batch call fails', async () => {
+    // `updateEnabledRulesets` is all-or-nothing: one bad id would otherwise leave every
+    // list in its previous state (on a fresh profile: nothing enabled at all).
+    const real = chromeMock.declarativeNetRequest.updateEnabledRulesets;
+    chromeMock.declarativeNetRequest.updateEnabledRulesets = (async (o: {
+      enableRulesetIds?: string[];
+      disableRulesetIds?: string[];
+    }) => {
+      if ((o.enableRulesetIds ?? []).includes('easylist-de')) throw new Error('no such ruleset');
+      return real(o as never);
+    }) as typeof chromeMock.declarativeNetRequest.updateEnabledRulesets;
+
+    await manager.applyFirstRunDefaults();
+    const enabled = await manager.applyEnabledRulesets();
+    expect(enabled).toContain('easylist');
+    expect([...chromeMock._state.enabledRulesets]).toEqual(['easylist']);
+  });
+
+  it('never enables a list the extension manifest has no ruleset for', async () => {
+    chromeMock.runtime.getManifest = (() => ({
+      version: '1.2.3',
+      declarative_net_request: { rule_resources: [{ id: 'easylist', enabled: true, path: 'x' }] },
+    })) as typeof chromeMock.runtime.getManifest;
+    await manager.applyFirstRunDefaults();
+    const enabled = await manager.applyEnabledRulesets();
+    expect(enabled).toEqual(['easylist']);
+    expect([...chromeMock._state.enabledRulesets]).toEqual(['easylist']);
+    expect(chromeMock._state.calls.updateEnabledRulesets[0]).toMatchObject({
+      enableRulesetIds: ['easylist'],
+    });
+  });
 });
 
 describe('lifecycle: onStartup', () => {

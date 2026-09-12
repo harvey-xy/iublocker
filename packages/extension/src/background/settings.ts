@@ -73,12 +73,18 @@ export interface SettingsChange {
 }
 
 export async function setSettings(patch: Partial<Settings>): Promise<SettingsChange> {
-  const previous = await getSettings();
-  const settings = sanitiseSettings(previous, patch);
-  const changed = (Object.keys(settings) as (keyof Settings)[]).filter(
-    (key) => JSON.stringify(settings[key]) !== JSON.stringify(previous[key]),
-  );
-  if (changed.length) await store.set({ settings });
+  let previous = await store.get('settings');
+  let changed: (keyof Settings)[] = [];
+  // Serialised read-modify-write: the popup and the dashboard both write `settings`, and a
+  // plain get/set pair drops one of two overlapping saves.
+  const settings = await store.update('settings', (current) => {
+    previous = current;
+    const next = sanitiseSettings(current, patch);
+    changed = (Object.keys(next) as (keyof Settings)[]).filter(
+      (key) => JSON.stringify(next[key]) !== JSON.stringify(current[key]),
+    );
+    return changed.length ? next : current;
+  });
   setDebug(settings.advanced.logMatchedRules);
   return { settings, previous, changed };
 }

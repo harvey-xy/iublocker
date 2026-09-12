@@ -77,8 +77,18 @@ export function isSafeDeltaRule(rule: unknown): rule is DNRRule {
   if (!r.condition || typeof r.condition !== 'object') return false;
   if (r.action.type === 'redirect') {
     const redirect = r.action.redirect;
-    // Never let list data point a request at an arbitrary remote origin.
-    if (!redirect || typeof redirect.url === 'string') return false;
+    // List data may only redirect to a bundled resource (docs/RULESETS.md §6). `url`,
+    // `regexSubstitution` and `transform` can all point a request at an arbitrary remote
+    // origin, so an `extensionPath` is the only accepted form.
+    if (!redirect || typeof redirect.extensionPath !== 'string') return false;
+    if (!redirect.extensionPath.startsWith('/')) return false;
+    if (
+      redirect.url !== undefined ||
+      redirect.regexSubstitution !== undefined ||
+      redirect.transform !== undefined
+    ) {
+      return false;
+    }
   }
   return true;
 }
@@ -211,7 +221,13 @@ async function doUpdate(force: boolean): Promise<UpdateResult> {
   const noStore = settings.updateChannel === 'nightly';
 
   try {
+    // `cloudDeltaBaseUrl` is user-overridable for self-hosting (docs/STORAGE.md); a value
+    // that predates the https check in `sanitiseSettings` must not be fetched in the clear.
+    if (!url.startsWith('https://')) throw new Error(`insecure delta URL: ${url}`);
     const res = await fetchDelta(url, state.etag, noStore);
+    if (typeof res.url === 'string' && res.url !== '' && !res.url.startsWith('https://')) {
+      throw new Error(`delta redirected to an insecure URL: ${res.url}`);
+    }
     if (res.status === 304) {
       await store.set({ updater: { ...state, lastCheck: now, lastSuccess: now, lastError: undefined } });
       return { ok: true, skipped: 'not-modified' };

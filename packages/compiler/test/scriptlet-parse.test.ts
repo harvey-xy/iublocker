@@ -71,12 +71,24 @@ describe('splitScriptletArgs', () => {
     });
   }
 
-  it('rejects an unterminated quoted argument', () => {
-    expect(splitScriptletArgs("name, 'abc")).toMatchObject({ ok: false });
+  // uBO strips quotes only when an argument starts *and* ends with them; a quote anywhere
+  // else is ordinary text. Rejecting these lines used to lose 23 real uBO filters
+  // (`+js(nostif, '0x)`, `+js(rpnt, script, "a":1, "a":0)`, …).
+  it('keeps an unterminated quote as literal text', () => {
+    expect(args("name, 'abc")).toEqual(['name', "'abc"]);
   });
 
-  it('rejects text after a quoted argument', () => {
-    expect(splitScriptletArgs("name, 'abc'def")).toMatchObject({ ok: false });
+  it('keeps a quote followed by more text as literal text', () => {
+    expect(args("name, 'abc'def")).toEqual(['name', "'abc'def"]);
+  });
+
+  it('keeps a JSON-ish argument that merely starts with a quote', () => {
+    expect(args('rpnt, script, "adBlockWallEnabled":true, "adBlockWallEnabled":false')).toEqual([
+      'rpnt',
+      'script',
+      '"adBlockWallEnabled":true',
+      '"adBlockWallEnabled":false',
+    ]);
   });
 });
 
@@ -138,8 +150,6 @@ describe('parseScriptletFilter', () => {
     ['example.com##+js()', 'missing scriptlet name'],
     ['example.com##+js(noop', 'unbalanced "("'],
     ['example.com##+js(noop) trailing', 'unbalanced "("'],
-    ["example.com##+js(a, 'b)", 'unterminated quoted'],
-    ["example.com##+js(a, 'b'c)", 'unexpected text after a quoted'],
     ['example.com#?#+js(noop)', '"+js()" is not allowed after "#?#"'],
     ['example.com#$#+js(noop)', '"+js()" is not allowed after "#$#"'],
     ['bad host##+js(noop)', 'invalid hostname'],

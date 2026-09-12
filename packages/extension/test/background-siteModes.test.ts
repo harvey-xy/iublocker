@@ -32,6 +32,24 @@ describe('siteModes: resolution', () => {
     await expect(siteModes.setMode('not a host', 'off')).rejects.toThrow(/invalid hostname/);
   });
 
+  it('rejects a mode that is not a SiteMode', async () => {
+    await expect(siteModes.setMode('example.com', 'turbo' as never)).rejects.toThrow(/invalid mode/);
+    expect(await siteModes.getExplicitMode('example.com')).toBeNull();
+  });
+
+  it('keeps both of two concurrent mode changes', async () => {
+    await Promise.all([
+      siteModes.setMode('a.com', 'off'),
+      siteModes.setMode('b.com', 'complete'),
+      siteModes.setMode('c.com', 'basic'),
+    ]);
+    expect(await store.get('siteModes')).toEqual({
+      'a.com': 'off',
+      'b.com': 'complete',
+      'c.com': 'basic',
+    });
+  });
+
   it('clears an override with null', async () => {
     await siteModes.setMode('example.com', 'off');
     expect(await siteModes.setMode('example.com', null)).toBe('optimal');

@@ -31,8 +31,11 @@ chrome.webNavigation.onCommitted.addListener(
   { url: [{ schemes: ['http', 'https'] }] },
 );
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status !== 'complete') return;
+  // `getMatchedRules` is quota-limited per extension (stats.ts): never spend a call on a
+  // background tab whose badge nobody is looking at.
+  if (tab && tab.active === false) return;
   void stats.refreshBadge(tabId).catch((err) => log.debug('badge refresh failed', err));
 });
 

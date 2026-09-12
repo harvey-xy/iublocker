@@ -286,10 +286,13 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
     }
 
     case 'stats:get': {
-      const tabId = typeof msg.tabId === 'number' && isExtensionPage(sender) ? msg.tabId : sender.tab?.id;
-      // Refresh first: the counters feed the daily totals we are about to read.
+      const fromPage = isExtensionPage(sender);
+      const tabId = typeof msg.tabId === 'number' && fromPage ? msg.tabId : sender.tab?.id;
+      // Refresh first: the counters feed the daily totals we are about to read. Only an
+      // extension page may force it — `getMatchedRules` is quota-limited (stats.ts) and a
+      // content script must not be able to drain it.
       const blocked =
-        typeof tabId === 'number' && tabId >= 0 ? await stats.refreshBadge(tabId, { force: true }) : null;
+        typeof tabId === 'number' && tabId >= 0 ? await stats.refreshBadge(tabId, { force: fromPage }) : null;
       const all = await stats.getStats();
       return blocked === null ? all : { ...all, tab: { blocked } };
     }

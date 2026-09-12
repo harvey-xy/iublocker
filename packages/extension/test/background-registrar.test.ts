@@ -196,6 +196,29 @@ describe('registrar: reconcile', () => {
     expect(await chrome.scripting.getRegisteredContentScripts()).toHaveLength(0);
   });
 
+  it('serialises concurrent reconciles (install + startup)', async () => {
+    // Two overlapping runs read the same "already registered" snapshot; the second one
+    // would re-register the same ids and Chrome rejects the whole batch.
+    const real = chromeMock.scripting.registerContentScripts;
+    chromeMock.scripting.registerContentScripts = (async (scripts: { id: string }[]) => {
+      const existing = new Set(
+        (await chromeMock.scripting.getRegisteredContentScripts()).map((s) => s.id),
+      );
+      for (const script of scripts) {
+        if (existing.has(script.id)) throw new Error(`Duplicate script ID '${script.id}'`);
+      }
+      return real(scripts as never);
+    }) as typeof chromeMock.scripting.registerContentScripts;
+
+    const [first, second] = await Promise.all([registrar.reconcile(), registrar.reconcile()]);
+    chromeMock.scripting.registerContentScripts = real;
+
+    expect(first.failed + second.failed).toBe(0);
+    expect(first.registered + second.registered).toBe(1);
+    const registered = await chrome.scripting.getRegisteredContentScripts();
+    expect(registered.map((script) => script.id)).toEqual(['sl-set-constant-0']);
+  });
+
   it('leaves content scripts it does not own alone', async () => {
     await chrome.scripting.registerContentScripts([
       { id: 'other', js: ['x.js'], matches: ['*://*/*'] } as chrome.scripting.RegisteredContentScript,

@@ -17,6 +17,12 @@ const listDbCache = new Map<string, CosmeticDB | null>();
 let dbs: CosmeticDB[] | null = null;
 let loading: Promise<CosmeticDB[]> | null = null;
 let genericCache: CosmeticGeneric | null = null;
+/**
+ * Bumped by `invalidate()`. A load (or a lookup) that started before an invalidation must
+ * not publish its now-stale result into the caches, or a toggled list keeps filtering (or
+ * stops filtering) until the next invalidation.
+ */
+let generation = 0;
 const lookupCache = new Map<string, CosmeticLookup>();
 const LOOKUP_CACHE_MAX = 256;
 
@@ -46,6 +52,7 @@ async function fetchListDb(entry: RulesetListEntry): Promise<CosmeticDB | null> 
 }
 
 async function load(): Promise<CosmeticDB[]> {
+  const gen = generation;
   const [manifest, enabled, userCompiled, delta] = await Promise.all([
     getManifest(),
     enabledListIds(),
@@ -58,7 +65,7 @@ async function load(): Promise<CosmeticDB[]> {
   const out = loaded.filter((db): db is CosmeticDB => db !== null);
   if (delta?.cosmetic && isCosmeticDB(delta.cosmetic)) out.push(delta.cosmetic);
   if (userCompiled?.cosmetic && isCosmeticDB(userCompiled.cosmetic)) out.push(userCompiled.cosmetic);
-  dbs = out;
+  if (gen === generation) dbs = out;
   log.debug(`cosmetic index: ${out.length} DB(s)`);
   return out;
 }
@@ -75,6 +82,7 @@ export async function lookup(hostname: string): Promise<CosmeticLookup> {
   const host = hostname.toLowerCase();
   const cached = lookupCache.get(host);
   if (cached) return cached;
+  const gen = generation;
   const all = await getDbs();
   let result: CosmeticLookup;
   try {
@@ -91,14 +99,17 @@ export async function lookup(hostname: string): Promise<CosmeticLookup> {
       excluded: [],
     };
   }
-  if (lookupCache.size >= LOOKUP_CACHE_MAX) lookupCache.clear();
-  lookupCache.set(host, result);
+  if (gen === generation) {
+    if (lookupCache.size >= LOOKUP_CACHE_MAX) lookupCache.clear();
+    lookupCache.set(host, result);
+  }
   return result;
 }
 
 /** Merged generic tables across all loaded DBs (complete mode only). */
 export async function genericTables(): Promise<CosmeticGeneric> {
   if (genericCache) return genericCache;
+  const gen = generation;
   const all = await getDbs();
   const byId: Record<string, string[]> = {};
   const byClass: Record<string, string[]> = {};
@@ -116,8 +127,9 @@ export async function genericTables(): Promise<CosmeticGeneric> {
     }
     for (const selector of generic.complex ?? []) complex.add(selector);
   }
-  genericCache = { byId, byClass, complex: [...complex] };
-  return genericCache;
+  const tables: CosmeticGeneric = { byId, byClass, complex: [...complex] };
+  if (gen === generation) genericCache = tables;
+  return tables;
 }
 
 /** True when any loaded DB has something for this hostname. */
@@ -127,6 +139,7 @@ export async function hasAnyFor(hostname: string): Promise<boolean> {
 }
 
 export function invalidate(): void {
+  generation++;
   dbs = null;
   loading = null;
   genericCache = null;

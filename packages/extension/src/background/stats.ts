@@ -1,7 +1,23 @@
 /**
- * Stats and badge. docs/ARCHITECTURE.md §4.5 — never per request: the badge is refreshed
- * from `declarativeNetRequest.getMatchedRules()` when a tab finishes loading and when the
- * popup asks, throttled to at most one call per second and tab.
+ * Stats and badge. docs/ARCHITECTURE.md §4.5.
+ *
+ * `declarativeNetRequest.getMatchedRules()` is quota-limited by Chrome:
+ * `MAX_GETMATCHEDRULES_CALLS_PER_INTERVAL` (20) calls per `GETMATCHEDRULES_QUOTA_INTERVAL`
+ * (10 minutes) into a single bucket for the whole extension, and only calls made with a
+ * user gesture are exempt — a service worker never has one. Refreshing once per page load
+ * therefore burns the quota within the first minute of browsing and every later call fails,
+ * so the counters are fed as follows:
+ *
+ *   - unpacked installs receive `onRuleMatchedDebug` and count every match for free; as
+ *     soon as one event arrives we never call `getMatchedRules` again;
+ *   - otherwise a call is spent at most once every `BACKGROUND_REFRESH_SPACING_MS` for
+ *     background (tab finished loading) refreshes, and `RESERVED_FORCED_CALLS` of every
+ *     interval are kept for refreshes the user is waiting for (popup, logger);
+ *   - when the quota is spent the last known count is kept (rehydrated from
+ *     `storage.session` after a worker restart) instead of resetting the badge to zero.
+ *
+ * The spent-call log lives in `storage.session` because Chrome's bucket outlives the
+ * worker (docs/STORAGE.md).
  */
 import type { MatchedRuleSummary, Stats } from '@iublocker/shared';
 import { errorMessage, log } from './log';
@@ -9,15 +25,31 @@ import { getSettings } from './settings';
 import * as store from './storage/store';
 
 export const BADGE_THROTTLE_MS = 1_000;
+/** Chrome's `declarativeNetRequest.MAX_GETMATCHEDRULES_CALLS_PER_INTERVAL`. */
+export const MAX_GETMATCHEDRULES_CALLS_PER_INTERVAL = 20;
+/** Chrome's `declarativeNetRequest.GETMATCHEDRULES_QUOTA_INTERVAL` (10 minutes). */
+export const GETMATCHEDRULES_QUOTA_INTERVAL_MS = 10 * 60 * 1_000;
+/** Calls held back in every interval for popup/logger refreshes. */
+export const RESERVED_FORCED_CALLS = 8;
+/** Minimum spacing between two background refreshes (fits the non-reserved calls). */
+export const BACKGROUND_REFRESH_SPACING_MS = Math.ceil(
+  GETMATCHEDRULES_QUOTA_INTERVAL_MS / (MAX_GETMATCHEDRULES_CALLS_PER_INTERVAL - RESERVED_FORCED_CALLS),
+);
+/** The popup asks twice (`tab:getState` + `stats:get`); that must cost one call. */
+export const FORCED_COALESCE_MS = 2_000;
+
 const MAX_MATCHED_PER_TAB = 500;
 const MAX_BLOCKED_URLS_PER_TAB = 500;
 const MAX_DAYS_KEPT = 90;
 const BADGE_COLOR = '#3a6ea5';
 
 interface TabCounters {
-  /** Matched-rule count last observed for this tab. */
+  /** Matched-rule count for the document currently loaded in this tab. */
   count: number;
+  /** How much of `count` is already folded into the daily totals. */
+  reported: number;
   lastRefresh: number;
+  lastForced: number;
   /** Page-load timestamp, used to scope getMatchedRules to the current document. */
   since: number;
 }
@@ -27,6 +59,12 @@ const blockedUrls = new Map<number, string[]>();
 const matchedByTab = new Map<number, MatchedRuleSummary[]>();
 const inFlight = new Map<number, Promise<number>>();
 
+/** True once `onRuleMatchedDebug` has fired: an unpacked install, no quota needed. */
+let debugFeed = false;
+/** Timestamps of the `getMatchedRules` calls spent in the current quota interval. */
+let quotaCalls: number[] = [];
+let quotaReady: Promise<void> | null = null;
+
 export function dayKey(when: number = Date.now()): string {
   return new Date(when).toISOString().slice(0, 10);
 }
@@ -34,7 +72,7 @@ export function dayKey(when: number = Date.now()): string {
 function counterFor(tabId: number): TabCounters {
   let counter = counters.get(tabId);
   if (!counter) {
-    counter = { count: 0, lastRefresh: 0, since: 0 };
+    counter = { count: 0, reported: 0, lastRefresh: 0, lastForced: 0, since: 0 };
     counters.set(tabId, counter);
   }
   return counter;
@@ -42,7 +80,7 @@ function counterFor(tabId: number): TabCounters {
 
 /** Called when a main frame commits: the tab starts counting from zero again. */
 export function resetTab(tabId: number, when: number = Date.now()): void {
-  counters.set(tabId, { count: 0, lastRefresh: 0, since: when });
+  counters.set(tabId, { count: 0, reported: 0, lastRefresh: 0, lastForced: 0, since: when });
   blockedUrls.delete(tabId);
   matchedByTab.delete(tabId);
 }
@@ -76,38 +114,110 @@ async function setBadge(tabId: number, count: number): Promise<void> {
   }
 }
 
-async function doRefresh(tabId: number, now: number): Promise<number> {
+/** Hydrate the spent-call log once per worker start; Chrome's bucket outlives us. */
+async function readyQuota(): Promise<void> {
+  quotaReady ??= (async () => {
+    const stored = await store.session.getMatchedRuleCalls();
+    quotaCalls = [...new Set([...stored, ...quotaCalls])].sort((a, b) => a - b);
+  })().catch((err) => {
+    log.debug('could not read the getMatchedRules call log', errorMessage(err));
+  });
+  return quotaReady;
+}
+
+/**
+ * Reserve one `getMatchedRules` call. `false` means "do not call it": either the interval's
+ * budget is gone or a background refresh came too soon after the previous call.
+ */
+async function takeQuotaSlot(now: number, force: boolean): Promise<boolean> {
+  await readyQuota();
+  const cutoff = now - GETMATCHEDRULES_QUOTA_INTERVAL_MS;
+  quotaCalls = quotaCalls.filter((when) => when > cutoff);
+  const budget = force
+    ? MAX_GETMATCHEDRULES_CALLS_PER_INTERVAL
+    : MAX_GETMATCHEDRULES_CALLS_PER_INTERVAL - RESERVED_FORCED_CALLS;
+  if (quotaCalls.length >= budget) return false;
+  if (!force) {
+    const last = quotaCalls.length ? Math.max(...quotaCalls) : Number.NEGATIVE_INFINITY;
+    if (now - last < BACKGROUND_REFRESH_SPACING_MS) return false;
+  }
+  quotaCalls.push(now);
+  void store.session
+    .setMatchedRuleCalls(quotaCalls)
+    .catch((err) => log.debug('could not persist the getMatchedRules call log', errorMessage(err)));
+  return true;
+}
+
+/** Test/debug helper: how many calls are left in the current interval. */
+export function quotaRemaining(now: number = Date.now()): number {
+  const cutoff = now - GETMATCHEDRULES_QUOTA_INTERVAL_MS;
+  return Math.max(
+    0,
+    MAX_GETMATCHEDRULES_CALLS_PER_INTERVAL - quotaCalls.filter((when) => when > cutoff).length,
+  );
+}
+
+/** Keep the badge on the last count we know instead of clearing it. */
+async function keepLastKnown(tabId: number, counter: TabCounters): Promise<number> {
+  let known = counter.count;
+  if (known === 0) {
+    const session = await store.session.getTab(tabId);
+    known = session?.blocked ?? 0;
+    // Those matches were already added to the totals before the worker restarted.
+    if (known > counter.reported) counter.reported = known;
+  }
+  counter.count = known;
+  await setBadge(tabId, known);
+  return known;
+}
+
+async function doRefresh(tabId: number, now: number, force: boolean): Promise<number> {
   const counter = counterFor(tabId);
   counter.lastRefresh = now;
-  let matched: chrome.declarativeNetRequest.MatchedRuleInfo[] = [];
-  try {
-    const filter: chrome.declarativeNetRequest.MatchedRulesFilter = { tabId };
-    if (counter.since > 0) filter.minTimeStamp = counter.since;
-    const result = await chrome.declarativeNetRequest.getMatchedRules(filter);
-    matched = result?.rulesMatchedInfo ?? [];
-  } catch (err) {
-    log.debug('getMatchedRules failed', errorMessage(err));
-    return counter.count;
-  }
-  const summaries: MatchedRuleSummary[] = matched.map((info) => ({
-    ruleId: info.rule.ruleId,
-    rulesetId: info.rule.rulesetId,
-    time: info.timeStamp,
-  }));
-  matchedByTab.set(tabId, summaries.slice(-MAX_MATCHED_PER_TAB));
+  if (force) counter.lastForced = now;
 
-  const count = matched.length;
-  const delta = count - counter.count;
-  counter.count = count;
-  if (delta > 0) await addToTotals(delta);
-  await store.session.patchTab(tabId, { blocked: count, matched: summaries.slice(-50) });
+  if (!debugFeed) {
+    if (!(await takeQuotaSlot(now, force))) {
+      log.debug(`getMatchedRules quota spent; keeping the last count for tab ${tabId}`);
+      return keepLastKnown(tabId, counter);
+    }
+    let matched: chrome.declarativeNetRequest.MatchedRuleInfo[] = [];
+    try {
+      const filter: chrome.declarativeNetRequest.MatchedRulesFilter = { tabId };
+      if (counter.since > 0) filter.minTimeStamp = counter.since;
+      const result = await chrome.declarativeNetRequest.getMatchedRules(filter);
+      matched = result?.rulesMatchedInfo ?? [];
+    } catch (err) {
+      log.debug('getMatchedRules failed', errorMessage(err));
+      return counter.count;
+    }
+    const summaries: MatchedRuleSummary[] = matched.map((info) => ({
+      ruleId: info.rule.ruleId,
+      rulesetId: info.rule.rulesetId,
+      time: info.timeStamp,
+    }));
+    matchedByTab.set(tabId, summaries.slice(-MAX_MATCHED_PER_TAB));
+    counter.count = matched.length;
+  }
+
+  const count = counter.count;
+  const delta = count - counter.reported;
+  if (delta > 0) {
+    counter.reported = count;
+    await addToTotals(delta);
+  }
+  await store.session.patchTab(tabId, {
+    blocked: count,
+    matched: (matchedByTab.get(tabId) ?? []).slice(-50),
+  });
   await setBadge(tabId, count);
   return count;
 }
 
 /**
- * Refresh the badge for a tab. Throttled to one `getMatchedRules` call per second per
- * tab unless `force` is set (popup open).
+ * Refresh the badge for a tab. Background refreshes are throttled per tab *and* spaced
+ * globally so the `getMatchedRules` quota survives a browsing session; `force` (popup,
+ * logger) may use the reserved calls but is coalesced over `FORCED_COALESCE_MS`.
  */
 export async function refreshBadge(
   tabId: number,
@@ -115,11 +225,16 @@ export async function refreshBadge(
 ): Promise<number> {
   if (tabId < 0) return 0;
   const now = options.now ?? Date.now();
+  const force = options.force === true;
   const counter = counterFor(tabId);
-  if (!options.force && now - counter.lastRefresh < BADGE_THROTTLE_MS) return counter.count;
   const pending = inFlight.get(tabId);
   if (pending) return pending;
-  const promise = doRefresh(tabId, now).finally(() => inFlight.delete(tabId));
+  if (force) {
+    if (now - counter.lastForced < FORCED_COALESCE_MS) return counter.count;
+  } else if (now - counter.lastRefresh < BADGE_THROTTLE_MS) {
+    return counter.count;
+  }
+  const promise = doRefresh(tabId, now, force).finally(() => inFlight.delete(tabId));
   inFlight.set(tabId, promise);
   return promise;
 }
@@ -141,17 +256,38 @@ export async function getMatchedForTab(tabId: number): Promise<MatchedRuleSummar
 
 /**
  * `declarativeNetRequest.onRuleMatchedDebug` only fires for unpacked installs, but when it
- * does it is the only source of blocked request URLs (the collapse hint the content script
- * asks for through `blocked:getForTab`).
+ * does it is both the only source of blocked request URLs (the collapse hint the content
+ * script asks for through `blocked:getForTab`) and a quota-free match counter: once we have
+ * seen one event, the badge is fed from here and `getMatchedRules` is never called again.
  */
 export function noteMatchedRule(info: chrome.declarativeNetRequest.MatchedRuleInfoDebug): void {
+  debugFeed = true;
   const tabId = info.request?.tabId ?? -1;
   const url = info.request?.url;
-  if (tabId < 0 || !url) return;
-  const list = blockedUrls.get(tabId) ?? [];
-  if (list.length >= MAX_BLOCKED_URLS_PER_TAB) list.shift();
-  list.push(url);
-  blockedUrls.set(tabId, list);
+  if (tabId < 0) return;
+  if (url) {
+    const list = blockedUrls.get(tabId) ?? [];
+    if (list.length >= MAX_BLOCKED_URLS_PER_TAB) list.shift();
+    list.push(url);
+    blockedUrls.set(tabId, list);
+  }
+  const counter = counterFor(tabId);
+  counter.count++;
+  const summaries = matchedByTab.get(tabId) ?? [];
+  if (summaries.length >= MAX_MATCHED_PER_TAB) summaries.shift();
+  summaries.push({
+    ruleId: info.rule?.ruleId ?? 0,
+    rulesetId: info.rule?.rulesetId ?? '',
+    url,
+    type: info.request?.type,
+    time: Date.now(),
+  });
+  matchedByTab.set(tabId, summaries);
+}
+
+/** Whether matches are counted from `onRuleMatchedDebug` (unpacked install). */
+export function usesDebugFeed(): boolean {
+  return debugFeed;
 }
 
 export function getBlockedUrls(tabId: number): string[] {
@@ -167,7 +303,9 @@ export async function resetStats(): Promise<Stats> {
   await store.set({ stats });
   for (const counter of counters.values()) {
     counter.count = 0;
+    counter.reported = 0;
     counter.lastRefresh = 0;
+    counter.lastForced = 0;
   }
   blockedUrls.clear();
   matchedByTab.clear();
@@ -179,4 +317,7 @@ export function __resetForTests(): void {
   blockedUrls.clear();
   matchedByTab.clear();
   inFlight.clear();
+  quotaCalls = [];
+  quotaReady = null;
+  debugFeed = false;
 }

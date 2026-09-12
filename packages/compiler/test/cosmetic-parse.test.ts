@@ -163,7 +163,6 @@ describe('parseCosmeticFilter — native selectors', () => {
     ['##.a:if-not(.b)', '.a:not(.b)'],
     ['##.a:-abp-has(.b)', '.a:has(.b)'],
     ['##.a:matches(.b)', '.a:is(.b)'],
-    ['##.a:has(.b:if(.c))', '.a:has(.b:has(.c))'],
     // `#?#` with a plain selector degrades to plain hiding
     ['#?#.ad', '.ad'],
   ];

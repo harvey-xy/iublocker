@@ -75,14 +75,43 @@ export interface RewriteOptions {
 }
 
 /**
+ * One rewrite of a range at a time. Two overlapping rewrites both read the pre-write rule
+ * set, so the second one would ask Chrome to add IDs the first one has just created and
+ * `updateDynamicRules` would reject the whole call (a double "Save" of the user filters, or
+ * a user save racing a delta apply).
+ */
+const rangeLocks = new Map<number, Promise<unknown>>();
+
+function withRangeLock<T>(range: IdRange, run: () => Promise<T>): Promise<T> {
+  const previous = rangeLocks.get(range.start) ?? Promise.resolve();
+  const result = previous.then(run, run);
+  rangeLocks.set(
+    range.start,
+    result.then(
+      () => undefined,
+      () => undefined,
+    ),
+  );
+  return result;
+}
+
+/**
  * Replace every rule of `range` with `rules` in a single `updateDynamicRules` call.
  * IDs are reassigned from the bottom of the range; rules that do not fit the range or
  * the platform budgets are dropped with a warning (the caller surfaces them).
  */
-export async function rewriteRange(
+export function rewriteRange(
   range: IdRange,
   rules: readonly DNRRule[],
   options: RewriteOptions = {},
+): Promise<RewriteResult> {
+  return withRangeLock(range, () => doRewriteRange(range, rules, options));
+}
+
+async function doRewriteRange(
+  range: IdRange,
+  rules: readonly DNRRule[],
+  options: RewriteOptions,
 ): Promise<RewriteResult> {
   const existing = await getDynamicRules();
   const removeRuleIds = existing.filter((rule) => inRange(rule.id, range)).map((rule) => rule.id);
@@ -131,4 +160,8 @@ export async function rewriteRange(
 export async function clearRange(range: IdRange): Promise<number> {
   const result = await rewriteRange(range, []);
   return result.removed;
+}
+
+export function __resetForTests(): void {
+  rangeLocks.clear();
 }

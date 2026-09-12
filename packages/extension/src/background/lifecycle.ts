@@ -45,11 +45,26 @@ export async function discardStaleDelta(): Promise<boolean> {
   return true;
 }
 
+/**
+ * The four reconciliation steps are independent: a failure in one of them (Chrome refusing
+ * a ruleset, the static rule budget, a scripting error) must not skip the others. Skipping
+ * `syncSessionRules` would leave `off` sites blocked, skipping `registrar.reconcile` would
+ * leave every list scriptlet unregistered.
+ */
 async function reconcileAll(): Promise<void> {
-  await manager.applyEnabledRulesets();
-  await manager.applyDisabledStaticRules();
-  await siteModes.syncSessionRules();
-  await registrar.reconcile();
+  const steps: [string, () => Promise<unknown>][] = [
+    ['applyEnabledRulesets', () => manager.applyEnabledRulesets()],
+    ['applyDisabledStaticRules', () => manager.applyDisabledStaticRules()],
+    ['syncSessionRules', () => siteModes.syncSessionRules()],
+    ['registrar.reconcile', () => registrar.reconcile()],
+  ];
+  for (const [what, run] of steps) {
+    try {
+      await run();
+    } catch (err) {
+      log.error(`${what} failed`, errorMessage(err));
+    }
+  }
 }
 
 export async function onInstalled(details: chrome.runtime.InstalledDetails): Promise<void> {
