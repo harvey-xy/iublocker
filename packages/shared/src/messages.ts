@@ -40,6 +40,8 @@ export interface CosmeticGetResponse {
   generic: CosmeticGeneric | null;
   excluded: string[];
   elemhide: boolean;
+  /** settings.collapseBlockedElements: whether the content script should hide elements whose loads were blocked. */
+  collapse?: boolean;
 }
 
 export interface TabState {

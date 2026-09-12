@@ -219,3 +219,13 @@ describe('collapsing blocked elements', () => {
     collapser.stop();
   });
 });
+
+describe('collapse setting', () => {
+  it('does not start the collapser when the worker says collapse=false', async () => {
+    mockWorker(() => response({ mode: 'optimal', collapse: false }));
+    const engine = await startEngine(window);
+    expect(engine).not.toBeNull();
+    expect((engine as unknown as { collapser: unknown }).collapser).toBeNull();
+    engine?.stop();
+  });
+});

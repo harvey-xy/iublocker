@@ -168,7 +168,8 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
       const hostname = hostnameFromUrl(frame.url) || msg.hostname;
       const topHostname =
         (await injector.resolveTopHostname(frame.tabId, frame.frameId, frame.url)) || hostname;
-      const mode = await siteModes.resolveMode(topHostname);
+      const [mode, settings] = await Promise.all([siteModes.resolveMode(topHostname), getSettings()]);
+      const collapse = settings.collapseBlockedElements;
       const empty = {
         mode,
         procedural: [],
@@ -177,6 +178,7 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
         generic: null,
         excluded: [],
         elemhide: false,
+        collapse,
       };
       if (!hostname || !modeAtLeast(mode, 'optimal')) return empty;
       const lookup = await cosmeticIndex.lookup(hostname);
@@ -195,6 +197,7 @@ async function dispatch(msg: Request, sender: chrome.runtime.MessageSender): Pro
         generic: mode === 'complete' && !lookup.generichide ? await cosmeticIndex.genericTables() : null,
         excluded: lookup.excluded,
         elemhide: false,
+        collapse,
       };
     }
 

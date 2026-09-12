@@ -48,7 +48,7 @@ export class CosmeticEngine {
     const procedural =
       response.procedural.length > 0 ? new ProceduralExecutor(envFromWindow(win), response.procedural) : null;
     this.procedural = procedural && procedural.size > 0 ? procedural : null;
-    this.collapser = new Collapser(win);
+    this.collapser = response.collapse === false ? null : new Collapser(win);
     this.scheduler = new Scheduler(win, () => this.pass(), {
       minInterval: PROCEDURAL_MIN_INTERVAL_MS,
       timeout: IDLE_TIMEOUT_MS,
